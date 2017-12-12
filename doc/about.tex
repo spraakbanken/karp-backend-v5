@@ -1,0 +1,891 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arsclassica Article
+% LaTeX Template
+% Version 1.1 (10/6/14)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Lorenzo Pantieri (http://www.lorenzopantieri.net) with extensive modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[
+12pt, % Main document font size
+a4paper, % Paper type, use 'letterpaper' for US Letter paper
+oneside, % One page layout (no page indentation)
+%twoside, % Two page layout (page indentation for binding and different headers)
+headinclude,footinclude, % Extra spacing for the header and footer
+BCOR0mm, % Binding correction
+]{scrartcl}
+
+\input{structure.tex} % Include the structure.tex file which specified the document structure and layout
+\usepackage[margin=25mm]{geometry}
+
+\hyphenation{Fortran hy-phen-ation} % Specify custom hyphenation points in words with dashes where you would like hyphenation to occur, or alternatively, don't put any dashes in a word to stop hyphenation altogether
+
+%----------------------------------------------------------------------------------------
+%	TITLE AND AUTHOR(S)
+%----------------------------------------------------------------------------------------
+
+\title{\normalfont\spacedallcaps{Karp's Backend}} % The article title
+
+%\author{\spacedlowsmallcaps{Malin Ahlberg} \\ \spacedlowsmallcaps{Språkbanken} \\ \spacedlowsmallcaps{Göteborgs Universitet}} % The article author(s) - author affiliations need to be specified in the AUTHOR AFFILIATIONS block
+\author{\spacedlowsmallcaps{Språkbanken}\\\spacedlowsmallcaps{Göteborgs Universitet}} % The article author(s) - author affiliations need to be specified in the AUTHOR AFFILIATIONS block
+
+\date{} % An optional date to appear under the author(s)
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	HEADERS
+%----------------------------------------------------------------------------------------
+
+\renewcommand{\sectionmark}[1]{\markright{\spacedlowsmallcaps{#1}}} % The header for all pages (oneside) or for even pages (twoside)
+%\renewcommand{\subsectionmark}[1]{\markright{\thesubsection~#1}} % Uncomment when using the twoside option - this modifies the header on odd pages
+\lehead{\mbox{\llap{\small\thepage\kern1em\color{halfgray} \vline}\color{halfgray}\hspace{0.5em}\rightmark\hfil}} % The header style
+
+\pagestyle{scrheadings} % Enable the headers specified in this block
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS & LISTS OF FIGURES AND TABLES
+%----------------------------------------------------------------------------------------
+
+\maketitle % Print the title/author/date block
+
+\setcounter{tocdepth}{2} % Set the depth of the table of contents to show sections and subsections only
+
+\tableofcontents % Print the table of contents
+
+%\listoffigures % Print the list of figures
+
+%\listoftables % Print the list of tables
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT
+%----------------------------------------------------------------------------------------
+%
+%\section*{Abstract} % This section will not appear in the table of contents due to the star (\section*)
+%
+%\lipsum[1] % Dummy text
+%
+%----------------------------------------------------------------------------------------
+%	AUTHOR AFFILIATIONS
+%----------------------------------------------------------------------------------------
+
+%{\let\thefootnote\relax\footnotetext{* \textit{Språkbanken, Göteborgs Universitet}}}
+
+%{\let\thefootnote\relax\footnotetext{\textsuperscript{1} \textit{Department of Chemistry, University of Examples, London, United Kingdom}}}
+
+%----------------------------------------------------------------------------------------
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+\section{About karp}\label{sec:about_karp}
+Karp is Språkbanken’s lexical infrastructure which is used for publishing and editing lexical resources. Karp's backend allows you to make your lexicons searchable and editable. The lexicons must be in json format, but it is possible to have for example xml
+blocks in the json objects, which can still be made searchable. % (to some extent).
+
+
+%\subsection*{Simple and extended search}
+There are two main types of searches available, simple (free text search)
+and extended (field search).
+%The system will allow its users to perform simple (free text) searches and more advanced - extended - searches.
+In the free text search, the content of a predefined set of fields is used, as defined when you set the configuration files.
+In the extended search, the user can choose which specific fields to search,
+eg.\ baseform or part of speech. Which
+fields are searchable and how the text in them is analyzed is also defined during the configuration.
+
+The backend is a WSGI application written in Python.
+The main components of the system are ElasticSearch and SQL.\@ ElasticSearch (ES) provides fast searching and
+an easy way of indexing and analyzing your data. The SQL database is used only as a back-up and for keeping
+the revision history of edited resources.
+
+The code base for Karp's backend contains one example resource, the Bilingual Glossary German-English with Probabilities (PANACEA) created by Linguatec GmbH, which can be used for testing your Karp installation.
+
+
+\section{Input format}
+Each lexical entry must be represented as one json object, and contain the name of the lexicon ("lexiconName").
+It should also contain the order of the lexicons ("lexiconOrder"), which regulates in which order the search results
+are shown\footnote{A standard use case of the Karp backend is to group all search results by lexicon. This
+  also corresponds to the set-up in the frontend. You will also have to specify the order of your lexicons
+later in the configuration part.}. This should be an integer, starting from \verb|0|.
+A lexicon is a list of objects.
+A simple example:
+{\footnotesize
+\begin{verbatim}
+[{'lexiconName': 'saldo', 'lexiconOrder': 0, 'baseform': 'katt', 'partOfSpeech': 'nn',
+  'xml': '<definition>Some <b>dumped</b> data</definition>'},
+ {'lexiconName': 'saldo', 'lexiconOrder': 0, 'baseform': 'hund', 'partOfSpeech': 'nn'},
+ {'lexiconName': 'lexin', 'lexiconOrder': 1, 'baseform': 'hund',
+  'partOfSpeech': ['nn','vb'], 'lexinID': 'lx500'}
+]
+\end{verbatim}}
+The entries may of course have a much more complex structure, and contain lists, other objects etc.
+ES will allow the type of a field to vary between lists and single objects, but not between other any two types.
+The above example is thus ok, even though `partOfSpeech' varies in type, but the below is not:
+{\footnotesize
+\begin{verbatim}
+[{'lexiconName': 'saldo', 'lexiconOrder': 0, 'baseform': 'katt', 'partOfSpeech': 'nn'},
+ {'lexiconName': 'lexin', 'lexiconOrder': 1, 'baseform': 'hund',
+  'partOfSpeech': {'swe': 'nn', 'eng': 'vb'}}
+]
+\end{verbatim}}
+Your work will be simplified if all entries are similarly structured, but it is not required.
+
+\section{Prerequisites}
+To run the Karp backend, you will need to install a number of other packages.
+If you are running Karp for test and development, you can get an easy start by
+using Docker\footnote{%
+\url{https://www.docker.com/}}. If so, skip this section
+and continue at section~\ref{sec:docker}.
+\begin{itemize}
+\item ElasticSearch \\
+  Download version 1\\
+  \url{https://www.elastic.co/downloads/past-releases/elasticsearch-1-5-2}\\
+  Install as described here \url{https://www.elastic.co/downloads/elasticsearch}\\
+  The only configuration needed is to set
+  \verb|cluster.name| in \\
+  \verb|config/elasticsearch.yml| to a desired name\footnote{%
+    This is important if you want more than one node in your cluster (see \url{https://www.elastic.co/guide/en/elasticsearch/reference/1.4/_basic_concepts.html}).
+    Språkbanken currently uses three nodes running on three different servers.}
+  \item Virtual Env\\
+  For the python libraries. Install with:\\
+  \verb|pip install virtualenv|\\
+  \url{http://docs.python-guide.org/en/latest/dev/virtualenvs/}
+\item SQL \\
+  (preferrably MySQL (or MariaDB))\\
+  \url{https://www.mysql.com/}
+  \url{https://mariadb.org/}
+\item a WSGI server\\
+  for example mod\_wsgi with Apache, Waitress, Gunicorn, uWSGI\ldots
+\item Authserver (if you plan to use Karp's editor)\\
+  At Språkbanken, we use \\
+  \textcolor{red}{Update!}
+  \url{https://svn.spraakbanken.gu.se/repos/cjs/pub/wsauth/}\\
+  This requires \textbf{Drupal 7} together with the module Email Registration \\
+  \url{https://www.drupal.org/}\\
+  \url{https://www.drupal.org/project/email_registration}\\
+  It is also possible to use a server of your choice, as long as it returns
+  a json object containing at least: \\
+   \verb|{'authenticated': true/false| \\
+     \verb|,'permitted_resources' : {'lexica' : [{"lexicon1" : {"read": true, "write": true}}}|
+\item Python2 >= 2.7 with pip.\\
+  \url{https://www.python.org/downloads/}\\
+  \url{http://pip.readthedocs.org/en/stable/installing/}
+\end{itemize}
+
+
+\section{Downloading the code}
+\label{sec:download}
+\subsection*{Using Docker}
+\label{sec:docker}
+If you want to set up a test and development instance of Karp for local use,
+download the code from\\
+%\verb|https://svn.spraakdata.gu.se/repos/karp/branches/workshop-docker|\\
+\verb|git clone http://spraakbanken.gu.se/pub/karpdocker.git|\\
+and follow the instructions in README.md. When doing offline calls (section \ref{sec:input}-\ref{sec:output}) in this
+set-up, always prefix the commands with  \\
+\verb|docker-compose run --rm karp|
+
+\subsection*{Normal download}
+  Download the code with git:\\
+   \verb|git clone http://spraakbanken.gu.se/pub/karp.git|\\
+   %\verb|svn co https://svn.spraakdata.gu.se/repos/karp/branches/malindev/backend/|\\
+
+
+  In the next section, you will see what configurations you will have to do to
+  run the system with your lexicons.
+  There are two versions of Karp, a standard version and an extended version which targets
+  problems specific to Språkbanken's own lexicons. The code specific for Språkbanken is located in
+  \verb|sb/|. If unsure, use the standard version.
+
+  The file \verb|backend.py| is the main component, run by \verb|backend.wsgi|.
+  The script \verb|upload_offline.py| will help you upload, delete and extract
+  data from the system as an offline service, only available to the developers.
+  It is run like a normal python script, you will learn more
+  about this in Section \ref{sec:input}-\ref{sec:output}.
+  %The script \verb|datashuffle.py| can also be run as a web server, but should not be
+  %exposed to other users as it is a tool for uploading and deleting data without requiring
+  %log in details.
+
+\section{Configurations}
+The first thing you have to do is to set up the virtual environment for python
+(this is however not needed when running Karp in Docker).
+Do this by running the following commands:
+\begin{verbatim}
+cd backend
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+\end{verbatim}
+%
+From now on, whenever you want to run the code from a fresh terminal, you must
+reenter the environment:
+\verb|source venv/bin/activate|\\
+To deactivate the environment (when done working with the Karp), deactivate it:\\
+\verb|deactivate|\\
+%
+Next, there are some configurations to do in the files located in the directory called \verb|config|. By default all the lexicon-related configuration files are set to handle the PANACEA lexicon mentioned in Section \ref{sec:about_karp}. This was done in order to provide a working example.\\
+
+
+\textbf{debugmode.py}\\
+    Set \verb|DEBUGLEVEL| to match you're desired level of log messages to be printed,
+    for example:\\
+    \verb|DEBUGLEVEL = logging.DEBUG|\\
+    %Since this means that information that might be sensitive will be exposed to any user,
+    %make sure to inactivate the debug mode before you release your Karp version.
+    %The same goes for the logging level in the last line:\\
+    %\verb|logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)|\\
+    %for an exposed version of Karp, you will probably want to set this to\\
+    %\verb|logging.basicConfig(stream=sys.stderr, level=logging.ERROR)|.\\
+    For non-Docker users:
+    Change the file path of \verb|LOGFOLDER| and \verb|DEBUGFILE| to be the absolute path to your log file.
+    %make sure that this file exists and that the user who will run the server
+    %(eg.\ the Apache user) has write access to this file.
+    %This is crucial, since the backend will not run if the write access is not ok.
+    \\
+    For Docker users:
+    Set \verb|DEBUG_TO_STDERR| to True so that the log messages will be sent to Dockers
+    own logging system.
+
+\textbf{dbconf.py}\\
+    If you're using MySQL/MariaDB, all you have to do is to replace \verb|karplabb| to the database name
+    that you wish to use.\\
+    \verb|mysql = 'mysql+pymysql://'+user+'/|\textcolor{red}{karplabb}\verb|?charset=utf8'|
+
+    \verb|admin_emails| should be a list with all email addresses to which notifications
+    should be sent on any SQL error
+
+\verb|sender_email| should be the email address that the system puts as the sender of its emails. Emails
+are sent to administrators on errors but also to users that have submitted suggestions. \\
+
+\textbf{dbpassword.py}\\
+  Create this file, and add the following line\\
+  \verb|user="name:pass@server"|\\
+  where \verb|name|, \verb|pass| and \verb|server| corresponds to your SQL login details.\\
+
+\textbf{setup.py}\\
+   Necessary:\\
+   \verb|script_path|: corresponds to \verb|SCRIPT_NAME|;  the initial portion
+                       of the request URL's "path" that corresponds to the
+                       application object. Should, in other words, show the relative path from the server's
+                       "root" to your application.\\
+   \verb|sb_extended|: unless you want to work with the version specified on Språkbanken's lexicons, set this to False\\
+   \verb|elasticnodes|: a list of urls to the ES nodes in your cluster\\
+   \verb|max_page|: the maximum number of hits to show on each page.\\
+   \verb|scan_limit|: sets the limit for when a scan/scroll is performed instead of a normal.\\
+   search\footnote{see \url{https://www.elastic.co/guide/en/elasticsearch/guide/1.x/scan-scroll.html}}.
+   Setting this higher than the \verb|max_result_window| (see
+   \verb|mappingconf.json|), will result in dysfunctional behaviour.\\
+   \verb|secret_key|: this key is needed for the sessions (cookies) to work (used in the login system).
+\\
+   Optional:\\
+   \verb|indexalias|: ES will store your data in an index, you can chose the name of that here.%
+   \footnote{To be precise, this will be the name of an index alias,
+   rather than index}\\
+   \verb|index_internal|: should be set to the same as \verb|indexalias| (not important,
+   unless your using the extended version)\\
+   \verb|_type|: this is the name of the type used in ES.\@ It can be set to anything.\\
+   \verb|sugg_index|: if you plan to allow suggestions (edits by non logged in
+   users), they need to be stored in a different index than "normal" entries. Make up a name and
+   put it here.\\
+
+\textbf{authconfig.py}\\
+%Necessary if you want to allow editing.
+This file keeps the configurations needed to call the authorization system.
+To read or modify a lexicon, this system must permit the user to do so.
+If you're using the same system as Språkbanken,
+fill in the url to the \verb|AUTH_SERVER| (checks logged in user and their
+permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resources) and the secret string.\\
+
+\textbf{lexiconconf.py}\\
+  \verb|conf|: a dictionary where the keys are the names of the lexicons.
+        The values are lists containing the order, and the path to the lexicons.
+    Example:\\
+    \verb|conf = {'panacea': [0, 'data/panacea/panacea.json']}|\\
+
+\textbf{fieldmappings.py}:\\
+   In this file you define which fields in your data should be searchable,
+   and map those to keywords. The keys are names which you will later be
+   able to use in an extended query to the backend, and should hence match the
+   field names for extended search in the frontend.
+   For example, if a lexical entry looks like this
+   \begin{verbatim}
+   {'Form': {'baseform': '...', 'partOfSpeech': '...', 'example': '...'},
+    'Sense': { 'example': '...'}}
+   }
+   \end{verbatim}
+   and you wish to be able to search for baseform, part of speech and the text
+   in any of the examples (but you do not make a distinciton between these two)
+   you should add these lines
+   \begin{verbatim}
+   mappings = {'baseform': ['Form.baseform'],
+               'pos': ['Form.partOfSpeech'],
+               'example': ['Sense.example','Form.example']
+              }
+   \end{verbatim}
+   Mappings can be many-to-many; one key can be linked to many fields and many keys may refer
+   to the same field.
+   Keep the lines referring to the lexiconName, lexiconOrder and id.\\
+   The \verb|anything|-field:
+   ES will keep a copy of all text from the fields of your choice
+   (you will set this in the \verb|mappingconf.json|)   in one or more
+   designated fields, usually referred to as \verb|_all|.
+   Within Karp, these field is referred as \verb|anything|, and used for free
+   text search, so specify here which ES field that should point to.
+   If you don't know yet what field names you want to put here, simply put\\
+   \verb|"anything" = ["_all"]|\\
+
+   While setting up the mapping (see below) you will learn more about how the fields are indexed.\\
+
+% For nested fields:
+   %     fieldname: ([path], (parent, sibling, siblingMatches))
+   %     mor      : ([relation.name], (relation, relation.type, "Mor"))
+%
+% Special hacks:
+   % special_fields = {"mor" : {"equals": "match"}}
+% this means that when dealing with the field "mor", the "equals" query should
+% always use the ES query type "match"
+
+\textbf{searchconf.py}:\\
+   This is where you define how different sorts of searches should be performed.
+   You will specify which fields (or json paths) of your lexicons are interesting
+   for different purposes.
+   Before you complete this file, it might be useful to have a look at the mapping
+   configuration (below).
+
+   \verb|sort_by| : define the order by which your results are sorted. It is recommended
+             to keep \verb|lexiconOrder| in the first position,
+             since the Karp frontend assumes this to be the first sorting criteria.
+             Unless you want
+             to totally ignore the score that the search
+             engine assigns each hit, also keep \verb|_score| in this list!
+
+   \verb|head_sort_field|: if you wish to always have a specific primary result order,
+             even if the user has inputted more fields to search on, you can specify that
+             here. Example: If the user wants to sort by part of speech, you still want
+             the results to be sorted by lexiconName in the first place, and after that
+             by part of speech.
+
+   \verb|minientry_fields|: the minientry search is a search type where only the most
+             important information for each entry is shown. Specify here which
+             fields should be shown in a minientry search.\\
+  \verb|statistics_buckets|: the statistics query does an
+             aggregation\footnote{\url{https://www.elastic.co/guide/en/elasticsearch/guide/current/aggregations.html}}
+             of the data; it groups the data by a chosen set of fields and shows the number in each
+             "bucket".
+             The user can input what fields he or she wants to use at query time, but the default
+             grouping should be put here.
+             Example: \verb|["lexiconName", "pos"]| will, for each lexicon, show how many
+             entries there are belonging to each part of speech.
+
+  \verb|all_fields|: specifies which fields should be used for free text search (simple search).
+             Set this to \\
+             \verb|all_fields = F.lookup_multiple("anything")|
+             %ES will keep a copy of all text from the fields of your choice
+             %(you will set this in the \verb|mappingconf.json|)
+             %in one or more designated fields, usually referred to as \verb|_all|.
+             %If you don't know yet what field names you want to put here, simply put\\
+             %\verb|all_fields = ["_all"]|\\
+             %for now.
+             %It is recommended to create an \verb|_all| field in the mapping
+             %(see below) and use that here.
+
+  \verb|boosts|: this is used for free text search. Apart from
+          searching all fields, ES can boost the results which contain the query
+          string in one or more specific fields. You might for example be more interested in
+          results where the baseform matches the query string than where a comment
+          matches it. Put the fields you consider to be most interesting here, in order of
+          descending importance. For more control of how the boosting is done, you will need
+          to modify the source code in \verb|server/translator/parser.py|
+
+  \verb|autocomplete_field|: Autocompletion will return all entries having fields that contain the
+          requested word. Specify the fields you want to search.
+          This function is called from Karp's sister project Korp.
+          \\
+
+          The field names in all settings in \verb|searchconf.py| should always
+          be - or evaluate to - the json paths in your lexical entries.
+          You can use the function
+          \verb|F.lookup| and the keys from \verb|fieldmappings.py|:\\
+          \verb|sort_by = [F.lookup(pos)]| \\
+          to achieve this, or simply put the whole json path: \\
+          \verb|sort_by = ["Entry.partOfSpeech"]|.\\
+          %Whenever referring to a json field, you can use the \textit{key}
+          %names (as in \verb|fieldmappings.py|) or the actual json path to the
+          %field.
+          Note that the function \verb|F.lookup| only picks the first path in case of
+          an one-to-many mapping. If \\
+          {\verb|"pos" : ["Entry.partOfSpeech", "Entry.simplePartOfSpeech",|\\}
+          {\verb|         "Entry.translatedPartOfSpeech"]|\\}
+          then\\
+          \verb|[F.lookup(pos)] = "Entry.partOfSpeech"| \\
+          %multiple
+          %If you use the \textit{key} names of the fields, use the syntax
+          %\verb|F.lookup("pos")|.
+          %It is recommended to use the json path
+          %whenever you have mapped multiple values to one key.
+
+  \verb|def format_query(field,query)|: This function may apply some formatting or changes
+          to the query string (\verb|query|) depending on the fieldname (\verb|field|).
+          For example, lowercase may be used in some fields. Note that things like this
+          should preferably be handled by Elastic's analyzers whenever possible.
+
+%     Example:%
+%     \small{\begin{verbatim}
+%# (fieldmappings.py) multiple values for one key
+%"pos" : ["Entry.partOfSpeech", "Entry.simplePartOfSpeech", "Entry.translatedPartOfSpeech"]
+%
+%# (searchconf.py) use the real names
+%sort_by = ["Entry.partOfSpeech", "Entry.simplePartOfSpeech", "Entry.translatedPartOfSpeech"]
+%---
+%# (fieldmappings.py), only one value for the key
+%"pos" : ["Entry.partOfSpeech"]
+%
+%# (searchconf.py) ok to use the key names
+% sort_by = [F.lookup(pos)]
+%     \end{verbatim}}\\
+
+
+
+
+\textbf{mappingconf.json}:\\
+  In this mapping you specify how ES should treat your data. You can set
+  tokenizers, searchable fields
+  etc.\footnote{\url{https://www.elastic.co/guide/en/elasticsearch/reference/1.5/mapping.html}} The default \verb|mappingconf.json| file contains a simple mapping for the PANACEA lexicon. A more advanced example of a mapping can be found in \verb|example_mappingconf.json|\\
+%
+  \textbf{Easy set-up: Using the default mapping}\\
+  It it possible to partly ignore this step for the moment and go on to upload your data. In that
+  case all text in your data will be searchable and tokenized by a standard european tokenizer%
+  \footnote{\url{https://www.elastic.co/guide/en/elasticsearch/reference/1.4/analysis-analyzers.html}}.
+  In that case, set the \verb|all_fields| to \verb|["_all"]| in \verb|searchconf.py|.
+  %and rename the file \verb|config/simplemappingconf.json| to \verb|config/mappingconf.json|.\\
+
+ % simply run one of the commands below (you might want to do a back-up of the current mappingconf.json)\\
+%
+%  without Docker:\\
+%  \verb|python upload_offline.py --getmapping > config/mappingconf.json|\\
+%  with Docker:\\
+%  \verb|docker-compose run --rm karp python upload_offline.py --getmapping \|\\
+%  \verb|                   > config/mappingconf.json|\\
+%  instead.
+%  This will replace your old mapping with a new version.
+%  Open the file and find the line containing
+%  %There is only one modification you need to do to this file and that is to modify the type for
+%  \verb|lexiconName|.
+%  %This should never be tokenized as one, to avoid the lexicon names being
+%  %segmented on special characters (such as |,\_,- ...). Make sure to edit the
+%  %lines mentioning \verb|lexiconName| to look like this:
+%  Edit the information for this field to look like this:
+%  \begin{verbatim}
+%    "lexiconName": {
+%        "type": "string", "analyzer" : "keyword"
+%        }
+%  \end{verbatim}
+%
+  \textbf{Advanced set-up: Creating a custom mapping}\\
+  If - or when - you want more control of your data, you can edit this file. If
+  this is done after the data has been uploaded for the first time, however, you will need to
+  reload it (see section~\ref{sec:reload}) after finishing the new mapping.\\
+  %The mapping configuration is an json object consisting of two fields?; 'settings' and 'mappings'.
+  Have a look at the file \verb|example_mappingconf.json|.
+  In the first section, \verb|settings|, you can define custom
+  tokenizers, analyzers and filters etc. You may also want to set the \textbf{result window size}:\\
+  \verb|"max_result_window" : 10000|
+  This will allow deep pagination to work up to 10 000 items (default in ES2 is 1 000). Set this to the
+  same value as in \verb|scan_limit| in \verb|setup.py|.
+
+  ES provides a set of built-in
+  \textbf{analyzers}, and at Språkbanken we have added some more to fit our data:\\
+  %In the provided example file \\(\verb|config/example_mappingconf.json|) you
+  %will find some of Språkbanken's custom analyzers:
+
+  \begin{tabular}{ll}
+    \verb|full_name|: & using a built-in tokenizer to split at whitespaces only\\
+    \verb|xml_analyzer|: & for xml-blocks. Makes the text, but not the mark-up, searchable.\\
+   \end{tabular}\\
+
+
+  The default analyzer in ES will split words on special characters (-,\_,.,"\ldots). If that's
+  not what you want, consider the built-in
+  \verb|keyword| analyzer treats the whole string as one token (useful for
+  different types of identifiers, or possibly multiwords expression that should not be analyzed as
+  separate tokens). The analyzer \verb|whitespace| splits only on whitespaces.
+  If you are interested in other alternatives or defining your own analyzers,
+  please read the ES documentation\footnote{%
+ \url{https://www.elastic.co/guide/en/elasticsearch/reference/1.4/analysis-custom-analyzer.html}}.
+
+  The section below, \verb|mappings|, is a definition of your data's structure. \\
+  You can control
+  the \textbf{\_all fields} here:\\
+  \verb|"_all" : {"enabled" : false}|
+  prevents ES from making all fields searchable.
+  If you do want all text to be searchable, put this to true.
+  Note that this will enable free text searches to
+  match the text in  \verb|lexiconName| and \verb|lexiconOrder|.\\
+  \verb|"all_text", "all_xml"|:
+     These are used instead of \verb|_all| in Språkbanken's version. Each field in the mapping below
+     specifies whether its content should be copied to one of those. The
+     difference between the two is the analyzers used; text copied to \verb|all_text| is
+     tokenized as normal, while the text copied to \verb|all_xml| is
+     tokenized as xml. Simply leave out these if you enabled \verb|_all| above.
+  Finally, remember to update \verb|all_fields| in \verb|searchconf.py|
+  to match your current settings.
+
+
+   %The \verb|mappings| field is only depending on your data.
+   The rest of the content is only depending on your data's \textbf{type structure}.
+   %It contains one object for every type you have, that is, it will contain only the object
+   %\verb|lexicalentry| (unless you changed the \verb|_type| in \verb|setup.py|).
+   %In this object, you should define the type structure of your data.
+   If your data is simple, just write down the types of it yourself. If it is
+   more complex, you could let ES do the job for you,  by inputting all data to ES and
+   then extracting the automatically generated mapping.
+   To do this, run one of the commands:\\
+   without Docker:\\
+   \verb|python upload_offline.py --getmapping > config/newmappingconf.json|\\
+   with Docker:\\
+  \verb|docker-compose run --rm karp python upload_offline.py --writemapping \|\\
+  \verb|                     config/newmappingconf.json|\\
+   This will give you the file \verb|newmappingconf.json|, which you can use
+   as your \verb|mappingconf.py|. Modify the settings mentioned above as needed.
+
+%   start a local server\\
+%\verb|python offline/datashuffle.py| \\
+%From another terminal, make the following url calls:
+%\begin{verbatim}
+%       curl '127.0.0.1:5000/create_index/test'
+%       curl -XPOST '127.0.0.1:5000/upload_light/json/test' -d @data/lexicon1.json
+%       curl -XPOST '127.0.0.1:5000/upload_light/json/test' -d @data/lexicon2.json
+%       curl '127.0.0.1:5000/getmapping/test' > mapping.json
+%       curl '127.0.0.1:5000/deleteindex/test'
+%\end{verbatim}
+%You will now have a mapping in \verb|mapping.json|.
+%Copy the relevant parts into your \verb|mappingconf.json|.
+   %There are some further things to look at in the mapping.
+   What's important in the type mapping is to look at the fields \textbf{copy\_to, analyzer, index and
+   type} for each of your data fields.
+   In the below example, we see that "blissName" is of type
+   "string", and is copied to \verb"all_text", meaning that it will be searchable in free text searches.
+   Since no analyzer is specified, ES will use its standard text analyzer.
+   "category" is also a string, but should be analyzed with our custom analyzer.
+   "blissID" is not indexed at all, meaning that it will not be searchable, neither in simple nor
+   extended queries.
+
+   \begin{verbatim}
+"blissName": {
+    "copy_to" : "all_text",
+    "type": "string"
+},
+"category": {
+    "copy_to" : "all_text",
+    "type": "string", 
+    "analyzer" : "full_name"
+},
+"blissID": {
+    "index" : "no"
+}
+   \end{verbatim}
+   Note that you do not need to specify whether a field contains a list or a single object. "blissName"
+   could contain one string, or a list of strings.
+
+   Finally, the possibility of using \textbf{multiple analyzer} on a field is worth mentioning.
+   This is done by adding
+   the special field called \verb|fields|%
+  \footnote{\url{https://www.elastic.co/guide/en/elasticsearch/reference/2.0/multi-fields.html}}.
+   In the example mapping, you'll see that \verb|FormRepresentations.baseform| has an extra line:\\
+       \verb|"type": "string", "analyzer" : "full_name"|,\\
+       \verb|"fields" : {"sortform" : {"type" : "string", "analyzer" : "keyword"}}|\\
+  %The field "fields" allows us to use an additional analyzer on the same field
+  By doing this, we can search both \verb|FormRepresentations.baseform| - where multiword expressions
+  have been tokenized - and \verb|FormRepresentations.baseform.sortform| - where the whole
+  expression is always treated as one inseparable unit. The first option will allow us to to
+  find "car park" by searching for "park", but will also find "car park" when we search for words starting
+  with "pa".\\
+
+  Before you reload (section~\ref{sec:reload}) your data, check that the mapping
+  is valid json:\\
+  \verb|jsonlint config/mappingconf.json|
+  % doc on fields not available in version 1.5
+
+  %This is an example of blablabla (ref), which we need for X type of searches.
+ %  This tells elastic to create an extra field for here, called 'sortform'
+ %  which is identical to the baseform, but to anlyze it differently (using the
+ %  keyword analyzer).  The point of this is treating multi word expressions. A
+ %  baseform could be "klä på sig" (get dressed), and for a normal freetext
+ %  search, we would like 'klä' to match this baseform. We thus needs the field
+ %  to tokenized. But there are cases when we want to treat the mwe as one whole
+ %  blob. For example, you might want to search for 'baseform starts with på',
+ %  and find only entries when the *whole* baseform starts with 'på'. In
+ %  conf/fieldmappings.py you will find this line
+ %       "baseformC" : ['FormRepresentations.baseform.sortform']
+ %   where this field is being used and mapped to 'baseformC'.
+ %   FormRepresentation.partOfSpeech and FormRepresentations.rawFreq does not
+ %   have any copy_to statements. This means that when doing free text searches,
+ %   these fields will be ignored.
+%    Another thing to note is Sense.definition. It has got two field, xml and
+%    text. text is treated as normal text and copied to all_text
+%    whereas xml is using the xml analyzer and copied to the all_xml field. This
+%    is of course to only make the actual text in the xml blob
+%    searchable both for free text searches and for searches within this specific field.
+
+
+
+\section{Inputting the data to the system}
+\label{sec:input}
+Once you have installed and configured the system, you can
+upload your json documents to the system.  The data will be stored in the
+search engine ElasticSearch, and backed-up in SQL.\@ The SQL database will also
+keep track of the revision history of each entry, which is useful if you allow
+your lexicons to be edited.
+The below command should only be used the \textit{first time} lexicons are added.
+If you
+use it for reloads, the previous version of the lexicons will not be properly deleted
+in the SQL database and hence be multiplied. This might cause problems later on.
+For reloads, always execute the commands in section~\ref{sec:reload}.
+
+\subsection{Loading data}
+%The easiest way to upload data is to use the script \verb|upload_offline.py|.
+%If you want more control of the flow, you can also run \verb|datashuffle.py|
+%as a local web service and make url calls to it.
+%Both are explained below.
+%
+%\subsection*{Upload\_offline}
+To upload data, the first thing you need to do is to come up with a suitable
+(lower cased) index name, which should {\bf not} be the same you put for
+\verb|indexalias| in \\
+\verb|config/setup.py|.  A suggestion is to put the
+current date in the name. If we choose the index name \verb|karp151103|, run
+\begin{verbatim}
+python upload_offline.py --create_load karp151103
+\end{verbatim}
+or, if using Docker:\\
+\verb|docker-compose run --rm karp python upload_offline.py --create_load karp151103|\\
+
+This will upload all lexicons listed in \verb|config/lexiconconf.py| to the databases.
+If your interested in the details on why we upload the data to another index
+than \verb|indexalias| specified in the setup, have a look at ES's index alias functionality%
+\footnote{\url{https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html}}.
+The karp backend is using aliases, and the alias \verb|karp| will be set to mirror the index
+\verb|karp151103| once the upload is complete.  The reason we do this is to avoid
+downtime for your users while you are reloading the data.
+
+\subsection{Adding more lexicons}
+\enlargethispage{\baselineskip} %prevents line break within this paragraph
+If you decide to add more lexicons to your system, first add them to the configurations, as specified
+above. Also make sure your mapping covers them. To do the upload, execute the below command, where
+\verb|newlexcionnameN|
+are the names of all new lexicons, ie. the ones that have not previously been uploaded.
+\begin{verbatim}
+python upload_offline.py --add_lexicon newindex151115 newlexicon1 newlexicon2 ...
+\end{verbatim}
+%
+All of your lexicons will now be searchable in the new index.
+
+%\subsection*{Using a local web service (for more control)}
+%Start the server: \\
+%\verb|python datashuffle.py| \\
+%From another terminal, make the following url calls:
+%\begin{verbatim}
+%curl -XPOST '127.0.0.1:5000/create_index_mapping/karp151102' -d @conf/mappingconf.json
+%(creates the index and the mapping)
+%
+%curl -XPOST '127.0.0.1:5000/upload/json/karp151102' -d @data/lexicon1.json
+%(upload lexicon1)
+%
+%curl -XPOST '127.0.0.1:5000/upload/json/karp151102' -d @data/lexicon2.json
+%(upload lexicon2)
+%
+%curl '127.0.0.1:5000/publish_index/karp151102'
+%(publish the index)
+%\end{verbatim}
+%
+
+\section{Reloading the data}
+\label{sec:reload}
+At some points, you might need to reload the data to ES.\@
+There are two types of reloads:
+\begin{itemize}
+  \item[A] Reload from SQL
+  \item[B] Reload from file
+\end{itemize}
+
+Use the first one if you for example found errors in your mapping, and
+want ES to re-index and re-analyse it. This type of reload will not leave
+any trace in the revision history and all changes to the resources done
+within the system will be kept.
+
+Use the second one if you found errors in your data that you want
+to fix offline and then update the databases from new files. This type
+of reload will delete your revision history and should hence be avoided
+after the initial testing phase.
+As when you load data the first time, come up with a new index name,
+for example \verb|karp151104|.
+Run one of the commands:
+
+\textbf{[A]}:
+\verb|python upload_offline.py --publishnew newindex|
+
+\textbf{[B]}:
+\verb|python upload_offline.py --reload newindex|\\
+Again, prefix the commands above with
+\verb|docker-compose run --rm karp|
+if you are using Docker.
+
+After you have run any of these commands, the new index will be created and
+made available to your users. The old data will still be stored in ES, however. It will not
+be searchable by your users, but could be used as a back-up in case you find
+errors in the new data and want to "undo" your changes. In some  cases, you
+still want to delete the old indexes.
+Do that by running\\
+\verb|python upload_offline.py --deleteindex oldindex|\\
+or, with Docker:\\
+\verb|docker-compose run --rm karp python upload_offline.py --deleteindex oldindex|
+where \verb|oldindex| is the index to be deleted. Note that \verb|oldindex|
+should never be equal to the index alias in \verb|setup.py|!
+
+
+
+\section{Outputting the data from the system}
+\label{sec:output}
+Since Karp allows users to edit the resources, you might sometimes want to extract
+these to use for other purposes.
+If you want to extract the current version of a lexicon, called lexicon1, and print it to
+file, use
+\begin{verbatim}
+python upload_offline --printlatestversion lexicon1
+          | python converter/mklist.py > extracted_lexicon1.json
+\end{verbatim}
+If you are using Docker, prefix the command with\\
+\verb|docker-compose run --rm karp|
+
+\section{Testing the backend}
+Once you finished the configuration and uploading, you might want to
+test how things are working. Below
+you'll find some basic examples of how to inspect the data. In these examples,
+we are running a test version locally. Start it by running \\
+\verb|python backend.py|\\
+The web service will now run on
+\verb|localhost:5000|.
+If you are using Docker, or if you have your WSGI server of choice running and
+set-up already, you should
+also be able to access the Karp backend through that, without running the python
+script manually. The docker webservice runs on \verb|localhost:8081/app|.\\
+Errors will be logged to the file \verb|debug.txt| (or to the docker logs, if
+you are using Docker).
+If you change the code, the WSGI application needs to be reloaded:\\
+\verb|touch backend.wsgi|
+\\A detailed documentation on the API is available online\footnote{%
+\url{https://ws.spraakbanken.gu.se/ws/karp}}.\\
+
+
+\textbf{Aggregation}\\
+To start with, you might want to do an aggregation over the data
+to see some statistics and make sure everything is there:\\
+\verb|curl 'localhost:5000/statistics'|\\
+The result looks like this (ES provides you with details that you're probably not intersted in at the
+moment. If you are go to the docs\footnote{%
+\url{https://www.elastic.co/guide/en/elasticsearch/reference/1.4/_the_search_api.html}}):
+\begin{verbatim}
+{
+  "_shards": { "failed": 0, "successful": 10, "total": 10 }, // info from ES
+  "aggregations": {
+    "lexiconName": {
+      "buckets": [
+        {
+          "doc_count": 131020, // there are 131020 entries in Saldo
+          "key": "saldo",
+          "pos": {
+            "buckets": [
+              {
+                "doc_count": 85969,  // 85969 of them are nouns
+                "key": "nn"
+              },
+              {
+                "doc_count": 21839,  // 21839 of them are adjectives
+                "key": "av"
+              },
+              ...
+      ],
+      "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0 // info from ES
+    }
+  },
+  "hits": {
+    "hits": [],
+    "max_score": 0.0,
+    "total": 727846  // total number of entries in your data base
+  },
+  "timed_out": false,  // ES did complete the search without timing out...
+  "took": 80           // in 80 milliseconds
+}
+\end{verbatim}
+
+\textbf{Simple search}\\
+If the statistics looked good, you could go on testing a free text search\\
+\verb_curl 'localhost:5000/query?q=simple||house'_\\
+Check that the results match the query in the fields you added to
+\verb|all_fields| in \\ \verb|searchconf.py|
+and that the index specified in each hit is that of the
+last upload you did.\\
+
+\textbf{Extended search}\\
+Now try and see that the configuration in \verb|fieldmappings.py| works.
+Try searching different fields (\textit{keys} from the fieldmappings).\\
+\verb_curl 'localhost:5000/query?q=extended||and|FIELD|equals|house'_\\
+
+
+\textbf{Random search}\\
+The random search will, as the name suggests, let you see
+random entries. The information will be displayed the same
+way as for minientries. It might be useful to test this function
+a few times to see that the entries show up and contain the information
+you expected.\\
+\verb_curl 'localhost:5000/random'_\\
+
+
+\section{Checking that ElasticSearch is healthy}
+ElasticSearch provides many ways of managing your cluster and
+checking its status and health, and
+it is recommended to read up on those\footnote{%
+\url{https://www.elastic.co/guide/en/elasticsearch/reference/1.5/_cluster_health.html}}.
+
+Here are a few calls that might be good to know about. We assume
+that you have a local node running on port 9200.\\
+Check that your cluster is doing ok:\\
+\verb|localhost:9200/_cluster/health?pretty|\\
+The status should be green, unless you are running a cluster with
+1 node only. In that case the status should be yellow.\\
+See the indices that you have created:\\
+\verb|localhost:9200/_cat/indices?v|\\
+
+\section{Fresh restart}
+If you want to start over and remove all lexicons you've added so far, run the command
+\verb|python upload_offline.py --delete_all|\\
+This will delete \textit{all} ES indices, and remove all lexicons in your
+configuration file \\
+\verb|config/lexiconconf.py| from the SQL database.
+
+
+% TODO
+%\section{Common problems}
+%index already exists\\
+%avbruten load - remove from sql yourself\\
+
+%\section{Appendix (API)}
+%\input{../html/index_dokumentation.tex}
+\end{document}
