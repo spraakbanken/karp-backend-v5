@@ -3,7 +3,6 @@
     Input: json structures that might be of type string ('{"hej" : "hu"}')
 """
 from json import loads
-import config.setup as setupconf
 _index = 'test'
 _type = 'test'
 

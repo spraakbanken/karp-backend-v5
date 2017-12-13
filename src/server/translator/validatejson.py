@@ -1,10 +1,11 @@
-import config.lexiconconf as lexiconconf
+import server.helper.configmanager as configM
 import copy
 from .. import errorhandler as Err
 import json
 from re import findall
 import sys
 
+lexiconconf = configM.lexiconconfig
 
 def validate_json(doc, lexicon):
     for key, val in doc.items():

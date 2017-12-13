@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from config import setup as setupconf
 import elasticObjects
 from elasticsearch import helpers as EShelpers
 import fieldmapping as F
 import parsererror as PErr
-import src.server.helper.configmanager as searchconf
+import src.server.helper.configmanager as configM
 import re
 from urlparse import parse_qs
 
@@ -165,9 +164,9 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     operation = parse_operation(etype, op, isfilter=isfilter,
                                 special_op=field_info['op'])
     f_query = parse_field(field_info, operation)
-    if 'format_query' in searchconf.mode_fields(mode):
+    if 'format_query' in configM.mode_fields(mode):
         # format the operands as specified in settings
-        operands = [searchconf.formatquery(mode, field, o) for o in operands]
+        operands = [configM.formatquery(mode, field, o) for o in operands]
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         if not f_query.ok_in_filter:
@@ -185,7 +184,7 @@ def get_field(field, mode):
         returns a dictionary """
 
     fields, constraints = F.lookup_multiple_spec(field, mode)
-    special_op = searchconf.lookup_op(field, mode)
+    special_op = configM.lookup_op(field, mode)
     highlight = ['*'] if field == 'anything' else fields
     return {"fields": fields, "constraints": constraints, "op": special_op,
             "highlight": highlight}
@@ -230,12 +229,12 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
         Returns a query object to be sent to elastic search
 
     """
-    if 'format_query' in searchconf.mode_fields(mode):
+    if 'format_query' in configM.mode_fields(mode):
         # format the query text as specified in settings
-        text = searchconf.formatquery(mode, 'anything', text)
+        text = configM.formatquery(mode, 'anything', text)
 
     qs = []
-    for field in searchconf.searchfield(mode, 'all_fields'):
+    for field in configM.searchfield(mode, 'all_fields'):
         qs += ['"match": {"%s": {"query": "%s", "operator": "and"}}' % (field, text)]
     if isfilter:
         qs = ['"query" : {%s}' % q for q in qs]
@@ -252,7 +251,7 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
         highlight_str = ''
 
     to_boost = []
-    boost_list = searchconf.searchfield(mode, 'boosts')
+    boost_list = configM.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
         to_boost.append('{"boost_factor": "%d", "filter":{"term":{"%s":"%s"}}}'
@@ -441,7 +440,7 @@ def adapt_query(size, _from, es, query, kwargs):
         del kwargs['from_']
 
     # If the wanted number of hits is below the scan limit, do a normal search
-    if stop_num <= setupconf.scan_limit:
+    if stop_num <= configM.setupconfig['SETUP']['SCAN_LIMIT']:
         kwargs['body'] = query
         return es.search(**kwargs)
 
@@ -469,7 +468,7 @@ def adapt_query(size, _from, es, query, kwargs):
             return esans
         # If the total number of hits are less than the scan limit,
         # do a normal search
-        elif tot_hits < setupconf.scan_limit:
+        elif tot_hits < configM.setupconfig['SETUP']['SCAN_LIMIT']:
             kwargs['body'] = query
             kwargs['size'] = tot_hits
             return es.search(**kwargs)

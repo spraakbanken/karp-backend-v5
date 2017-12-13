@@ -2,11 +2,11 @@
 
 from flask import jsonify, request, session
 from src.server.helper.utils import route
-from src.server.helper.flaskhelper import app, crossdomain
 import src.server.checkdbhistory as checkdbhistory
 import src.server.searching as searching
 import src.server.suggestions as suggestions
 import src.server.update as update
+import src.server.helper.configmanager as configM
 
 
 """ The backend, redirects url calls to the appropriate modules.
@@ -223,18 +223,16 @@ def init():
 
     @route(urls)
     def modes():
-        from config import modes
         jsonmodes = {}
-        for mode, info in modes.modes.items():
+        for mode, info in configM.searchconfig.items():
             jsonmodes[mode] = info.get('groups', {})
         return jsonify(jsonmodes)
 
 
     @route(urls)
     def groups():
-        from config import lexiconconf
         modes = {}
-        for name, val in lexiconconf.conf.items():
+        for name, val in configM.lexiconconfig.items():
             if val[0] in modes:
                 modes[val[0]].append('%s (%s)' % (name, val[1]))
             else:
@@ -254,9 +252,8 @@ def init():
     # http://flask.pocoo.org/docs/0.10/api/#flask.Flask.send_static_file
     @route(urls)
     def order():
-        from config import lexiconconf
         orderlist = []
-        for name, val in lexiconconf.conf.items():
+        for name, val in configM.lexiconconfig.conf.items():
             orderlist.append((val[1], '%s (%s)' % (name, val[0])))
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist
@@ -265,13 +262,12 @@ def init():
     @route(urls, name='/')
     @route(urls, name='/index')
     def helppage():
-        from config import setup
         import os
         import re
         import logging
         project_dir = os.path.join(os.path.dirname(__file__))
         logging.debug('path %s' % project_dir)
-        html_dir = os.path.join(setup.script_path, 'html')
+        html_dir = os.path.join(configM.setupconfig['script_path'], 'html')
         doc_file = 'index_dokumentation.html'
         with app.open_resource(os.path.join(html_dir, doc_file)) as f:
             contents = f.read()

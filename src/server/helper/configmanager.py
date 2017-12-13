@@ -1,24 +1,37 @@
-import config.extra_src
-import config.dbconf as dbconf
-import config.lexiconconf as lexiconconf
 import config.modes
 from elasticsearch import Elasticsearch
+import json
 import logging
 import src.server.errorhandler as eh
 from src.server.translator import fieldmapping as F
 
-searchconfig = {}
-for mode, mode_dict in config.modes.modes.items():
-    searchconfig[mode] = mode_dict
+
+searchconfig = json.load(open('config/modes.json'))
+setupconfig = json.load(open('config/config.json'))
+lexiconconfig = json.load(open('config/lexiconconf.json'))
+
+def extra_src(mode, funcname, default):
+    import importlib
+    # If importing fails, try with a different path.
+    try:
+        classmodule = importlib.import_module(python_path(mode))
+        logging.debug('\n\ngo look in %s\n\n' % classmodule)
+        func = getattr(classmodule, funcname)
+        return func
+    except:
+        #raise
+        return default
+
+
+def python_path(mode, funcname):
+    paths = {"karp": "sb.server.formatdata",
+             "external": "sb.server.external",
+             "saol": "saol.searching"}
+    return paths[mode]
 
 
 def elastic(mode='', lexicon=''):
     return Elasticsearch(elasticnodes(mode=mode, lexicon=lexicon))
-
-
-def extra_src(mode, funcname, default):
-    f = config.extra_src.extra_src(mode, funcname)
-    return f or default
 
 
 def searchconf(mode, field, failonerror=True):
@@ -100,9 +113,10 @@ def get_mode_index(mode):
 
 
 def get_mode_sql(mode):
+    dburl = 'mysql+pymysql://%s/%s?charset=utf8'
     sql = searchconf(mode, 'sql', failonerror=False)
     if sql:
-        return dbconf.dburl % sql
+        return dburl % (setupconfig['DB']['DBPASS'], sql)
     else:
         return False
 
@@ -118,7 +132,7 @@ def get_lexiconlist(mode):
     modeconf = config.modes.modes.get(mode, {})
     for group in modeconf.get('groups', []):
         grouplist.append(group)
-    for lex, lexconf in lexiconconf.conf.items():
+    for lex, lexconf in lexiconconfig.items():
         if lexconf[0] in grouplist:
             lexiconlist.add(lex)
 
@@ -127,7 +141,7 @@ def get_lexiconlist(mode):
 
 def get_lexicon_mode(lexicon):
     try:
-        return lexiconconf.conf[lexicon][0]
+        return lexiconconfig[lexicon][0]
     except Exception:
         # TODO what to return
         logging.warning("Lexicon %s not in conf" % lexicon)

@@ -1,5 +1,4 @@
 # -*- coding=UTF-8 -*-
-from config import dbconf
 import src.server.helper.configmanager as configM
 import datetime
 import json
@@ -8,10 +7,11 @@ import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
 """
 Connect to the sql data base and interact with it.
-Emails the admins (dbconf.py) if an error occurs.
+Emails the admins (dbconf.json) if an error occurs.
 """
 
 
+dbconf = configM.setupconfig['DB']
 @compiles(sql.VARCHAR, 'mysql')
 @compiles(sql.String, 'mysql')
 def compile_varchar(element, compiler, **kw):
@@ -251,13 +251,13 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
 
 def handle_error(e, user, msg, doc):
     mail_sent = 'No warnings sent by email'
-    if dbconf.admin_emails:
+    if dbconf['ADMIN_EMAILS']:
         import emailsender
         report = 'User: %s, msg: %s. \nDoc:\n%s' % (user, msg, doc)
         msg = 'Karp-b failure, %s.\n%s\n%s'\
               % (datetime.datetime.now(), e, report)
-        emailsender.send_notification(dbconf.admin_emails, 'Karp failure', msg)
-        mail_sent = 'Warning sent to %s' % ', '.join(dbconf.admin_emails)
+        emailsender.send_notification(dbconf['ADMIN_EMAILS'], 'Karp failure', msg)
+        mail_sent = 'Warning sent to %s' % ', '.join(dbconf['ADMIN_EMAILS'])
     return '%s. %s' % (str(e), mail_sent)
 
 

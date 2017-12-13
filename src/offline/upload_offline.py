@@ -4,7 +4,6 @@ from elasticsearch import exceptions as esExceptions
 import json
 import sys
 
-import config.modes as modes
 from config.lexiconconf import conf
 import src.dbhandler.dbhandler as db
 import src.server.helper.configmanager as configM
@@ -291,7 +290,7 @@ def make_parents(group):
     # a group is its own parent
     # (bliss should publish bliss170208, etc)
     parents = [group]
-    for name, info in modes.modes.items():
+    for name, info in configM.searchconfig.items():
         if group in info.get('groups', []):
             parents.append(name)
     return parents
@@ -302,8 +301,8 @@ def publish_group(group, suffix):
     # of the group from an mode. Eg. publish_group(saldo)
     # may lead to 'saldogroup' not containing 'external'.
     es = configM.elastic(group)
-    if not modes.modes.get(group)['is_index']:
-        for subgroup in modes.modes.get(group)['groups']:
+    if not configM.searchconfig.get(group)['is_index']:
+        for subgroup in configM.searchconfig.get(group)['groups']:
             publish_group(subgroup, suffix)
 
     else:
@@ -353,12 +352,12 @@ def publish_group(group, suffix):
 
 def create_mode(alias, suffix, with_id=False):
     es = configM.elastic(alias)
-    if modes.modes[alias]['is_index']:
+    if configM.searchconfig[alias]['is_index']:
         to_create = [alias]
     else:
-        to_create = modes.modes.get(alias)['groups']
+        to_create = configM.searchconfig.get(alias)['groups']
 
-    typ = modes.modes[alias]['type']
+    typ = configM.searchconfig[alias]['type']
     for index in to_create:
         data = open(get_mapping(index), 'r').read()
         newname = make_indexname(index, suffix)
@@ -384,7 +383,7 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
     es = configM.elastic(alias)
     data = open(get_mapping(alias), 'r').read()
     indexname = make_indexname(alias, suffix)
-    typ = modes.modes[alias]['type']
+    typ = configM.searchconfig[alias]['type']
     try:
         ans = es.indices.create(index=indexname, body=data)
         print ans
@@ -451,7 +450,7 @@ def load(to_upload, index, typ, es, with_id=False):
         for name, info in conf.items():
             if name in to_upload or not to_upload:
                 group, data, order, form = parse_config(info)
-                sql = modes.modes[group]['sql']
+                sql = configM.searchconfig[group]['sql']
                 print 'Upload %s. To sql? %s' % (name, sql)
                 upload(form, name, order, data, es, index, typ, sql=sql,
                        with_id=with_id)
@@ -522,7 +521,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
 
 
 def publish_all(suffix):
-    for alias, aliasconf in modes.modes.items():
+    for alias, aliasconf in configM.searchconfig.items():
         # Only publish if it is a group, meta-aliases will point to the correct
         # subaliases anyway.
         if aliasconf['is_index']:
@@ -530,8 +529,9 @@ def publish_all(suffix):
 
 
 def make_structure():
+    # TODO does not work, what is confelastic?
     add_actions = []
-    for alias, aliasconf in modes.modes.items():
+    for alias, aliasconf in configM.searchconfig.items():
         # Only publish if it is a group, meta-aliases will point to the correct
         # subaliases anyway.
         es = confelastic(alias)

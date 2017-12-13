@@ -1,11 +1,12 @@
 import smtplib
 from email.mime.text import MIMEText
-from config.dbconf import sender_email
+import src.server.helper.configmanager as configM
 # Sends emails from the adress specified in dbconf.py
 
 
 def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
+    sender_email = configM.setupconfig['DB']['SENDER_EMAIL']
     try:
         if type(message) is unicode:
             message = message.encode('utf-8')

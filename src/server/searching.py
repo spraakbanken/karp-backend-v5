@@ -7,7 +7,6 @@ from json import loads, dumps
 import re
 from urllib2 import unquote
 
-import config.setup as setupconf
 import src.dbhandler.dbhandler as db
 import src.server.errorhandler as eh
 from src.server.auth import validate_user
@@ -80,7 +79,8 @@ def requestquery(page=0):
         clean_highlight(ans)
 
     if settings.get('format') or settings.get('export'):
-        formatmethod = settings.get('format') or settings.get('export')
+        formatmethod = 'format' if 'format' in settings else 'export'
+        #formatmethod = settings.get('format') or settings.get('export')
         toformat = settings.get(formatmethod)
         msg = 'Unkown %s %s for mode %s' % (formatmethod, toformat, mode)
         format_posts = configM.extra_src(mode, formatmethod, helpers.notdefined(msg))
@@ -154,14 +154,14 @@ def querycount(page=0):
     try:
         # TODO buckets should be gathered from some config
         default = {"buckets": ['lexiconOrder', 'lexiconName'],
-                   "size": setupconf.max_page}
+                   "size": configM.setupconfig['max_page']}
         settings = parser.make_settings(permitted, default)
         q_ans = requestquery(page=page)
         # TODO does search_type=count work with the new es version?
         # if not, use query_then_fetch, size=0
 
         # raise the size for the statistics call
-        stat_size = setupconf.max_page
+        stat_size = configM.setupconfig['max_page']
         count_elasticq, more = parser.statistics(request.query_string,
                                                  settings,
                                                  order={"lexiconOrder":
@@ -217,7 +217,7 @@ def explain():
 
 def minientry():
     """ Returns the counts and stats for the query """
-    max_page = setupconf.minientry_max_page
+    max_page = configM.setupconfig['minientry_max_page']
     auth, permitted = validate_user(mode="read")
     try:
         query = request.query_string
@@ -424,7 +424,7 @@ def formatpost():
     # set all allowed lexicons (to avoid authentication exception
     auth, permitted = validate_user(mode="read")
     # find the wanted format
-    settings = {'format': 'app', 'allowed': permitted, 'mode': 'saol'}
+    settings = parser.make_settings(permitted, {'size': 25})
     query = request.query_string
     parsed = parser.parse_qs(query)
     parser.parse_extra(parsed, settings)
@@ -433,14 +433,12 @@ def formatpost():
     logging.debug('mode "%s"' % mode)
     index, typ = configM.get_mode_index(mode)
 
-    if to_format in ['app', 'tryck']:
+    if to_format:
         if type(data) != list:
             data = [data]
         errmsg = 'Unkown format %s for mode %s' % (settings['format'], mode)
         format_list = configM.extra_src(mode, 'format_list', helpers.notdefined(errmsg))
-        # TODO add children?
         ok, html = format_list(data, configM.elastic(mode=mode), settings['format'], index)
-
         return jsonify({'all': len(data), 'ok': ok, 'data': html})
 
     else:
@@ -460,8 +458,7 @@ def autocomplete():
     auth, permitted = validate_user(mode="read")
     query = request.query_string
     try:
-        settings = parser.make_settings(permitted,
-                                        {'size': 1000, 'mode': 'external'})
+        settings = parser.make_settings(permitted, {'size': 1000})
         parsed = parser.parse_qs(query)
         mode = parser.get_mode(query)
         p_extra = parser.parse_extra(parsed, settings)

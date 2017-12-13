@@ -12,7 +12,7 @@ if project_dir not in sys.path:
 
 # from backend import app as real_application
 # import config.setup as conf
-from src.main import app as real_application, load_urls
+from src.main_sb import app as real_application, load_urls
 import config.setup as conf
 
 load_urls()

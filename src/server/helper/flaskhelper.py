@@ -4,6 +4,7 @@ from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
 from functools import update_wrapper
 import src.server.errorhandler as eh
+from src.server.helper.configmanager import configM
 import src.server.update as update
 
 #app = Flask('backend')
@@ -121,15 +122,15 @@ def handle_invalid_usage(error):
         # In case of write conflicts etc, print to anoter file
         # and send email to admin
         import time
-        from config import dbconf
-        from config import debugmode
         import traceback
+        logdir = configM.setupconfig['DEBUG']['LOGDIR']
+        dbconf = configM.setupconfig['DB']
         trace = traceback.format_exc()
         date = time.strftime('%Y-%m-%d %H:%M:%S')
         msg = 'Cannot print log file: %s, %s' % (date, trace)
         title = 'Karp urgent logging error'
-        if dbconf.admin_emails:
+        if dbconf['admin_emails']:
             import dbhandler.emailsender as email
-            email.send_notification(dbconf.admin_emails, title, msg)
-        open(debugmode.LOGDIR+'KARPERR'+time.strftime("%Y%m%d"), 'a').write(msg)
+            email.send_notification(dbconf['admin_emails'], title, msg)
+        open(logdir+'KARPERR'+time.strftime("%Y%m%d"), 'a').write(msg)
         return "Oops, something went wrong\n", 500

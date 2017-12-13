@@ -1,7 +1,7 @@
-from config.modes import modes
 import copy
 import json
 from src.server.translator.fieldmapping import default
+from src.server.helper.configmanager import configM
 
 
 def read_fieldmappings(mode):
@@ -11,7 +11,7 @@ def read_fieldmappings(mode):
     # or use it's own config file if it's a indexmode
     all_fields = {}
     print "create", mode
-    for index in modes[mode].get('groups', [mode]):
+    for index in configM.searchconfig[mode].get('groups', [mode]):
         try:
             print "read", index
             fields = json.load(open('config/mappings/fieldmappings_'+index+'.json'))
@@ -26,7 +26,7 @@ def read_fieldmappings(mode):
 def print_all(outpath):
     " Find all modes and print their field configs "
     all_mappings = []
-    for name in modes.keys():
+    for name in configM.searchconfig.keys():
         conf_str = []
         for key, val in read_fieldmappings(name).items():
             if type(val) is dict:
