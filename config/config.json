@@ -1,0 +1,28 @@
+{
+  "AUTH": {
+    "AUTH_RESOURCES" : "https://ws.spraakbanken.gu.se/wsauth/resources",
+    "AUTH_SERVER" : "https://ws.spraakbanken.gu.se/wsauth/authenticate",
+    "AUTH_SECRET" : "secret"
+  },
+  "DB": {
+    "ADMIN_EMAILS": ["malin.ahlberg@gu.se"],
+    "SENDER_EMAIL": "karp@gu.se",
+    "DBPASS": "karp:karp@mariadb"
+  },
+ "DEBUG": {
+   "DEBUGLEVEL": "DEBUG",
+   "DEBUG_TO_STDERR":  true,
+   "LOGDIR":  "log/",
+   "LOGFMT": "%(asctime)s - %(levelname)s: %(message)s",
+   "DATEFMT": "%Y-%m-%d %H:%M:%S"
+ },
+"SETUP":{
+  "ABSOLUTE_PATH" : ".",
+  "SCAN_LIMIT": 1000000,
+  "MAX_PAGE": 1000,
+  "MINIENTRY_MAx_page": 10000,
+  "SECRET_KEY": "glass",
+  "MEMCACHED": "memcached.sock"
+}
+
+}
