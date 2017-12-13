@@ -12,6 +12,7 @@ import src.dbhandler.dbhandler as db
 import src.server.errorhandler as eh
 from src.server.auth import validate_user
 import src.server.helper.configmanager as configM
+import src.server.helper.helpers as helpers
 import src.server.translator.fieldmapping as F
 from src.server.translator import parser
 from src.server.translator import parsererror as PErr
@@ -78,47 +79,55 @@ def requestquery(page=0):
     if settings.get('highlight', False):
         clean_highlight(ans)
 
-    if settings.get('format', '') in ['app', 'tryck']:  # saol
-        def notdefined(*args, **kwargs):
-            raise eh.KarpQueryError('Unkown format %s' % settings['format'])
-        format_posts = configM.extra_src(mode, 'format', autocompletequery)
-        format_posts(ans, configM.elastic, mode, index, settings['format'])
-
-    if settings.get('export', '') in ['tab', 'csv', 'tsv']:  # term-swefin
-        import converter.tabformat as conv
-        # app.config['JSON_AS_ASCII'] = False
-        conv.format_posts(ans, mode, settings.get('export'))
-
-    if settings.get('export', '') in ['html']:  # term-swefin
-        import converter.htmlconv as conv
-        conv.format_posts(ans, mode, settings.get('export'))
-
-    if settings.get('export', '') in ['lmf', 'xml']:
-        # TODO is mode enough, or do we need lexicon?
-        # TODO 'ans' contains hits.hits etc.
-        try:
-            from subprocess import Popen, PIPE
-            # Coversion must be run as python3.
-            # Run in virtualenv with pycountry
-            p_dir = setupconf.absolute_path
-            venv3 = 'venv3/bin/activate'
-            parsejson = 'converter/parsejson.py'
-            py_enc = 'PYTHONIOENCODING=utf-8:surrogateescape'
-            command = 'cd %s; source %s; %s python3 %s --mklmf %s; deactivate'\
-                      % (p_dir, venv3, py_enc, parsejson, mode)
-            logging.debug('command %s' % command)
-            p = Popen([command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-            hits = [hit['_source'] for hit in ans.get('hits', {}).get('hits', [])]
-            lmf, err = p.communicate(input=dumps(hits))
-            logging.debug('err %s' % err)
-            logging.debug('lmf %s' % lmf)
-            del ans['hits']
-            ans['formatted'] = lmf
-        except Exception as e:
-            logging.exception(e)
-            raise eh.KarpGeneralError("Cannot convert lexicon %s to xml\n" % mode, "")
+    if settings.get('format') or settings.get('export'):
+        formatmethod = settings.get('format') or settings.get('export')
+        toformat = settings.get(formatmethod)
+        msg = 'Unkown %s %s for mode %s' % (formatmethod, toformat, mode)
+        format_posts = configM.extra_src(mode, formatmethod, helpers.notdefined(msg))
+        format_posts(ans, configM.elastic(mode=mode), mode, index, toformat)
 
     return ans
+
+    ####
+    # if settings.get('format', '') in ['app', 'tryck']:  # saol
+    #     toformat = settings.get('format')
+    #     format_posts = configM.extra_src(mode, 'format', helpers.notdefined(form))
+    #     format_posts(ans, configM.elastic, mode, index, toformat)
+
+    # if settings.get('export', '') in ['tab', 'csv', 'tsv']:  # term-swefin
+    #     import converter.tabformat as conv
+    #     # app.config['JSON_AS_ASCII'] = False
+    #     conv.format_posts(ans, es, mode, settings.get('export'))
+
+    # if settings.get('export', '') in ['html']:  # term-swefin
+    #     import converter.htmlconv as conv
+    #     conv.format_posts(ans, mode, settings.get('export'))
+
+    # if settings.get('export', '') in ['lmf', 'xml']:
+    #     # TODO is mode enough, or do we need lexicon?
+    #     # TODO 'ans' contains hits.hits etc.
+    #     try:
+    #         from subprocess import Popen, PIPE
+    #         # Coversion must be run as python3.
+    #         # Run in virtualenv with pycountry
+    #         p_dir = setupconf.absolute_path
+    #         venv3 = 'venv3/bin/activate'
+    #         parsejson = 'converter/parsejson.py'
+    #         py_enc = 'PYTHONIOENCODING=utf-8:surrogateescape'
+    #         command = 'cd %s; source %s; %s python3 %s --mklmf %s; deactivate'\
+    #                   % (p_dir, venv3, py_enc, parsejson, mode)
+    #         logging.debug('command %s' % command)
+    #         p = Popen([command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    #         hits = [hit['_source'] for hit in ans.get('hits', {}).get('hits', [])]
+    #         lmf, err = p.communicate(input=dumps(hits))
+    #         logging.debug('err %s' % err)
+    #         logging.debug('lmf %s' % lmf)
+    #         del ans['hits']
+    #         ans['formatted'] = lmf
+    #     except Exception as e:
+    #         logging.exception(e)
+    #         raise eh.KarpGeneralError("Cannot convert lexicon %s to xml\n" % mode, "")
+
 
 
 def sortorder(settings, mode, querycommand):
@@ -425,15 +434,13 @@ def formatpost():
     index, typ = configM.get_mode_index(mode)
 
     if to_format in ['app', 'tryck']:
-        import converter.saolconverter as conv
-        import saol.searching as ss
         if type(data) != list:
             data = [data]
-            # TODO add children?
-        chits = ss.search_children(data, configM.elastic(mode=mode), index)
-        wfdict = ss.get_linkedwfs(data, configM.elastic(mode=mode), index)
-        ok, html = conv.convert_list(chits, mode=settings['format'],
-                                     wfdict=wfdict)
+        errmsg = 'Unkown format %s for mode %s' % (settings['format'], mode)
+        format_list = configM.extra_src(mode, 'format_list', helpers.notdefined(errmsg))
+        # TODO add children?
+        ok, html = format_list(data, configM.elastic(mode=mode), settings['format'], index)
+
         return jsonify({'all': len(data), 'ok': ok, 'data': html})
 
     else:
@@ -750,6 +757,7 @@ def export(lexicon):
     parsed = parser.parse_qs(query)
     parser.parse_extra(parsed, settings)
     date = settings.get('date', '')
+    mode = settings.get('mode', '')
     if date:
         from dateutil.parser import parserinfo, parse
         from datetime import datetime
@@ -774,26 +782,13 @@ def export(lexicon):
     ans = ans[:settings['size']]
 
     logging.debug('exporting %s entries' % len(ans))
-    if settings.get('format', '') in ['lmf', 'xml']:
-        try:
-            from subprocess import Popen, PIPE
-            # Coversion must be run as python3.
-            # Run in virtualenv with pycountry
-            p_dir = setupconf.absolute_path
-            venv3 = 'venv3/bin/activate'
-            parsejson = 'converter/parsejson.py'
-            py_enc = 'PYTHONIOENCODING=utf-8:surrogateescape'
-            command = 'cd %s; source %s; %s python3 %s --mklmf %s; deactivate'\
-                      % (p_dir, venv3, py_enc, parsejson, lexicon)
-            logging.debug('command %s' % command)
-            p = Popen([command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-            lmf, err = p.communicate(input=dumps(ans))
-            logging.debug('err %s' % err)
-            return Response(lmf, mimetype='text/xml')
+    if settings.get('format', ''):
+        toformat = settings.get('format')
+        index, typ = configM.get_mode_index(mode)
+        msg = 'Unkown %s %s for mode %s' % ('format', toformat, mode)
+        format_posts = configM.extra_src(mode, 'exportformat', helpers.notdefined(msg))
+        lmf, err = format_posts(ans, lexicon, mode, toformat)
+        return Response(lmf, mimetype='text/xml')
 
-        except Exception as e:  # catch *all* exceptions
-            # TODO only catch relevant exceptions
-            logging.exception(e)
-            raise eh.KarpGeneralError("Cannot convert lexicon to xml\n", "")
     else:
         return jsonify({lexicon: ans})

@@ -65,3 +65,9 @@ def read_data():
         errstr = "The source is empty. Empty documents not allowed"
         raise eh.KarpParsingError(errstr)
     return data
+
+
+def notdefined(msg):
+    def f(*args, **kwargs):
+        raise eh.KarpQueryError(msg)
+    return f

@@ -17,7 +17,8 @@ def elastic(mode='', lexicon=''):
 
 
 def extra_src(mode, funcname, default):
-    return config.extra_src.extra_src().get(mode, {}).get(funcname, default)
+    f = config.extra_src.extra_src(mode, funcname)
+    return f or default
 
 
 def searchconf(mode, field, failonerror=True):
