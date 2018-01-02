@@ -358,7 +358,9 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
     buckets = settings.get('buckets')
     # buckets = buckets - exclude
     if exclude:
-        buckets = list(set(buckets).difference(exclude))
+        # buckets = buckets - exclude
+        # do a set difference operation, but preserve the order
+        buckets = [b for b in buckets if b not in exclude]
 
     if force_size >= 0:
         size = force_size
