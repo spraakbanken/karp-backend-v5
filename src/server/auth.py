@@ -3,7 +3,7 @@ from json import loads
 import md5
 import logging
 import src.server.errorhandler as eh
-from src.server.helper.configmanager import configM
+import src.server.helper.configmanager as configM
 import urllib
 from urllib2 import urlopen, HTTPError
 

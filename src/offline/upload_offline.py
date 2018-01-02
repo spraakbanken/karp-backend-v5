@@ -7,6 +7,7 @@ import sys
 from config.lexiconconf import conf
 import src.dbhandler.dbhandler as db
 import src.server.helper.configmanager as configM
+import os
 
 
 def get_mapping(index):
@@ -259,13 +260,14 @@ def printlatestversion(lexicon, debug=True, with_id=False):
 #     return newindex
 
 
-def parse_config(info, keep_external=True):
-    """ Parse the info in lexiconconf.py and returns
+def parse_config(name, info, default):
+    """ Parse the info in lexiconconf.json and returns
         group, data, order, format
     """
-    data = open(info[3], 'r').read()
-    #      group    data  order    form
-    return info[0], data, info[1], info[2]
+    path = info.get('path', default.get('path', ''))
+    fformat = info.get('format', default.get('format', 'json'))
+    data = open('%s.%s' % (os.path.join(path, name), fformat), 'r').read()
+    return info['mode'], data, info.get('order'), fformat
 
 
 # TODO outdated. elastic, index, type and mapping are to be found in configs
@@ -449,7 +451,7 @@ def load(to_upload, index, typ, es, with_id=False):
     try:
         for name, info in conf.items():
             if name in to_upload or not to_upload:
-                group, data, order, form = parse_config(info)
+                group, data, order, form = parse_config(name, info, conf['default'])
                 sql = configM.searchconfig[group]['sql']
                 print 'Upload %s. To sql? %s' % (name, sql)
                 upload(form, name, order, data, es, index, typ, sql=sql,
@@ -557,7 +559,7 @@ usage = """Usage:
      publish a new index with data from sql
 
     'python upload_offline.py [lexiconName,]'\
-     upload lexicon to ES and SQL, as specified in lexiconconf.py
+     upload lexicon to ES and SQL, as specified in lexiconconf.json
     """
 
 if __name__ == "__main__":

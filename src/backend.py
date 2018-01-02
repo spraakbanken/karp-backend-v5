@@ -233,10 +233,10 @@ def init():
     def groups():
         modes = {}
         for name, val in configM.lexiconconfig.items():
-            if val[0] in modes:
-                modes[val[0]].append('%s (%s)' % (name, val[1]))
+            if val['mode'] in modes:
+                modes[val['mode']].append('%s (%s)' % (name, val['order']))
             else:
-                modes[val[0]] = ['%s (%s)' % (name, val[1])]
+                modes[val['mode']] = ['%s (%s)' % (name, val['order'])]
         olist = ''
         for mode, kids in modes.items():
             olist += ('<li>%s<ul>%s</ul></li>'
@@ -254,7 +254,7 @@ def init():
     def order():
         orderlist = []
         for name, val in configM.lexiconconfig.conf.items():
-            orderlist.append((val[1], '%s (%s)' % (name, val[0])))
+            orderlist.append((val['order'], '%s (%s)' % (name, val[0])))
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist
 

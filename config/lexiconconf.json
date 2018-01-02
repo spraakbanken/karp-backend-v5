@@ -1,0 +1,61 @@
+
+{
+  "default":          {"path": "data/karplex/", "no_escape": false, "format": "json"
+                       "usedtags": []},
+
+  "saldo":            {"mode": "saldo", "order": 0},
+  "saldoe":           {"mode": "saldo", "order": 2},
+
+  "saldom":           {"mode": "external", "order": 1},
+  "dalinm":           {"mode": "external", "order": 14},
+  "fsvm":             {"mode": "external", "order": 22},
+  "swedbergm":        {"mode": "external", "order": 18},
+
+  "swesaurus":        {"mode": "stablekarp", "order": 3},
+  "simpleplus":       {"mode": "stablekarp", "order": 5},
+  "parolelexplus":    {"mode": "stablekarp", "order": 6},
+  "kelly":            {"mode": "stablekarp", "order": 7},
+  "lwt":              {"mode": "stablekarp", "order": 8},
+  "wordnet-saldo":    {"mode": "stablekarp", "order": 9},
+  "lexin":            {"mode": "stablekarp", "order": 11},
+  "ao":               {"mode": "stablekarp", "order": 12},
+
+  "swefn":            {"mode": "fn_cxn", "order": 4},
+  "konstruktikon":    {"mode": "fn_cxn",  "order":10, "usedtags": ["g","example","definition","e","text"]},
+  "konstruktikon-rus": {"mode": "fn_cxn",  "order":25, "usedtags": ["g","example","definition","e","text"]},
+  "konstruktikon-multi": {"mode": "fn_cxn",  "order":29, "usedtags": ["g","example","definition","e","text"]},
+
+  "dalin":            {"mode": "historic_i",  "order":15,
+                       "usedtags": ["add","corr","def","eg","entry","etym",
+                                    "form","gram","gramGrp","hom","lbl","note",
+                                    "orth","pron","ref","re","sense","subsense",
+                                    "usg","xr"]},
+
+  "dalin-base":       {"mode": "historic_i", "order": 16},
+  "swedberg":         {"mode": "historic_i", "order": 17},
+  "diapivot":         {"mode": "historic_i", "order": 23},
+
+  "schlyter":         {"mode": "historic_ii",  "order":19},
+  "soederwall":       {"mode": "historic_ii",  "order":20},
+  "soederwall-supp":  {"mode": "historic_ii",  "order":21},
+  "hellqvist":        {"mode": "historic_ii", "order": 24,
+                       "usedtags": ["*","+","b","i","over","sc","sp","SP","sub","sup"]},
+
+  "blissword":        {"mode": "bliss", "order": 27},
+  "blisschar":        {"mode": "bliss", "order": 26},
+
+  "saol":             {"mode": "saol", "order": 32,"path": "data/saol/", "no_escape": true},
+  "skbl":             {"mode": "skbl", "order": 28,"path": "data/skbl/"},
+
+  "lsilex":           {"mode": "lsi", "order": 30,"path": "data/lsi/"},
+  "term-swefin":      {"mode": "term-swefin", "order": 31,"path": "data/bilingual/"},
+
+  "blingbring":       {"mode": "blingbring", "order": 33},
+  "langfn":           {"mode": "fn_cxn", "order": 34},
+  "fgnp":             {"mode": "fgnp", "order": 36, "path": "data/fgnp/",
+                       "usedtags": ["idxp","e","text", "g"]}
+}
+
+
+
+

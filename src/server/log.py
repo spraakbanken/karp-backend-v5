@@ -3,15 +3,15 @@ import sys
 import os.path
 import time
 import stat
-from src.server.helper.configmanager import configM
+import helper.configpaths as C
 
 #debugmode = reload(debugmode)
-debugmode = reload(configM.setupconfig['DEBUG'])
+debugmode = C.setupconfig['DEBUG']
 
 today = time.strftime("%Y%m%d")
 DEBUGFILE = os.path.join(debugmode['LOGDIR'], '%s-debug.txt' % today)
 
-if debugmode.DEBUG_TO_STDERR:
+if debugmode['DEBUG_TO_STDERR']:
     logging.basicConfig(stream=sys.stderr, level=debugmode['DEBUGLEVEL'],
                         format=debugmode['LOGFMT'], datefmt=debugmode['DATEFMT'])
 else:

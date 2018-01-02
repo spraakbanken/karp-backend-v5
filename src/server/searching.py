@@ -67,7 +67,7 @@ def requestquery(page=0):
     # size = min(settings['size'], setupconf.max_page)
     size = settings['size']
     index, typ = configM.get_mode_index(mode)
-    exclude = configM.searchfield(mode, 'secretfields') if not auth else []
+    exclude = configM.searchfield(mode, 'secret_fields') if not auth else []
     ans = parser.adapt_query(size, start, configM.elastic(mode=mode), loads(elasticq),
                              {'size': size, 'sort': sort, 'from_': start,
                               'index': index,
@@ -229,7 +229,7 @@ def minientry():
         show = settings['show']
         if not auth:
             # show = show - exclude
-            exclude = configM.searchfield(mode, 'secretfields')
+            exclude = configM.searchfield(mode, 'secret_fields')
             show = list(set(show).difference(exclude))
 
         sort = sortorder(settings, mode, settings.get('query_command', ''))
@@ -278,7 +278,7 @@ def random():
             show = settings['show']
             if not auth:
                 # show = show - exclude
-                exclude = configM.searchfield(mode, 'secretfields')
+                exclude = configM.searchfield(mode, 'secret_fields')
                 show = list(set(show).difference(exclude))
             es_q['_source'] = show
 
@@ -305,7 +305,7 @@ def statistics():
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
-        exclude = [] if auth else configM.searchfield(mode, 'secretfields')
+        exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
 
         elasticq, more = parser.statistics(query, settings, exclude=exclude)
         es = configM.elastic(mode=settings['mode'])
@@ -341,7 +341,7 @@ def statlist():
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
 
-        exclude = [] if auth else configM.searchfield(mode, 'secretfields')
+        exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
         elasticq, more = parser.statistics(query, settings, exclude=exclude,
                                            prefix='STAT_')
         es = configM.elastic(mode=settings['mode'])
@@ -555,7 +555,7 @@ def lexiconorder():
     from config import lexiconconf
     orderlist = {}
     for name, val in lexiconconf.conf.items():
-        orderlist[name] = val[1]
+        orderlist[name] = val.get('order', '-1')
     return jsonify(orderlist)
 
 

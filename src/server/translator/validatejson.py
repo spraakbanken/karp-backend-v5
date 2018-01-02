@@ -11,7 +11,7 @@ def validate_json(doc, lexicon):
     for key, val in doc.items():
         if key == 'xml':
             doc[key] = validate_xml(val, lexicon)
-        elif lexiconconf.no_escape(key, lexicon):
+        elif lexiconconf.get(lexicon, {}).get('no_escape'):
             continue
         else:
             doc[key] = checkelem(val, lexicon)
@@ -51,7 +51,7 @@ def validate_xml(xml, lexicon):
     # check that no unaccepted tags are present
     if isinstance(xml, str) or isinstance(xml, unicode):
         for tag, attrs in findall('<\/?\s*(\S*?)(\s+.*?)?>', xml):
-            if tag not in lexiconconf.usedtags:
+            if tag not in lexiconconf.get(lexicon).get('usedtags', []):
                 # raise Exception('Data contains unapproved tags: %s' % tag)
                 raise Err.KarpParsingError('Data contains unapproved tags: %s'
                                            % tag)
