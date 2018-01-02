@@ -4,7 +4,7 @@ from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
 from functools import update_wrapper
 import src.server.errorhandler as eh
-from src.server.helper.configmanager import configM
+import src.server.helper.configmanager as configM
 import src.server.update as update
 
 #app = Flask('backend')
@@ -123,8 +123,8 @@ def handle_invalid_usage(error):
         # and send email to admin
         import time
         import traceback
-        logdir = configM.setupconfig['DEBUG']['LOGDIR']
-        dbconf = configM.setupconfig['DB']
+        logdir = configM.config['DEBUG']['LOGDIR']
+        dbconf = configM.config['DB']
         trace = traceback.format_exc()
         date = time.strftime('%Y-%m-%d %H:%M:%S')
         msg = 'Cannot print log file: %s, %s' % (date, trace)

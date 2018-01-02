@@ -6,8 +6,9 @@ from src.server.translator import fieldmapping as F
 
 
 searchconfig = C.searchconfig
-setupconfig = C.setupconfig
+config = C.config
 lexiconconfig = C.lexiconconfig
+setupconfig = config['SETUP']
 
 defaultmode = searchconfig.get('default', {})
 for mode, vals in searchconfig.items():
@@ -124,7 +125,7 @@ def get_mode_sql(mode):
     dburl = 'mysql+pymysql://%s/%s?charset=utf8'
     sql = searchconf(mode, 'sql', failonerror=False)
     if sql:
-        return dburl % (C.setupconfig['DB']['DBPASS'], sql)
+        return dburl % (C.config['DB']['DBPASS'], sql)
     else:
         return False
 

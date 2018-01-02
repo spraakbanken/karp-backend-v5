@@ -154,14 +154,14 @@ def querycount(page=0):
     try:
         # TODO buckets should be gathered from some config
         default = {"buckets": ['lexiconOrder', 'lexiconName'],
-                   "size": configM.setupconfig['max_page']}
+                   "size": configM.setupconfig['MAX_PAGE']}
         settings = parser.make_settings(permitted, default)
         q_ans = requestquery(page=page)
         # TODO does search_type=count work with the new es version?
         # if not, use query_then_fetch, size=0
 
         # raise the size for the statistics call
-        stat_size = configM.setupconfig['max_page']
+        stat_size = configM.setupconfig['MAX_PAGE']
         count_elasticq, more = parser.statistics(request.query_string,
                                                  settings,
                                                  order={"lexiconOrder":

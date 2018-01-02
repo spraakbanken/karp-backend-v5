@@ -27,7 +27,7 @@ def check_user(force_lookup=False):
     auth = request.authorization
 
     postdata = {"include_open_resources": "true"}
-    server = configM.setupconfig['AUTH']['AUTH_RESOURCES']
+    server = configM.config['AUTH']['AUTH_RESOURCES']
     user, pw = "", ''
     if auth is not None:
         # if the user has provided log in details, check them against
@@ -40,9 +40,9 @@ def check_user(force_lookup=False):
                                              "Make sure that they are properly encoded")
         postdata["username"] = user
         postdata["password"] = pw
-        secret = configM.setupconfig['AUTH']['AUTH_SECRET']
+        secret = configM.config['AUTH']['AUTH_SECRET']
         postdata["checksum"] = md5.new(user + pw + secret).hexdigest()
-        server = configM.setupconfig['AUTH']['AUTH_SERVER']
+        server = configM.config['AUTH']['AUTH_SERVER']
 
     try:
         logging.debug("Auth server: " + server)

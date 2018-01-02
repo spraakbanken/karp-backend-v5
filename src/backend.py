@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import jsonify, request, session
+from src.server.helper.flaskhelper import app
 from src.server.helper.utils import route
 import src.server.checkdbhistory as checkdbhistory
 import src.server.searching as searching
@@ -267,7 +268,7 @@ def init():
         import logging
         project_dir = os.path.join(os.path.dirname(__file__))
         logging.debug('path %s' % project_dir)
-        html_dir = os.path.join(configM.setupconfig['script_path'], 'html')
+        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'html')
         doc_file = 'index_dokumentation.html'
         with app.open_resource(os.path.join(html_dir, doc_file)) as f:
             contents = f.read()

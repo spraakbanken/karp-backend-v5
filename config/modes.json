@@ -1,6 +1,6 @@
 {
     "default": {
-        "elastic_url": "default",
+        "elastic_url": ["http://elasticsearch:9200"],
         "sql": "default",
         "type": "lexicalentry",
         "special_fields": {},

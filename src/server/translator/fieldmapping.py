@@ -5,7 +5,7 @@ import src.server.errorhandler as eh
 import src.server.helper.configpaths as C
 
 
-absolute_path = C.setupconfig['SETUP']['ABSOLUTE_PATH']
+absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
 try:
     fields = json.load(open(absolute_path+'/config/fieldmappings.json'))
 except Exception as e:

@@ -1,6 +1,7 @@
 
 {
-  "default":          {"path": "data/karplex/", "no_escape": false, "format": "json"
+  "default":          {"path": "data/karplex/", "no_escape": false,
+                       "format": "json",
                        "usedtags": []},
 
   "saldo":            {"mode": "saldo", "order": 0},

@@ -443,7 +443,7 @@ def adapt_query(size, _from, es, query, kwargs):
         del kwargs['from_']
 
     # If the wanted number of hits is below the scan limit, do a normal search
-    if stop_num <= configM.setupconfig['SETUP']['SCAN_LIMIT']:
+    if stop_num <= configM.setupconfig['SCAN_LIMIT']:
         kwargs['body'] = query
         return es.search(**kwargs)
 
@@ -471,7 +471,7 @@ def adapt_query(size, _from, es, query, kwargs):
             return esans
         # If the total number of hits are less than the scan limit,
         # do a normal search
-        elif tot_hits < configM.setupconfig['SETUP']['SCAN_LIMIT']:
+        elif tot_hits < configM.setupconfig['SCAN_LIMIT']:
             kwargs['body'] = query
             kwargs['size'] = tot_hits
             return es.search(**kwargs)

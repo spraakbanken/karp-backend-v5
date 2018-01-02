@@ -1,4 +1,4 @@
-import server.helper.configmanager as configM
+import src.server.helper.configmanager as configM
 import copy
 from .. import errorhandler as Err
 import json

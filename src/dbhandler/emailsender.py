@@ -6,7 +6,7 @@ import src.server.helper.configmanager as configM
 
 def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
-    sender_email = configM.setupconfig['DB']['SENDER_EMAIL']
+    sender_email = configM.config['DB']['SENDER_EMAIL']
     try:
         if type(message) is unicode:
             message = message.encode('utf-8')

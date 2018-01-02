@@ -6,7 +6,7 @@ import stat
 import helper.configpaths as C
 
 #debugmode = reload(debugmode)
-debugmode = C.setupconfig['DEBUG']
+debugmode = C.config['DEBUG']
 
 today = time.strftime("%Y%m%d")
 DEBUGFILE = os.path.join(debugmode['LOGDIR'], '%s-debug.txt' % today)
