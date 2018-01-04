@@ -1,4 +1,4 @@
-import config.setup as setupconf
+#import config.setup as setupconf
 from datetime import timedelta
 from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
@@ -11,7 +11,7 @@ import src.server.update as update
 app = Flask(__name__.split('.')[0])
 
 # set the secret key
-app.secret_key = setupconf.secret_key
+app.secret_key = configM.setupconfig['SECRET_KEY']
 
 
 # Decorator for allowing cross site http request etc.

@@ -12,21 +12,6 @@ except Exception as e:
     logging.exception(e)
 
 
-" Default fields. Remember to add 'anything' to each index mapping "
-default = {
-    "_score": ['_score'],
-    "anything": ['_all'],
-    "id": ['_id'],
-    "lexiconName": ['lexiconName'],
-    "lexiconName.bucket": ['lexiconName'],
-    "resource": ['lexiconName'],
-    "lexiconOrder": ['lexiconOrder'],
-    "lastmodifiedBy": ['lastmodifiedBy'],
-    "lastmodified.bucket" : ["lastmodified.raw"],
-    "lastmodified": ['lastmodified']
-}
-
-
 def lookup(field, mode='karp', own_fields={}):
     return lookup_spec(field, mode, own_fields=own_fields)[0]
 

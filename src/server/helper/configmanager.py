@@ -26,6 +26,21 @@ for mode, vals in lexiconconfig.items():
                   vals[key] = val
 
 
+" Default fields. Remember to add 'anything' to each index mapping "
+defaultfields = {
+    "_score": ['_score'],
+    "anything": ['_all'],
+    "id": ['_id'],
+    "lexiconName": ['lexiconName'],
+    "lexiconName.bucket": ['lexiconName'],
+    "resource": ['lexiconName'],
+    "lexiconOrder": ['lexiconOrder'],
+    "lastmodifiedBy": ['lastmodifiedBy'],
+    "lastmodified.bucket" : ["lastmodified.raw"],
+    "lastmodified": ['lastmodified']
+}
+
+
 def extra_src(mode, funcname, default):
     import importlib
     # If importing fails, try with a different path.

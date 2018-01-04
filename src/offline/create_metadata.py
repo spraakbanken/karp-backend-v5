@@ -1,12 +1,11 @@
 import copy
 import json
-from src.server.translator.fieldmapping import default
-from src.server.helper.configmanager import configM
+import src.server.helper.configmanager as configM
 
 
 def read_fieldmappings(mode):
     " Open a mode's config file and combine them "
-    default_fields = copy.deepcopy(default)
+    default_fields = copy.deepcopy(configM.defaultfields)
     # step through the group members if the mode is an aliasmode
     # or use it's own config file if it's a indexmode
     all_fields = {}
