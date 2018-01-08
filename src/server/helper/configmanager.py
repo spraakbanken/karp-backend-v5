@@ -18,10 +18,10 @@ for mode, vals in searchconfig.items():
                   vals[key] = val
 
 
-defaultmode = lexiconconfig.get('default', {})
+defaultlexicon = lexiconconfig.get('default', {})
 for mode, vals in lexiconconfig.items():
     if mode != 'default':
-          for key, val in defaultmode.items():
+          for key, val in defaultlexicon.items():
               if key not in vals:
                   vals[key] = val
 

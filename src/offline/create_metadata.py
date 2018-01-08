@@ -1,11 +1,13 @@
 import copy
 import json
 import src.server.helper.configmanager as configM
+import sys
+print sys.path
 
 
 def read_fieldmappings(mode):
     " Open a mode's config file and combine them "
-    default_fields = copy.deepcopy(configM.defaultfields)
+    default_fields = copy.deepcopy(configM.lexiconconfig['default'])
     # step through the group members if the mode is an aliasmode
     # or use it's own config file if it's a indexmode
     all_fields = {}
