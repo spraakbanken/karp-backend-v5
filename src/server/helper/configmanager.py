@@ -27,23 +27,14 @@ for mode, vals in lexiconconfig.items():
 
 
 " Default fields. Remember to add 'anything' to each index mapping "
-defaultfields = {
-    "_score": ['_score'],
-    "anything": ['_all'],
-    "id": ['_id'],
-    "lexiconName": ['lexiconName'],
-    "lexiconName.bucket": ['lexiconName'],
-    "resource": ['lexiconName'],
-    "lexiconOrder": ['lexiconOrder'],
-    "lastmodifiedBy": ['lastmodifiedBy'],
-    "lastmodified.bucket" : ["lastmodified.raw"],
-    "lastmodified": ['lastmodified']
-}
+defaultfields = C.defaultfields
 
 
 def extra_src(mode, funcname, default):
     import importlib
     # If importing fails, try with a different path.
+    logging.debug('look for %s in %s' % (funcname, mode))
+    logging.debug('file: %s' % C.searchconfig[mode]['src'])
     try:
         classmodule = importlib.import_module(C.searchconfig[mode]['src'])
         logging.debug('\n\ngo look in %s\n\n' % classmodule)
@@ -165,7 +156,7 @@ def get_lexiconlist(mode):
 
 def get_lexicon_mode(lexicon):
     try:
-        return C.lexiconconfig[lexicon][0]
+        return C.lexiconconfig[lexicon]['mode']
     except Exception:
         # TODO what to return
         logging.warning("Lexicon %s not in conf" % lexicon)

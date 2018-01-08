@@ -10,13 +10,12 @@ execfile(activate_this, dict(__file__=activate_this))
 if project_dir not in sys.path:
     sys.path.append(project_dir)
 
-# from backend import app as real_application
-# import config.setup as conf
 from src.main_sb import app as real_application, load_urls
-import config.setup as conf
+import src.server.helper.configmanager as configM
 
 load_urls()
 
+
 def application(env, resp):
-    env['SCRIPT_NAME'] = conf.script_path
+    env['SCRIPT_NAME'] = configM.setupconfig['SCRIPT_PATH']
     return real_application(env, resp)

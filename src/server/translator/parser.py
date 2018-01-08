@@ -167,7 +167,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     format_query = configM.extra_src(mode, 'format_query', None)
     if format_query is not None:
         # format the operands as specified in the extra src for each mode
-        operands = [format_query(mode, field, o) for o in operands]
+        operands = [format_query(field, o) for o in operands]
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         if not f_query.ok_in_filter:

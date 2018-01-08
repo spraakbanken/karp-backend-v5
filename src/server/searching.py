@@ -217,7 +217,7 @@ def explain():
 
 def minientry():
     """ Returns the counts and stats for the query """
-    max_page = configM.setupconfig['minientry_max_page']
+    max_page = configM.setupconfig['MINIENTRY_MAX_PAGE']
     auth, permitted = validate_user(mode="read")
     try:
         query = request.query_string
@@ -552,9 +552,8 @@ def clean_highlight(ans):
 
 
 def lexiconorder():
-    from config import lexiconconf
     orderlist = {}
-    for name, val in lexiconconf.conf.items():
+    for name, val in configM.lexiconconfig.items():
         orderlist[name] = val.get('order', '-1')
     return jsonify(orderlist)
 

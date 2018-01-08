@@ -1,4 +1,3 @@
-#import config.setup as setupconf
 from datetime import timedelta
 from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app

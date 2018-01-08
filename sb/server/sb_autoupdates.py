@@ -14,5 +14,5 @@ def add_lastmodified(obj, lex, actiontype, user, date):
              'konstruktikon-multi','konstruktikon')
 def set_lexiconOrder(obj, lex, actiontype, user, date):
     lexname = obj['lexiconName']
-    lexOrder = confM.lexiconconfig[lexname][1]
+    lexOrder = confM.lexiconconfig[lexname]['order']
     obj['lexiconOrder'] = lexOrder

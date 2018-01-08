@@ -7,10 +7,10 @@ from json import dumps
 import logging
 from src.server.autoupdates import auto_update_document, autoupdate_child
 import src.server.helper.configmanager as configM
-from urlparse import parse_qs
 import src.server.auth as auth
 import src.server.helper.helpers as helpers
 import src.server.translator.validatejson as validate
+from urlparse import parse_qs
 
 """ Methods for updating the database,
     including deletion and creation of indices
@@ -183,7 +183,7 @@ def update_db(_id, doc, user, msg, lex, status='', version='', suggestion='',
         succeeded and 0 otherwise and 'error' is the error message given, if
         any.
     """
-    from dbhandler.dbhandler import update
+    from src.dbhandler.dbhandler import update
     return update(_id, dumps(doc), user, msg, lex, status=status,
                   version=version, suggestion_id=suggestion, date=date)
 
@@ -194,12 +194,12 @@ def modify_db(_id, lexicon, msg, status, origid=''):
         succeeded and 0 otherwise and 'error' is the error message given, if
         any.
     """
-    from dbhandler.dbhandler import modifysuggestion
+    from src.dbhandler.dbhandler import modifysuggestion
     return modifysuggestion(_id, lexicon, msg=msg, status=status, origid='')
 
 
 def add_multi_doc(lexicon, index=''):
-    import dbhandler.dbhandler as db
+    import src.dbhandler.dbhandler as db
 
     data = helpers.read_data()
     documents = data.get('doc', '') or data.get('_source')
@@ -339,15 +339,15 @@ def add_child(lexicon, parentid, suggestion=False):
 def handle_update_error(error, data, user, action):
     """ Sends emails to admins about updates that failed
     """
-    from dbhandler.dbhandler import handle_error
+    from src.dbhandler.dbhandler import handle_error
     return handle_error(error, user, "Action: " + action, data)
 
 
 def send_notification(user, message, _id, status):
     import re
     if re.match('^[^@]+@[^@]+\.[^@]+$', user):
-        import dbhandler.emailsender
+        import src.dbhandler.emailsender as sender
         msg = 'Your suggestion with id %s has been %s with the message:\n"%s"'\
               % (_id, status, message)
         subject = 'Karp: The status of your suggestion has been changed'
-        dbhandler.emailsender.send_notification(user, subject, msg)
+        sender.send_notification(user, subject, msg)

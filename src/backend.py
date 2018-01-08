@@ -8,6 +8,7 @@ import src.server.searching as searching
 import src.server.suggestions as suggestions
 import src.server.update as update
 import src.server.helper.configmanager as configM
+import logging
 
 
 """ The backend, redirects url calls to the appropriate modules.
@@ -21,11 +22,9 @@ def init():
     @route(urls)
     def autoupdate():
         import server.autoupdates as a
-        import logging
         import datetime
         """ Asking a query and requesting a specific page of the answer """
         logging.debug('\n\nhello')
-        print('\n\nhello')
         doc = {}
         date = datetime.datetime.now()
         doc2 = a.auto_update_document(doc, 'saol', 'update', 'testuser', date)
@@ -263,15 +262,18 @@ def init():
     @route(urls, name='/')
     @route(urls, name='/index')
     def helppage():
+        logging.debug('index page')
+        logging.debug('\n\n')
         import os
         import re
-        import logging
         project_dir = os.path.join(os.path.dirname(__file__))
         logging.debug('path %s' % project_dir)
-        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'html')
+        html_dir = os.path.join('src', 'html')
+        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], html_dir)
         doc_file = 'index_dokumentation.html'
+        logging.debug('open %s' %os.path.join(html_dir, doc_file))
         with app.open_resource(os.path.join(html_dir, doc_file)) as f:
-            contents = f.read()
+             contents = f.read()
         contents = re.sub('URL/', request.url.encode('utf8'), contents)
         return contents
 

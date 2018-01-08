@@ -12,7 +12,7 @@ def get_user():
 
 
 def get_size(default=10, settings={}):
-    from server.translator.parser import parse_extra
+    from src.server.translator.parser import parse_extra
     query = request.query_string
     parsed = parse_qs(query)
     parse_extra(parsed, settings)
@@ -20,7 +20,7 @@ def get_size(default=10, settings={}):
 
 
 def get_querysettings(settings):
-    from server.translator.parser import parse_extra
+    from src.server.translator.parser import parse_extra
     query = request.query_string
     parsed = parse_qs(query)
     parse_extra(parsed, settings)
