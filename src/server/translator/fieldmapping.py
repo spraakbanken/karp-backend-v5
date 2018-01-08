@@ -59,8 +59,6 @@ def get_value(field, mode, own_fields=''):
         return mappings[field]
     elif group is not None:
         return get_value(group.group(1), mode, own_fields=own_fields)
-    elif field in default:
-        return default[field]
     else:
         import parsererror as PErr
         msg = ("Could not find field %s for mode %s, %s"

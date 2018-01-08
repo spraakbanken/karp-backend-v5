@@ -13,17 +13,17 @@ setupconfig = config['SETUP']
 defaultmode = searchconfig.get('default', {})
 for mode, vals in searchconfig.items():
     if mode != 'default':
-          for key, val in defaultmode.items():
-              if key not in vals:
-                  vals[key] = val
+        for key, val in defaultmode.items():
+            if key not in vals:
+                vals[key] = val
 
 
 defaultlexicon = lexiconconfig.get('default', {})
 for mode, vals in lexiconconfig.items():
     if mode != 'default':
-          for key, val in defaultlexicon.items():
-              if key not in vals:
-                  vals[key] = val
+        for key, val in defaultlexicon.items():
+            if key not in vals:
+                vals[key] = val
 
 
 " Default fields. Remember to add 'anything' to each index mapping "
@@ -34,14 +34,13 @@ def extra_src(mode, funcname, default):
     import importlib
     # If importing fails, try with a different path.
     logging.debug('look for %s in %s' % (funcname, mode))
-    logging.debug('file: %s' % C.searchconfig[mode]['src'])
+    logging.debug('file: %s' % searchconfig[mode]['src'])
     try:
-        classmodule = importlib.import_module(C.searchconfig[mode]['src'])
+        classmodule = importlib.import_module(searchconfig[mode]['src'])
         logging.debug('\n\ngo look in %s\n\n' % classmodule)
         func = getattr(classmodule, funcname)
         return func
     except:
-        #raise
         return default
 
 
@@ -83,7 +82,7 @@ def searchfield(mode, field):
 
 
 def mode_fields(mode):
-    return C.searchconfig.get(mode, {})
+    return searchconfig.get(mode, {})
 
 
 def formatquery(mode, field, op):
@@ -144,7 +143,7 @@ def get_lexicon_sql(lexicon):
 def get_lexiconlist(mode):
     lexiconlist = set()
     grouplist = [mode]
-    modeconf = C.searchconfig.get(mode, {})
+    modeconf = searchconfig.get(mode, {})
     for group in modeconf.get('groups', []):
         grouplist.append(group)
     for lex, lexconf in C.lexiconconfig.items():

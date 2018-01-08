@@ -5,7 +5,6 @@ import time
 import stat
 import helper.configpaths as C
 
-#debugmode = reload(debugmode)
 debugmode = C.config['DEBUG']
 
 today = time.strftime("%Y%m%d")

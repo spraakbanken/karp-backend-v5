@@ -21,7 +21,6 @@ class QueryError(KarpException):
         return rv
 
 
-
 class AuthenticationError(KarpException):
 
     def __init__(self, message, status_code=None, payload=None):
@@ -36,6 +35,3 @@ class AuthenticationError(KarpException):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
-
-
-

@@ -12,6 +12,8 @@ Emails the admins (dbconf.json) if an error occurs.
 
 
 dbconf = configM.config['DB']
+
+
 @compiles(sql.VARCHAR, 'mysql')
 @compiles(sql.String, 'mysql')
 def compile_varchar(element, compiler, **kw):

@@ -7,6 +7,7 @@ import sys
 
 lexiconconf = configM.lexiconconfig
 
+
 def validate_json(doc, lexicon):
     for key, val in doc.items():
         if key == 'xml':

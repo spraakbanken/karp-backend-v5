@@ -26,7 +26,7 @@ def create_sequence_index(index_name='', start=''):
 
     if start:
         tasks = ('{"index": {"_index": "sequence", "_type": "sequence", "_id": "%s", "version": "%s", "version_type": "external"}}\n{}\n' %
-                   (index_name, start))
+                 (index_name, start))
         result = es.bulk(body=tasks)
         logging.debug('sequence id starting at %s: %s' % (start, result))
         return result

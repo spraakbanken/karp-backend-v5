@@ -58,7 +58,7 @@ def checklexiconhistory(lexicon, date):
 
 def comparejson(lexicon, _id, fromdate='', todate=''):
     from src.dbhandler.dbhandler import dbselect
-    import src.server.translator.jsondiff
+    import src.server.translator.jsondiff as jsondiff
     auth, permitted = validate_user()
     if lexicon not in permitted:
         raise eh.KarpAuthenticationError('You are not allowed to update')
@@ -89,5 +89,4 @@ def comparejson(lexicon, _id, fromdate='', todate=''):
     # It is probably not really sql that raises the exception
     except Exception:
         raise eh.KarpDbError('Could not find any entry from %s' % fromdate)
-    return jsonify({'diff': server.translator.jsondiff.compare(fromjson,
-                                                               tojson)})
+    return jsonify({'diff': jsondiff.compare(fromjson, tojson)})

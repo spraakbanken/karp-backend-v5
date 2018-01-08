@@ -21,8 +21,7 @@
   "SCAN_LIMIT": 1000000,
   "MAX_PAGE": 1000,
   "MINIENTRY_MAx_page": 10000,
-  "SECRET_KEY": "glass",
-  "MEMCACHED": "memcached.sock"
+  "SECRET_KEY": "glass"
 }
 
 }

@@ -97,7 +97,6 @@ def savesuggestion(lexicon, _id, status='accepted', source=''):
         ans = update.update_doc(lexicon, origid, data=source, live=False)
     else:
         # add to ES
-        #index = configM.get_lexicon_index(lexicon)
         ans = update.add_doc(lexicon, live=False, data=source)
         origid = ans.get('_id')
     # mark as accepted

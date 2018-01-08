@@ -6,7 +6,6 @@ import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.update as update
 
-#app = Flask('backend')
 app = Flask(__name__.split('.')[0])
 
 # set the secret key

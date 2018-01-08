@@ -3,6 +3,7 @@ import parsererror as PErr
 
 # TODO isfilter is (probably) not used anymore, delete from code
 
+
 class Operator:
     """ A class for representing complete and incomplet elasticsearch objects
         Construct an object by giving te expressiontype and the operator.
@@ -181,7 +182,7 @@ class Operator:
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
             self.operator = special_operator or "missing"
-            #self.isfilter = True
+            # self.isfilter = True
             self.query = '"missing" : {"field" : "FIELD"}'
         elif op == "exists":
             # This filter consider empty strings (but not empty lists) to be an
@@ -189,7 +190,7 @@ class Operator:
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
             self.operator = special_operator or "exist"
-            #self.isfilter = True
+            # self.isfilter = True
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "regexp":
             self.operator = special_operator or "regexp"

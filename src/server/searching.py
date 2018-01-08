@@ -80,54 +80,12 @@ def requestquery(page=0):
 
     if settings.get('format') or settings.get('export'):
         formatmethod = 'format' if 'format' in settings else 'export'
-        #formatmethod = settings.get('format') or settings.get('export')
         toformat = settings.get(formatmethod)
         msg = 'Unkown %s %s for mode %s' % (formatmethod, toformat, mode)
         format_posts = configM.extra_src(mode, formatmethod, helpers.notdefined(msg))
         format_posts(ans, configM.elastic(mode=mode), mode, index, toformat)
 
     return ans
-
-    ####
-    # if settings.get('format', '') in ['app', 'tryck']:  # saol
-    #     toformat = settings.get('format')
-    #     format_posts = configM.extra_src(mode, 'format', helpers.notdefined(form))
-    #     format_posts(ans, configM.elastic, mode, index, toformat)
-
-    # if settings.get('export', '') in ['tab', 'csv', 'tsv']:  # term-swefin
-    #     import converter.tabformat as conv
-    #     # app.config['JSON_AS_ASCII'] = False
-    #     conv.format_posts(ans, es, mode, settings.get('export'))
-
-    # if settings.get('export', '') in ['html']:  # term-swefin
-    #     import converter.htmlconv as conv
-    #     conv.format_posts(ans, mode, settings.get('export'))
-
-    # if settings.get('export', '') in ['lmf', 'xml']:
-    #     # TODO is mode enough, or do we need lexicon?
-    #     # TODO 'ans' contains hits.hits etc.
-    #     try:
-    #         from subprocess import Popen, PIPE
-    #         # Coversion must be run as python3.
-    #         # Run in virtualenv with pycountry
-    #         p_dir = setupconf.absolute_path
-    #         venv3 = 'venv3/bin/activate'
-    #         parsejson = 'converter/parsejson.py'
-    #         py_enc = 'PYTHONIOENCODING=utf-8:surrogateescape'
-    #         command = 'cd %s; source %s; %s python3 %s --mklmf %s; deactivate'\
-    #                   % (p_dir, venv3, py_enc, parsejson, mode)
-    #         logging.debug('command %s' % command)
-    #         p = Popen([command], shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-    #         hits = [hit['_source'] for hit in ans.get('hits', {}).get('hits', [])]
-    #         lmf, err = p.communicate(input=dumps(hits))
-    #         logging.debug('err %s' % err)
-    #         logging.debug('lmf %s' % lmf)
-    #         del ans['hits']
-    #         ans['formatted'] = lmf
-    #     except Exception as e:
-    #         logging.exception(e)
-    #         raise eh.KarpGeneralError("Cannot convert lexicon %s to xml\n" % mode, "")
-
 
 
 def sortorder(settings, mode, querycommand):
@@ -198,7 +156,6 @@ def explain():
     query = request.query_string
     auth, permitted = validate_user(mode="read")
     try:
-        #permitted = ['saldo']  # for testing
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
         elasticq = parser.parse(query, settings)
@@ -211,8 +168,6 @@ def explain():
     q_ans = requestquery(page=0)
     return jsonify({'elastic_json_query': loads(elasticq), 'ans': q_ans,
                     'explain': ex_ans})
-    # logging.debug('return %s' % elasticq)
-    # return jsonify({'elastic_json_query': loads(elasticq)})
 
 
 def minientry():
@@ -379,7 +334,7 @@ def check_bucketsize(bucket_sizes, size, index, es):
     is_more = {}
     for sizebucket, bucketname in bucket_sizes:
         countans = es.search(index=index, body=loads(sizebucket),
-                                  search_type="count")
+                             search_type="count")
         logging.debug('countans %s' % countans)
         bucketsize = countans['aggregations']['more']['value']
         logging.debug('size %s, type %s' % (bucketsize, type(bucketsize)))
@@ -682,8 +637,8 @@ def get_context(lexicon):
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
     show = configM.searchfield(mode, 'minientry_fields')
-    # TODO size*3 (magic number) because many entries may have the same sort value
-    # (eg homographs in saol)
+    # TODO size*3 (magic number) because many entries may have the same sort
+    # value (eg homographs in saol)
     ans_pre = parser.adapt_query(size*3, 0, es, elasticq_pre,
                                  {'size': size*3, 'from_': 0,
                                   'sort': ['%s:desc' % f for f in sortfield],

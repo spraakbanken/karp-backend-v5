@@ -27,5 +27,5 @@ def send_notification(email, subject, message):
         import datetime
         import logging
         error = '%s: Could not send notification to email %s,  %s\n %s'\
-                    % (datetime.datetime.now(), str(email), str(e), message)
+                % (datetime.datetime.now(), str(email), str(e), message)
         logging.exception(error)
