@@ -1,0 +1,34 @@
+{
+    "default": {
+        "elastic_url": ["http://elasticsearch:9200"],
+        "sql": "default",
+        "type": "lexicalentry",
+        "special_fields": {},
+        "secret_fields": ["lastmodifiedBy"],
+        "all_fields": ["anything"],
+        "src": "",
+        "suggestionalias": "karpsuggestion"
+    },
+    "testindex": {
+        "sort_by": ["lexiconOrder", "_score", "baseform.sort", "baseform"],
+        "head_sort_field": ["lexiconOrder"],
+        "autocomplete_field": ["baseform"],
+        "minientry_fields": ["baseform", "definition"],
+        "statistics_buckets": ["pos.bucket"],
+        "boosts": ["baseform"],
+        "is_index": true,
+        "indexalias": "testmode"
+    },
+    "testmode": {
+        "sort_by": ["lexiconOrder", "_score", "baseform.sort", "baseform"],
+        "head_sort_field": ["lexiconOrder"],
+        "autocomplete_field": ["baseform"],
+        "minientry_fields": ["lexiconName", "baseform", "definition"],
+        "statistics_buckets": ["lexiconName.bucket", "pos.bucket"],
+        "boosts": ["baseform"],
+        "groups": ["testindex"],
+        "sql": false,
+        "is_index": false,
+        "indexalias": "testmode"
+    }
+}

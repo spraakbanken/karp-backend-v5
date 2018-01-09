@@ -1,0 +1,1058 @@
+<head>
+<meta charset="UTF-8">
+</head>
+<h1>Documentation (<code>backend.py</code>)</h1>
+<p>
+
+
+
+<h2>Available calls to the backend</h2>
+<table>
+  <tr><td><b>Public calls (may require password for protected lexicons):</b></td></tr>
+  <tr><td> <a href="#modes">modes </a></td> <td> see the hierarchy of the modes </td></tr>
+  <tr><td> <a href="#groups">groups </a></td> <td> see the available index modes and their components </td></tr>
+  <tr><td> <a href="#modeinfo">modeinfo</a>       </td> <td> see the available search fields of a mode</td></tr>
+  <tr><td> <a href="#lexiconinfo">lexiconinfo </a></td> <td> see the available search fields of a lexicon </td></tr>
+  <tr><td> <a href="#lexiconorder">lexiconorder</a>               </td> <td> for retrieving the lexicon order </td></tr>
+  <tr><td> <a href="#query">query</a>               </td> <td> for normal querying </td></tr>
+  <tr><td> <a href="#querycount">querycount</a>               </td> <td> for querying with some statistics</td></tr>
+  <tr><td> <a href="#minientry">minientry</a>       </td> <td> for getting minientries</td></tr>
+  <tr><td> <a href="#statistics">statistics</a>       </td> <td> for getting statistics, aggregation </td></tr>
+  <tr><td> <a href="#statlist">statlist</a>       </td> <td> for getting statistics, table view </td></tr>
+  <tr><td> <a href="#autocomplete">autocomplete</a> </td> <td> for autocompletion of lemgrams </td></tr>
+  <tr><td> <a href="#saldopath">saldopath</a>       </td> <td> for showing the path from a saldo sense to PRIM</td> </tr>
+  <tr><td> <a href="#getcontext">getcontext</a>       </td> <td> for showing the (alphabetical) neighbours of an entry</td> </tr>
+
+  <tr><td> <a href="#explain">explain</a>               </td> <td> for normal querying </td></tr>
+  <tr><td> <a href="#random">random</a>               </td> <td> for retrieving a random lexical entry </td></tr>
+  <tr><td> <a href="#suggest">suggest</a>               </td> <td> make an update suggestion </td></tr>
+  <tr><td> <a href="#suggest">suggestnew</a>       </td> <td> suggest a new entry</td></tr>
+  <tr><td> <a href="#checksuggestion">checksuggestion </a></td> <td> see the status of a suggestion </td></tr>
+
+
+
+  <tr><td><br/></td></tr>
+  <tr><td colspan="2"><b>Password protected calls:</b></td></tr>
+  <tr><td> <a href="#delete">delete</a> </td>  <td> delete an entry by #ID</td></tr>
+  <tr><td> <a href="#update">mkupdate</a> </td>  <td> update a lexical entry</td></tr>
+  <tr><td> <a href="#add">add</a> </td>  <td> add a lexical entry</td></tr>
+  <tr><td> <a href="#add">readd</a> </td> <td> add an entry which already has an id (one that has been deleted) </td></tr>
+  <tr><td> <a href="#addbulk">addbulk</a> </td> <td> add multiple entries </td></tr>
+  <tr><td> <a href="#add_child">add_child</a> </td> <td> add an entry and link it to its parent </td></tr>
+  <tr><td> <a href="#checksuggestions">checksuggestions </a></td> <td> view suggestions </td></tr>
+  <tr><td> <a href="#acceptsuggestion">acceptsuggestion</a>               </td> <td> accept a suggestion</td></tr>
+  <tr><td> <a href="#acceptandmodify">acceptandmodify</a>               </td> <td> accept a suggestion after modifications have been made to it</td></tr>
+  <tr><td> <a href="#rejectsuggestion">rejectsuggestion</a>               </td> <td> reject a suggestion</td></tr>
+  <tr><td> <a href="#checkuser">checkuser</a>               </td> <td> for checking whether the user is ok</td></tr>
+  <tr><td> <a href="#checkuserhistory">checkuserhistory</a>               </td> <td> for retrieving the edit history of a user </td></tr>
+  <tr><td> <a href="#checkhistory">checkhistory</a>               </td> <td> for retrieving the edit history of an entry </td></tr>
+  <tr><td> <a href="#checklexiconhistory">checklexiconhistory</a></td> <td> for retrieving the edit history of one or more lexicon</td></tr>
+  <tr><td> <a href="#checkdifference">checkdifference</a>               </td> <td>see the difference between two versions</td></tr>
+  <tr><td> <a href="#export">export</a>               </td> <td>export a lexicon</td></tr>
+
+<!--
+  <tr><td><br/></td></tr>
+  <tr><td colspan="2"><b>Calls available for offline use</b></td></tr>
+  <tr><td> <a href="#publish">publish</a> </td> <td> Set this index to have the alias karp </td></tr>
+  <tr><td> <a href="#publishexternal">publishexternal</a>  </td> <td> Set this index to have the alias karp, and removes other externals from the alias </td></tr>
+  <tr><td> <a href="#createindex">createindexd</a>       </td>  <td> create an index</td></tr>
+  <tr><td> <a href="#createwithmapping">createwithmapping</a>  </td> <td>create an index with a specific mapping</td></tr>
+  <tr><td> <a href="#getmapping">getmapping</a>  </td> <td>get the current mapping</td></tr>
+  <tr><td> <a href="#upload">upload</a>             </td>  <td> upload a new resource to ElasticSearch and the SQL database</td></tr>
+  <tr><td> <a href="#upload_light">upload_light</a>      </td>  <td> upload a new resource to ElasticSearch. Used for lexica that should not be updated through the karp interface. </td></tr>
+  <tr><td> <a href="#deleteindex">deleteindex</a>       </td>  <td> delete an entire index</td></tr>
+  <tr><td> <a href="#deletelexicon">deletelexicon</a> </td>  <td> delete one lexicon from the index</td></tr>
+  -->
+
+</table>
+
+<p>
+
+
+<h2>Query language</h2>
+The query language is simple and based on the language used in karp's frontend.
+
+<ul>
+<li>
+    <b>simple:</b> free text search. Searches all fields.
+    <p>
+    <code>q=simple||satt och</code>
+</li>
+
+<li>
+    <b>extended:</b> search a specific field
+    <p>
+    <table>
+      <tr><td><code>q=extended||and|field|operator|value</code></td><td>(positive)</td>      </tr>
+      <tr><td><code>q=extended||not|field|operator|value</code></td><td>(negative)</td></tr>
+    </table>
+    <p>
+    <b>Example:</b>
+    search all entries with a word form that is "blomma" or "äpple" and that has no part of speech tag:<br>
+    <p><code>q=extended||and|pos|missing||and||wf|equals|blomma|äpple</code><br>
+</li>
+</ul>
+
+<h2>Operators</h2>
+<ul>
+  <li>equals</li>
+  <li>exists</li>
+  <li>missing (may not be available for lexicons with nested document structure)</li>
+  <li>regexp</li>
+  <li>startswith</li>
+  <li>endswith</li>
+  <li>lte</li>
+  <li>gte</li>
+  <li>range (syntax: fieldX|range|0|5)</li>
+</ul>
+
+<!-- + Abouth v3
+The main difference betwenn v2 and v3 is that it's now possible to search all modes - SB-karp, SAOL, SKBL -
+through the same backend although they are stored in different data bases.
+-->
+
+<h2>Modes</h2>
+The lexicons in Karp are divided into groups.
+A group consists of lexicons that has a similar document structure.
+Each group has it's own set of search fields, ordering functions etc.
+Groups that are sometimes queried together are
+gathered into modes. The modes often, but not always, correspond to the frontend modes.
+Every group is also a mode.
+You can find more information about the available
+  groups <a href="URL/groups">here</a> and modes <a href="URL/modes">here</a>.
+
+<h2>Search fields</h2>
+Which search fields that are available depends on which mode you are using. To see all fields for
+SB's default lexicons, go to <a href="URL/modeinfo/karp">URL/modeinfo/karp</a>
+
+<a name="query"/>
+<h3>query</h3>
+Login may be required for some lexicons.
+<p>
+Available query parameters:
+<table>
+  <tr><td>'q': </td><td> the query</td></tr>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+  <tr><td>'resource':</td><td> one or more comma separated lexicon to search. default: all</td></tr>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 25</td></tr>
+  <tr><td>'start':</td><td> the index of the first hit to show. default: 0</td></tr>
+  <tr><td>'sort':</td><td> one or more comma separated fields to sort on. default: depends on mode, usually lexiconOrder, score, baseform, lemgram</td></tr>
+  <tr><td>'export':</td><td>get the result in another format. which options that are available depends on lexicon and mode. examples: xml, lmf, tsb, tab, csv. </td></tr>
+  <tr><td>'format':</td><td>get each hit in the json structure in another format. which options that are available depends on lexicon and mode. examples: app, tryck. </td></tr>
+</table>
+
+<h5> Formatting and exports </h5>
+<p style="margin-left: 40px">
+Asking for <b>export</b> will not return the json objects (the hits). The result will look like:
+</p>
+<pre>
+                     {"formatted": a string in the current format
+                       ...
+                     }
+</pre>
+<p style="margin-left: 40px">
+Asking for another <b>format</b>, will give the following result
+
+<pre>
+                      {"hits": {
+                        "hits":  [
+                          {"_source": ...,
+                           "formatted": "...xml string..."
+                        ...
+                        }
+                      }
+</pre>
+
+<p>
+Examples:
+<ul>
+  <li><a href="URL/query?q=simple||stort hus&mode=stablekarp"><pre>URL/query?q=simple||stort hus&mode=stablekarp</pre></a>
+  </li>
+  <li><a href="URL/query?q=simple||flicka&mode=saldogroup&resource=saldo,saldom,saldoe"><pre>URL/query?q=simple||flicka&mode=saldogroup&resource=saldo,saldom,saldoe</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|lemgram|startswith|dalinm--"><pre>URL/query?q=extended||and|lemgram|startswith|dalinm--</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|wf|equals|äta||and|pos|missing&resource=kelly,lwt&mode=stablekarp"><pre>URL/query?q=extended||and|wf|equals|äta||and|pos|missing&resource=kelly,lwt&mode=stablekarp</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|wf|regexp|.*o.*a&mode=bliss"><pre>URL/query?q=extended||and|wf|regexp|.*o.*a&mode=bliss</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|wf|regexp|.*o.*a&start=25&mode=bliss"><pre>URL/query?q=extended||and|wf|regexp|.*o.*a&start=25&mode=bliss</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|sense|exists&mode=historic_ii"><pre>URL/query?q=extended||and|sense|exists&mode=historic_ii</pre></a>
+    </li>
+    <li><a href="URL/query?q=extended||and|wf|equals|sitta||not|wf|equals|satt&mode=external"><pre>URL/query?q=extended||and|wf|equals|sitta||not|wf|equals|satt&mode=external</pre></a>
+    </li>
+    <li><pre>URL/query?q=simple||muminfigurer&mode=term-swefin&format=csv</pre></a>
+    </li>
+</ul>
+
+<p>
+Result:
+<pre>
+hits{
+  total : number of hits
+  hits:   a list with information about the hits
+     hits[n]._source:      all information in hit n
+     hits[n]._source._id   elasticsearch's identifier for the entry
+     hits[n]._version:     the current version of this entry
+     hits[n]._source.lexiconName
+     hits[n]._source.lexiconOrder
+     hits[n]._source.FormRepresentations
+     hits[n]._source.Sense
+     hits[n]._source.WordForms
+
+     hits[n]._source.ListOfComponents
+     hits[n]._source.RelatedForm
+     hits[n]._source.compareWith
+     hits[n]._source.entryType
+     hits[n]._source.saldoLinks
+     hits[n]._source.see
+     hits[n]._source.symbolCenter
+     hits[n]._source.symbolHeight
+     hits[n]._source.symbolPath
+     hits[n]._source.symbolWidth
+
+     For freetext search (simple||...) only:
+     hits[n].highlight       information and paths about the matching part of the entry
+}
+</pre>
+
+<a name="querycount"/>
+<h3>querycount</h3>
+As a normal <a href="#query"><i>query</i></a>, but also shows the distribution over lexicons.
+Is a mix of <a href="#query"><i>query</i></a> and <a href="#statistics"><i>statistics</i></a>.
+The distribution results are sorted in lexicon order.
+<p> Example:
+<ul>
+  <li><a href="URL/querycount?q=simple||stort hus&mode=stablekarp"><pre>URL/querycount?q=simple||stort hus&mode=stablekarp</pre></a>
+  </li>
+</ul>
+<p>
+Result:
+<pre>
+  hits{...}                                          as above
+  distribution                                       a list of counts for each lexicon that contains at least one match
+  distribution[n].key                                the order for the n:th lexicon
+  distribution[n].doc_count                          the count for the n:th lexicon
+  distribution[n].lexiconName.buckets.[0].doc_count  the count for the n:th lexicon (again)
+  distribution[n].lexiconName.buckets.[0].key        the name of the n:th lexicon
+</pre>
+
+<a name="minientry"/>
+<h3>minientry</h3>
+Returns a mini variant of the normal query result. Only shows the fields specified in "show",
+but otherwise works the same way as <a href="#query"><i>query</i></a>.
+
+<p>
+Available query parameters:
+<table>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+  <tr><td>'q': </td><td> the query</td></tr>
+  <tr><td>'resource':</td><td> one or more comma separated lexica to search. default: all</td></tr>
+  <tr><td>'show':</td><td> one or more comma separated fields to show. default: depends on mode, usually lexiconName, lemgram, baseform</td></tr>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 25</td></tr>
+</table>
+</table>
+<p>
+Example:
+
+<ul>
+    <li> <a href="URL/minientry?q=extended||and|wf|equals|sitta|ligga"><pre>URL/minientry?q=extended||and|wf|equals|sitta|ligga</pre></a>
+    </li>
+    <li> <a href="URL/minientry?q=extended||and|writtenForm|equals|får||and|writtenForm|equals|fick&show=pos"><pre>URL/minientry?q=extended||and|writtenForm|equals|får||and|writtenForm|equals|fick&show=pos</pre></a>
+    </li>
+</ul>
+
+<p>
+Result:
+See <a href="#query">query</a>.
+
+<a name="statistics"/>
+<h3>statistics</h3>
+Aggregation, as provided by ElasticSearch.
+Shows the number of hits, group by the requested fields.
+Defaults to show the distribution grouped by lexicon and pos tags.
+<p>
+Available query parameters:
+<table>
+  <tr><td>'q': </td><td> the query</td></tr>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+  <tr><td>'resource':</td><td> one or more comma separated lexica to search. default: all</td></tr>
+  <tr><td>'size':</td><td> number of hits to show in each bucket. default: 100</td></tr>
+  <tr><td>'buckets':</td><td> one or more comma separated fields to group the results by. default: lexiconName, pos</td></tr>
+  <tr><td>'cardinality':</td><td> shows the cardinality number of values for the innermost of the
+                              requested buckets, instead of showing the actual values. Not compatible with 'q'. 'size' will be ignored. </td></tr>
+</table>
+<p>
+Example:
+
+<ul>
+  <li> <a href="URL/statistics"><pre>URL/statistics</pre></a>
+    </li>
+  <li> <a href="URL/statistics?q=simple||kasusformer&mode=karp"><pre>URL/statistics?q=simple||kasusformer&mode=karp</pre></a>
+    </li>
+    <li> <a href="URL/statistics?resource=hellqvist&mode=historic_ii"> <pre>URL/statistics?resource=hellqvist&mode=historic_ii</pre></a>
+    </li>
+    <li> <a href="URL/statistics?buckets=pos.bucket,sense.bucket&size=200&mode=stablekarp"> <pre>URL/statistics?buckets=pos.bucket,sense.bucket&size=200&mode=stablekarp</pre></a>
+    </li>
+</ul>
+
+<p>
+
+The result is not sorted.
+<p>
+Result:
+X is the name of the first bucket (default: lexiconName), Y (defaults to pos) the second and so on.
+For a search where a query or a resource is specified:
+<pre>
+aggregations {
+    q_statistics.doc_count : total number of hits
+    <!--q_satistics.X.buckets : information grouped by X-->
+    q_satistics.X: information about the data grouped by X (the first bucket)
+    q_satistics.X_missing: information about the data missing X
+
+      q_satistics.X.buckets[n].key: X value
+      q_satistics.X.buckets[n].doc_count: number of hits within the X value
+
+      q_satistics.X.buckets[n].Y: information grouped by X and then Y
+      q_satistics.X.buckets[n].Y.doc_count: number of hits within the Y value in X
+
+
+      q_satistics.X_missing.buckets[n]: information about entries which do not have any X value
+      q_satistics.X_missing.buckets[n].doc_count: number of hits that do not have any X value
+
+      q_satistics.X.buckets[n].Y_missing: information grouped by X and then Y, showing cases without any value for Y
+      q_satistics.X.buckets[n].Y.doc_count: number of hits within the Y value in X
+
+      ....
+}
+</pre>
+<!--
+If a statistics of all lexical entries is done, that is, no resource or query is specified, then
+the q_satistics level will be left out:
+
+<pre>
+aggregations {
+      X.buckets[n].key: X name
+      X.buckets[n].doc_count: number of hits within X
+
+      X.buckets[n].Y: information grouped by Y
+      ...
+}
+</pre>
+-->
+
+
+<a name="statlist"/>
+<h3>statlist</h3>
+Gives a table view based on the bucketed aggregations (see <a href="#statistics">statistics</a>).
+Shows the number of hits, group by the requested fields.
+Defaults to show the distribution grouped by lexicon and pos tags.
+<p>
+Available query parameters:
+<table>
+  <tr><td>'q': </td><td> the query</td></tr>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+  <tr><td>'resource':</td><td> one or more comma separated lexica to search. default: all</td></tr>
+  <tr><td>'buckets':</td><td> one or more comma separated fields to group the results by. default: lexiconName, pos</td></tr>
+  <tr><td>'size':</td><td> number of hits to show in each bucket. Does hence not correspond to the number of table rows. default: 100.</td></tr>
+</table>
+<p>
+Example:
+<ul>
+  <li> <a href="URL/statlist"><pre>URL/statlist</pre></a>
+    </li>
+  <li> <a href="URL/statlist?q=simple||ärt&buckets=resource,lemgram.bucket"><pre>URL/statlist?q=simple||ärt&buckets=resource,lemgram.bucket</pre></a>
+    </li>
+    <li> <a href="URL/statlist?resource=hellqvist"> <pre>URL/statlist?resource=hellqvist</pre></a>
+    </li>
+    <li> <a href="URL/statlist?mode=historic_i&buckets=pos.bucket"> <pre>URL/statlist?mode=historic_i&buckets=pos.bucket</pre></a>
+    </li>
+    <li> <a href="URL/statlist?buckets.bucket=pos&size=200&mode=stablekarp"> <pre>URL/statlist?buckets=pos.bucket&size=200&mode=stablekarp</pre></a>
+    </li>
+</ul>
+<p>
+
+Result:
+<pre>
+{
+  "stat_table": [
+    [
+      "konstruktikon",
+      "",
+      88
+    ],
+    [
+      "saldom",
+      "nn",
+      3
+    ],
+    ...
+  ]
+}
+</pre>
+
+<a name="autocomplete"/>
+<h3>autocomplete</h3>
+
+Gives suggestions for lemgrams (or other fields, as specified for each mode)
+which have a word form (or other field, as specified for each mode)
+matching the given one.
+<p>It does not match prefixes.
+Searching for "sig" does hence not give suggestions like "sigill" or "signatur".
+<p>
+Provides lemgram suggestions to Korp, by looking in mode 'external'.
+<p>
+Examples:
+<ul>
+    <li> <a href="URL/autocomplete?mode=external&q=sig"><pre>URL/autocomplete?mode=external&q=sig</pre></a>
+    </li>
+    <li> <a href="URL/autocomplete?multi=kasta,docka&resource=saldom&mode=external"><pre>URL/autocomplete?multi=kasta,docka&resource=saldom&mode=external</pre></a>
+    </li>
+    <li> <a href="URL/autocomplete?q=kasus&resource=saldom,dalin,hellqvist"><pre>URL/autocomplete?q=kasus&resource=saldom,dalin,hellqvist</pre></a>
+    </li>
+    <li> <a href="URL/autocomplete?q=kasta&resource=saldom"><pre>URL/autocomplete?q=kasta&resource=saldom</pre></a>
+    </li>
+</ul>
+<p>
+Available query parameters:
+<table>
+  <tr><td>'q': </td><td> the query, a word form</td></tr>
+  <tr><td>'multi': </td><td> a comma separated list of queries (word forms). do not use together with q</td></tr>
+  <tr><td>'resource':</td><td> one or more comma separated lexica to search. default: all</td></tr>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+</table>
+<p>
+The result is not sorted and one lemgram may occur multiple times
+<p>
+Result:
+<pre>
+hits{
+  total : number of hits
+  hits  : information about the hits
+  hits[n]._source : information about hit n
+  hits[n]._source.FormRepresentations.lemgram  : lemgram
+}
+</pre>
+If 'multi' parameter is used, the output will be a dictionary with one key corresponding to every input word.
+The values will be the same format as for q:
+<pre>
+{"kasta": {"hits": ...  },
+ "docka": {"hits": ...  }
+}
+</pre>
+<p>
+
+<a name="saldopath"/>
+<h3>saldopath</h3>
+Shows the path from a saldo sense to PRIM.
+Only works for saldo senses.
+<p>
+Example:
+<ul>
+    <li> <a href="URL/saldopath?q=bandy..1"><pre>URL/saldopath?q=bandy..1</pre></a>
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{ path: [input_sense..1, ... , PRIM..1] }
+</pre>
+<p>
+
+<a name="getcontext"/>
+<h3>getcontext</h3>
+Shows the (alphabetical) neighbours of an entry<p>
+The sorting order is based on the mode configs. (The order must be strict, eg. no two words may have
+the same score. If they do, getcontext will not work properly.)
+<p>
+Example:
+<ul>
+  <li><pre>URL/getcontext/#lexicon?center=#ID</pre></a>
+  <li> <a href="URL/getcontext/saldo?q=extended||and|pos|equals|nn&size=2"><pre>URL/getcontext/saldo?q=extended||and|pos|equals|nn&size=2</pre></a>
+    </li>
+  <li> <a ><pre>URL/getcontext/saol?q=extended||not|ptv|equals|true&size=2</pre></a>
+    </li>
+</ul>
+<p>
+<p>
+Available query parameters:
+<table>
+  <tr><td>'center':</td><td> the ES-ID of the entry to center the search around. default: the first entry</td></tr>
+  <tr><td>'q': </td><td> an optional query to restrict entries that appear in the result</td></tr>
+  <tr><td>'size':</td><td> number of hits to show on each side of the center word. default: 10</td></tr>
+</table>
+Result:
+<pre>
+{ center: [ *the centered entry* ],
+  pre:    [ *a list of hits (that match the query) occurring immediately before the centered * ],
+  post:   [ *a list of hits (that match the query) occurring immediately after the centered entry *]}
+</pre>
+<p>
+
+
+<a name="explain"/>
+<h3>explain</h3>
+A tool for debugging.
+Shows the result of the given query, the json formatted query as sent to ElasticSearch and the information
+given by a <a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/_validating_queries.html#_understanding_queries">_validate/query?explain</a> call to ElasticSearch.
+<p>
+Example:
+<ul>
+   <li> <a href="URL/explain?q=simple||mastodont"><pre>URL/explain?q=simple||mastodont</pre></a>
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+ans                  the normal query result
+elastic_json_query   the query translated to Elastic's api
+explain              Elastic's result to a _validate/query?explain query.
+</pre>
+<p>
+
+<a name="modes"/>
+<h3>modes</h3>
+Shows the hierarchy of the modes.
+
+<ul>
+   <li> <a href="URL/modes"><pre>URL/modes</pre></a>
+</ul>
+<p>
+
+<a name="groups"/>
+<h3>groups</h3>
+Shows the available groups (modes to which updates can be made).
+
+<ul>
+   <li> <a href="URL/groups"><pre>URL/groups</pre></a>
+</ul>
+<p>
+
+<a name="modeinfo"/>
+<h3>modeinfo</h3>
+Shows the search fields that are available in a mode.
+
+<ul>
+   <li> <a href="URL/modeinfo/bliss"><pre>URL/modeinfo/bliss</pre></a>
+</ul>
+<p>
+<a name="lexiconinfo"/>
+<h3>lexiconinfo</h3>
+Shows the search fields that are available in a lexicon. Note that the fields are set on the level of lexicon groups
+- some fields in the listing might be unused by the specified lexicon.
+
+<ul>
+   <li> <a href="URL/lexiconinfo/blissword"><pre>URL/lexiconinfo/blissword</pre></a>
+</ul>
+<p>
+<a name="lexiconorder"/>
+<h3>lexiconorder</h3>
+Shows the lexicons and their order. The <a href="#query">query</a> results are also ordered in this way.
+
+<ul>
+   <li> <a href="URL/lexiconorder"><pre>URL/lexiconorder</pre></a>
+</ul>
+
+<p>
+Result:
+<pre>
+{
+  "lexiconA": 1,
+  "lexiconB": 3,
+  "lexiconC": 8,
+  ...
+}
+</pre>
+<p>
+
+<a name="random"/>
+<h3>random</h3>
+Shows a randomly selected lexical entry.
+<p>
+Available query parameters:
+<table>
+  <tr><td>'resource':</td><td> one or more comma separated lexica to search. default: all</td></tr>
+  <tr><td>'mode':</td><td> which mode to search in. default: karp</td></tr>
+  <tr><td>'show':</td><td> one or more comma separated fields to show. default: depends on mode, usually lexiconName, lemgram, baseform</td></tr>
+  <tr><td>'show_all':</td><td> all fields of the entries will be shown if this flag is set to true (or any value). Overrides show</td></tr>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 1</td></tr>
+</table>
+<p>
+Example:
+
+<ul>
+    <li> <a href="URL/random"><pre>URL/random</pre></a>
+    </li>
+    <li> <a href="URL/random?resource=saldo"><pre>URL/random?resource=saldo</pre></a>
+    </li>
+</ul>
+<p>
+
+<a name="suggest"/>
+<h3>suggest, suggestnew</h3>
+  Works like <a href="update">update</a>, but requires no log in. The suggestion is stored in a separate system until it
+  has been accepted by a logged in user.
+  <p>
+The field 'version' is optional, but will prevent an old version to later override a newer one.
+Example:
+<ul>
+    <li><pre>URL/suggest/#lexicon/#ID -d {"message" : ..., "user": ..., "version": ... }</pre></a>
+    </li>
+    <li><pre>URL/suggestnew/#lexicon -d {"message" : ..., "user": ..., "version": ... }</pre></a>
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "es_ans": {...}  // output from ES
+  "es_loaded": 1,  // 1 if the suggestion is stored in ES
+  "id":           // the #ID of the suggestion. Can be used to see the current status, accept or reject the suggestion
+  "sql_loaded": 1,  // 1 if the suggestion is stored in SQL
+  "suggestion": true,
+  sql_error // present if there were errors storing the suggestion
+}
+</pre>
+<p>
+
+<a name="delete"/>
+<h3>delete</h3>
+Deletes one entry, identified by its lexicon and #ID. Requires a valid username and password.
+<p>
+Examples:
+<ul>
+  <li>
+    <pre>URL/delete/#lexicon/#ID</pre>
+  </li>
+</ul>
+<p>
+Result:
+<pre>{
+'sql_loaded' : 1 if successfully marked as deleted in the SQL database,
+'es_loaded' : 1 if successfully deleted from ElasticSearch (is no longer searchable),
+'es_ans'    : the answer from ES.
+}</pre>
+
+<a name="update"/>
+<h3>mkupdate</h3>
+Updates a lexicalentry identified by its lexicon and Elasticsearch's id (#ID). Requires a valid username and password.
+The IDs are found in any query results.
+<!--Note that the IDs may be changed over time. It is thus recommended to get the ID just before the update.-->
+To avoid conflicts, the last known version number of the entry can be provided as a query string. If a
+version number is provided and the
+database entry has been updated since the our last read, a version conflict error message will be returned.
+
+Example:
+<ul>
+  <li><!-- <a href="--> <pre>XPOST URL/mkupdate/#lexicon/#ID -d '{'doc' : updated entry, 'version' : (last) version, 'message' : update message}'</pre>
+    </li>
+  <li><!-- <a href="--> <pre>XPOST URL/mkupdate/#lexicon/#ID -d '{'doc' : updated entry, 'version' : (last) version, 'message' : update message}'</pre>
+    </li>
+</ul>
+Result:
+<pre>{
+'sql_loaded' : 1 if successfully saved in the SQL database,
+'es_loaded' : 1 if successfully stored in ElasticSearch (is searchable),
+'es_ans'    : {'_id':..., '_index':..., '_type':..., '_version': ...} //the answer from ES.
+}
+</pre>
+<p>
+Error messages:
+<p>
+Version conflict:
+<pre>{"message": "Database exception: Error during update. Message: TransportError(409, u'RemoteTransportException[...]; nested: VersionConflictEngineException[...]: version conflict, current [3], provided [1]]; ')."}</pre>
+ID could not be found:
+<pre>{"message": "Database exception: Error during update. Message: TransportError(404, u'RemoteTransportException[...]; nested: DocumentMissingException[...]: document missing]; ')"}</pre>
+  </pre>
+
+
+<a name="add"/>
+<h3>add, readd</h3>
+Adds a lexicalentry. Requires a valid username and password.
+The given ID is found in the returned object and is associated with the entry in ElasticSearch and in the SQL database.
+Example:
+<ul>
+  <li><pre>XPOST URL/add/#lexicon -d '{'doc' : {...,'lexiconName': 'saldo',lexiconOrder' : 0,...} 'version' : (last) version, 'message' : update message}'</pre></li>
+</ul>
+If an entry has existed in the data base before and has got an ID, it can be readded to get the same ID:
+<ul>
+  <li><pre>XPOST URL/readd/#lexicon/#ID -d '{'doc' : {...,'lexiconName': 'saldo',lexiconOrder' : 0,...} 'version' : (last) version, 'message' : update message}'</pre></li>
+</ul>
+<p>
+Result:
+<pre>
+{
+'sql_loaded' : 1 if successfully saved in the SQL database,
+'es_loaded' : 1 if successfully stored in ElasticSearch (is searchable),
+'es_ans'    : {'_id':..., '_index':..., '_type':..., '_version': ..., 'created' : True} //the answer from ES. ,
+'suggestion': False. True if the update has been treated as <a href="suggestion">suggestion</a>.
+}
+</pre>
+<p>
+
+<a name="addbulk"/>
+<h3>addbulk</h3>
+Adds a list of entries to a lexicon. Requires a valid username and password.
+Example:
+<ul>
+  <li><pre>XPOST URL/addbulk/#lexicon -d '{'doc' : [{...entry1...}, {...entry2...}, ...], 'message' : update message}'</pre></li>
+</ul>
+<pre>
+{
+'sql_loaded' : number of entries successfully saved in the SQL database,
+'es_loaded' : number of entries successfully stored in ElasticSearch,
+'ids'    : a list of the new entries IDs,
+'suggestion': False
+}
+</pre>
+<p>
+
+<a name="add_child"/>
+<h3>add_child</h3>
+Adds a lexical entry and link it to its parent. Requires a valid username and password.
+The given ID is found in the returned object and is associated with the entry in ElasticSearch and in the SQL database.
+Example:
+<ul>
+  <li><pre>XPOST URL/addchild/#lexicon/#parentid -d '{'doc' : {...,'lexiconName': 'saldo',lexiconOrder' : 0,...} 'version' : (last) version, 'message' : update message}'</pre></li>
+</ul>
+<p>
+Result:
+<pre>
+{
+'parent':   the result of adding the link to the parent (see <a href="#update">mkupdate</a>).
+'child' :   the result of adding the child (see <a href="#add">add</a>).
+}
+</pre>
+<p>
+
+<a name="checksuggestions"/>
+<h3>checksuggestions</h3>
+  Requires log in.
+  Show the suggestions for the chosen lexicons.
+  <p>
+  Required query parameters:
+  <table>
+    <tr><td>'resource':</td><td> one or more comma separated lexicons to search. default: all</td></tr>
+  </table>
+  <p>
+  Available query parameters:
+  <table>
+    <tr><td>'size': </td><td> the number of suggestions to view (order by decreasing date). default: 50</td></tr>
+    <tr><td>'status': </td><td> waiting, rejected, accepted. default: all</td></tr>
+  </table>
+  <p>
+
+Example:
+<ul>
+    <li><pre>URL/checksuggestions?resource=konstruktikon&size=2&status=waiting</pre></a>
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "updates": [
+    {
+      "acceptmessage"  // is set when the suggestion is accepted or rejected
+      "date":          // the date of suggestion
+      "doc":           // the suggested lexical entry
+      "id":            // the #ID of the suggestion
+      "lexicon":       // the lexicon it belongs to
+      "message":       // message from the suggester
+      "origid":        // the #ID of the entry the suggestion concerns
+      "status":        // the status of the suggestion (waiting, accepted or rejected)
+      "user":          // the name or email adress of the suggester
+      "version":       // the version of the entry that the suggestion concerns
+    }
+  ]
+
+</pre>
+<p>
+
+<a name="checksuggestion"/>
+<h3>checksuggestion</h3>
+   Checks the status of a given suggestion. Does not require log in.
+  <p>
+Example:
+<ul>
+    <li><pre>URL/checksuggestion/#lexicon/#ID </pre></a>
+        The #ID refers to the suggestion, not the original entry.
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "updates": [
+    {
+      "acceptmessage"  // is set when the suggestion is accepted or rejected
+      "date":          // the date of suggestion
+      "doc":           // the suggested lexical entry
+      "id":            // the #ID of the suggestion
+      "lexicon":       // the lexicon it belongs to
+      "message":       // message from the suggester
+      "origid":        // the #ID of the entry the suggestion concerns
+      "status":        // the status of the suggestion (waiting, accepted or rejected)
+      "user":          // the name or email adress of the suggester
+      "version":       // the version of the entry that the suggestion concerns
+    }
+  ]
+
+</pre>
+<p>
+
+
+
+<a name="acceptsuggestion"/>
+<h3>acceptsuggestion</h3>
+  Requires log in.
+  Changes the status of a suggestion to "accepted" and moves it to the live data base.
+  Accepted suggestions are still present in the sql data base (but not searchable through the suggestion ES).
+  <p>
+Example:
+<ul>
+    <li><pre>URL/acceptsuggestion/#lexicon/#ID -d {"message" : ...}</pre></a>
+        The #ID refers to the suggestion, not the original entry.
+        The message will be stored in the suggestion data base and in the live data base.
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "es_ans": {
+    "_id":  // #ID of the updated entry
+    "_index":
+    "_type":
+    "_version":
+  },
+  "es_loaded":  // 1 if successfully loaded to ES
+  "sql_loaded": // 1 if successfully loaded to the live SQL
+  "sugg_db_error": // present if there were errors storing the suggestion
+  "sugg_db_loaded":  // 1 if successfully loaded to suggestion SQL
+  "sugg_es_ans": {"es_ans" : {...} // ans from ES
+                 ,"es_loaded":  // 1 if removed from the suggestion ES
+                 ,"sql_loaded": // 1 if the suggestion was marked as accepted
+                 }
+}
+</pre>
+<p>
+
+<a name="acceptandmodify"/>
+<h3>acceptandmodify</h3>
+  Requires log in.
+  Changes the status of a suggestion to "accepted_modified" and adds the new, modified, version to the
+  live data base.
+  Accepted suggestions are still present in the sql data base (but not searchable through the suggestion ES).
+  <p>
+Example:
+<ul>
+    <li><pre>URL/acceptandmodify/#lexicon/#ID -d {"doc": {...} "message" : ...}</pre></a>
+        The #ID refers to the suggestion, not the original entry.
+        The data is the new version that should be kept.
+        The message will be stored in the suggestion data base and in the live data base.
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "es_ans": {
+    "_id":  // #ID of the updated entry
+    "_index":
+    "_type":
+    "_version":
+  },
+  "es_loaded":  // 1 if successfully loaded to ES
+  "sql_loaded": // 1 if successfully loaded to the live SQL
+  "sugg_db_error": // present if there were errors storing the suggestion
+  "sugg_db_loaded":  // 1 if successfully loaded to suggestion SQL
+  "sugg_es_ans": {"es_ans" : {...} // ans from ES
+                 ,"es_loaded":  // 1 if removed from the suggestion ES
+                 ,"sql_loaded": // 1 if the suggestion was marked as accepted
+                 }
+}
+</pre>
+<p>
+
+
+
+<a name="rejectsuggestion"/>
+<h3>rejectsuggestion</h3>
+  Requires log in.
+  Changes the status of a suggestion to "rejected".
+  Rejected suggestions are still present in the sql data base (but not searchable through the suggestion ES).
+  <p>
+Example:
+<ul>
+    <li><pre>URL/rejectsuggestion/#lexicon/#ID -d {"message" : ...}</pre></a>
+        The #ID refers to the suggestion, not the original entry.
+        The message will be stored in the suggestion data base.
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+"es_ans": {...} // output from the deletion from the suggestion ES
+  "es_loaded":  // 1 if successfully removed to the suggestion ES
+  "sugg_db_error": // present if there were errors storing the suggestion
+  "sugg_db_loaded":  // 1 if successfully loaded to suggestion SQL
+}
+</pre>
+<p>
+
+<a name="checkuser"/>
+<h3>checkuser</h3>
+Checks whether the provided user log-in details are ok.
+<p>
+Result:
+<pre>
+{
+  "authenticated":   is the user name and password ok,
+  "permitted_resources.lexica": lexicons that the user may see or edit
+}
+</pre>
+<p>
+
+<a name="checkuserhistory"/>
+<h3>checkuserhistory</h3>
+Shows the edit history of the user, ordered from newest to oldest.
+Available query parameters:
+<table>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 10</td></tr>
+</table>
+<p>
+Result:
+<pre>
+{
+  "updates": [
+    {"date"
+    ,"doc"        //the entry that has been edited
+    ,"id"
+    ,"message"
+    ,"user"
+    },
+    ...
+  ]
+}
+</pre>
+<p>
+
+<a name="checkhistory"/>
+<h3>checkhistory</h3>
+Shows the edit history of an entry, selected  by its identifier and ordered from newest to oldest.
+Available query parameters:
+<table>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 10</td></tr>
+</table>
+Example:
+<ul>
+    <li> URL/checkhistory/#lexicon/#ID </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "updates": [
+    {"date"
+    ,"doc"        //the entry that has been edited
+    ,"id"
+    ,"message"
+    ,"user"
+    },
+    ...
+  ]
+}
+</pre>
+<p>
+
+<a name="checklexiconhistory"/>
+<h3>checklexiconhistory</h3>
+Shows the edit history of one lexicon, ordered from newest to oldest. If no lexicon is specified, all is picked.
+Available query parameters:
+<table>
+  <tr><td>'size':</td><td> number of hits to show on each page. default: 10</td></tr>
+</table>
+<p>
+Examples. If a date is provided (in the correct format) only updates done later than this is shown.
+<ul>
+
+  <li>  <pre>URL/checklexiconhistory/#lexicon</pre></li>
+    <!-- <li> <a href="URL/lexiconhistory"><pre>URL/lexiconhistory</pre></a> -->
+
+    <li><pre>URL/checklexiconhistory/blissword/20150922</pre>
+    <!-- <li> <pre>URL/lexiconhistory/20150922T120012</pre></a> -->
+    </li>
+</ul>
+<p>
+Result:
+<pre>
+{
+  "updates": [
+    {"date"
+    ,"doc"        //the entry that has been edited
+    ,"id"
+    ,"message"
+    ,"user"
+    ,"type"  // CHANGED, ADDED or REMOVED, only present if checklexiconhistory is called
+    },
+    ...
+  ]
+}
+</pre>
+<p>
+
+
+<a name="checkdifference"/>
+<h3>checkdifference</h3>
+  Shows the diff of a chosen #ID.
+  <p>
+Example.
+<ul>
+  <li><pre>URL/checkdifference/#lexicon/#ID/latest</pre></li>
+  <li><pre>URL/checkdifference/#lexicon/#ID/latest/#fromdate'</pre></li>
+  <li><pre>URL/checkdifference/#lexicon/#ID/#fromdate/#todate'</pre></li>
+</ul>
+<p>
+Result:
+<pre>
+{ "diff" : [
+
+   {"field"  // a field that has been changed between the two versions
+   ,"after"  // the content of the field in the later of the two versions
+   ,"before" // the content of the field in the older of the two versions (not present if the field is added)
+   "type"    // added, changed och removed
+   }
+]}
+</pre>
+<p>
+
+
+<a name="export"/>
+<h3>export</h3>
+  Exports a lexicon. Requires a valid username and password.
+  <p>
+Available parameters:
+<table>
+  <tr><td>'date':</td><td> export the entries as they were a given date. default: latest</td></tr>
+  <tr><td>'export':</td><td>export to another format than json, eg csv, tsv, xml. Not available for all lexicons! default: json</td></tr>
+  <tr><td>'size':</td><td> number of hits to show. default: all entries</td></tr>
+</table>
+<p>
+Example.
+<ul>
+  <li><pre>URL/export/#lexicon</pre></li>
+  <li><pre>URL/export/#lexicon?date=20170901</pre></li>
+  <li><pre>URL/export/#lexicon?format=lmf&size=2</pre></li>
+</ul>
+<p>
+Result (if json):
+<pre>
+{ "#lexicon" : [
+     ... the lexicon ...
+   ]
+}
+</pre>
+<p>

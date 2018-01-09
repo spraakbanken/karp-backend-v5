@@ -1,0 +1,27 @@
+{
+  "AUTH": {
+    "AUTH_RESOURCES" : "https://urlforslistingresources",
+    "AUTH_SERVER" : "https://urlforauthentication",
+    "AUTH_SECRET" : "secret"
+  },
+  "DB": {
+    "ADMIN_EMAILS": ["mail@mail.com"],
+    "SENDER_EMAIL": "karp@mail.com",
+    "DBPASS": "karp:karp@mariadb"
+  },
+  "DEBUG": {
+    "DEBUGLEVEL": "DEBUG",
+    "DEBUG_TO_STDERR":  false,
+    "LOGDIR":  "log/",
+    "LOGFMT": "%(asctime)s - %(levelname)s: %(message)s",
+    "DATEFMT": "%Y-%m-%d %H:%M:%S"
+  },
+  "SETUP":{
+    "ABSOLUTE_PATH" : ".",
+    "SCAN_LIMIT": 1000000,
+    "MAX_PAGE": 1000,
+    "MINIENTRY_MAx_page": 10000,
+    "SECRET_KEY": "secret"
+  }
+
+}

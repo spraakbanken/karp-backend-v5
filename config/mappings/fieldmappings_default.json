@@ -1,0 +1,13 @@
+{
+    "_score": ["_score"],
+    "anything": ["_all"],
+    "id": ["_id"],
+    "lexiconName": ["lexiconName"],
+    "lexiconName.bucket": ["lexiconName"],
+    "resource": ["lexiconName"],
+    "lexiconOrder": ["lexiconOrder"],
+    "lastmodifiedBy": ["lastmodifiedBy"],
+    "lastmodified.bucket" : ["lastmodified.raw"],
+    "lastmodified": ["lastmodified"]
+}
+
