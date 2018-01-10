@@ -3,9 +3,7 @@
         "elastic_url": ["http://elasticsearch:9200"],
         "sql": "default",
         "type": "lexicalentry",
-        "special_fields": {},
         "secret_fields": ["lastmodifiedBy"],
-        "all_fields": ["anything"],
         "src": "",
         "suggestionalias": "karpsuggestion"
     },

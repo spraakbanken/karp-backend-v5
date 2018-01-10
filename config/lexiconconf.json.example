@@ -1,0 +1,13 @@
+
+{
+  "default": {
+    "path": "data/karplex/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": []
+  },
+  "testlex": {
+    "mode": "testlex",
+    "order": 0
+  }
+}

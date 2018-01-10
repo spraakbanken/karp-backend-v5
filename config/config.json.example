@@ -1,7 +1,7 @@
 {
   "AUTH": {
-    "AUTH_RESOURCES" : "https://urlforslistingresources",
-    "AUTH_SERVER" : "https://urlforauthentication",
+    "AUTH_RESOURCES" : "http://wsauth:80/app/ws/resources",
+    "AUTH_SERVER" : "http://wsauth:80/app/ws/authenticate",
     "AUTH_SECRET" : "secret"
   },
   "DB": {
@@ -11,16 +11,17 @@
   },
   "DEBUG": {
     "DEBUGLEVEL": "DEBUG",
-    "DEBUG_TO_STDERR":  false,
+    "DEBUG_TO_STDERR":  true,
     "LOGDIR":  "log/",
     "LOGFMT": "%(asctime)s - %(levelname)s: %(message)s",
     "DATEFMT": "%Y-%m-%d %H:%M:%S"
   },
   "SETUP":{
     "ABSOLUTE_PATH" : ".",
+    "SCRIPT_PATH" : ".",
     "SCAN_LIMIT": 1000000,
     "MAX_PAGE": 1000,
-    "MINIENTRY_MAx_page": 10000,
+    "MINIENTRY_PAGE": 10000,
     "SECRET_KEY": "secret"
   }
 
