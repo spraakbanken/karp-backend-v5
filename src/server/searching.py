@@ -172,7 +172,7 @@ def explain():
 
 def minientry():
     """ Returns the counts and stats for the query """
-    max_page = configM.setupconfig['MINIENTRY_MAX_PAGE']
+    max_page = configM.setupconfig['MINIENTRY_PAGE']
     auth, permitted = validate_user(mode="read")
     try:
         query = request.query_string
