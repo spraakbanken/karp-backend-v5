@@ -235,7 +235,7 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
         text = configM.formatquery(mode, 'anything', text)
 
     qs = []
-    for field in configM.searchfield(mode, 'all_fields'):
+    for field in configM.all_searchfield(mode, 'all_fields'):
         qs += ['"match": {"%s": {"query": "%s", "operator": "and"}}' % (field, text)]
     if isfilter:
         qs = ['"query" : {%s}' % q for q in qs]

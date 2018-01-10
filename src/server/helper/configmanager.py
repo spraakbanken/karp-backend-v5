@@ -81,6 +81,12 @@ def searchfield(mode, field):
     return sum([F.lookup_multiple(f, mode) for f in fields], [])
 
 
+def all_searchfield(mode):
+    # returns the json path of the field anything
+    fields = searchconf(mode, 'anything')
+    return sum([F.lookup_multiple(f, mode) for f in fields], [])
+
+
 def mode_fields(mode):
     return searchconfig.get(mode, {})
 
