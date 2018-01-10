@@ -62,7 +62,7 @@ def check_user(force_lookup=False):
             "authenticated": auth_response['authenticated']}
 
 
-def validate_user(force_user="", mode="write"):
+def validate_user(mode="write"):
     """Authenticates a user against an authentication server.
        Returns a dictionary with permitted resources for the user
     """
@@ -78,14 +78,10 @@ def validate_user(force_user="", mode="write"):
 
     user_auth = check_user()
     auth_response = user_auth['authenticated']
-    user = user_auth['username']
 
-    if (auth_response or not user) and (not force_user or user == force_user):
-        allowed = []
-        for lex, val in user_auth['lexicon_list'].items():
-            if val[mode]:
-                allowed.append(lex)
+    allowed = []
+    for lex, val in user_auth['lexicon_list'].items():
+        if val[mode]:
+            allowed.append(lex)
 
-        return auth_response, allowed
-
-    return auth_response, []
+    return auth_response, allowed
