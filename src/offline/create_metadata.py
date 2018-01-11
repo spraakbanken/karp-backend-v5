@@ -1,14 +1,7 @@
 import copy
 import json
-# TODO get rid of this
-import sys
-print sys.path
-sys.path.append('/export/htdocs_sbws/ws/karp/v6/')
-print sys.path
 
 import src.server.helper.configmanager as configM
-import sys
-print sys.path
 
 
 def read_fieldmappings(mode):
@@ -36,7 +29,6 @@ def print_all(outpath):
     for name in configM.searchconfig.keys():
         conf_str = []
         for key, val in read_fieldmappings(name).items():
-            print 'debug', key, val
             if type(val) is dict:
                 conf_str.append('"%s": %s'
                                 % (key, json.dumps(val)))

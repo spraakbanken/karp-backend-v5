@@ -1,7 +1,7 @@
 {
     "default": {
         "elastic_url": ["http://elasticsearch:9200"],
-        "sql": "default",
+        "sql": "karp",
         "type": "lexicalentry",
         "secret_fields": ["lastmodifiedBy"],
         "src": "",
@@ -19,6 +19,7 @@
     },
    "karp": {
         "is_index": false,
-        "groups": ["panacea"]
+        "groups": ["panacea"],
+        "indexalias": "karp"
     }
 }
