@@ -12,11 +12,11 @@ import logging
 
 
 def get_mode(query):
-    return parse_qs(query).get('mode', ['karp'])[0]
+    return parse_qs(query).get('mode', [configM.standardmode])[0]
 
 
 def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, 'mode': 'karp'}
+    settings = {"allowed": permitted, 'mode': configM.standardmode}
     settings.update(in_settings)
     return settings
 

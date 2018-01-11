@@ -9,6 +9,7 @@ searchconfig = C.searchconfig
 config = C.config
 lexiconconfig = C.lexiconconfig
 setupconfig = config['SETUP']
+standardmode = setupconfig['STANDARDMODE']
 
 defaultmode = searchconfig.get('default', {})
 for mode, vals in searchconfig.items():
@@ -168,7 +169,7 @@ def get_lexicon_mode(lexicon):
         return ''
 
 
-def lookup_op(field, mode='karp'):
+def lookup_op(field, mode=standardmode):
     " Checks if there are special conditions for this field "
     specials = searchconf(mode, 'special_fields', failonerror=False) or {}
     return specials.get(field, {})

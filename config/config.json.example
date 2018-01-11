@@ -19,6 +19,7 @@
   "SETUP":{
     "ABSOLUTE_PATH" : ".",
     "SCRIPT_PATH" : ".",
+    "STANDARDMODE": "karp",
     "SCAN_LIMIT": 1000000,
     "MAX_PAGE": 1000,
     "MINIENTRY_PAGE": 10000,
