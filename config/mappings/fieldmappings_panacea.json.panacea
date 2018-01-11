@@ -1,0 +1,9 @@
+{
+  "baseform": ["lemma_german"],
+  "pos": ["pos_german"],
+  "baseform_en": ["english.lemma_english"],
+  "pos_en": ["english.pos_english"],
+  "target_prob": ["english.target_prob"],
+  "corpus_prob": ["english.corpus_prob"],
+  "package_prob": ["english.package_prob"]
+}
