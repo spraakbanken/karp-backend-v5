@@ -11,7 +11,11 @@ import os
 
 
 def get_mapping(index):
-    return 'config/mappings/mappingconf_%s.json' % index
+    filepath =  'config/mappings/mappingconf_%s.json' % index
+    try:
+        return open(filepath).read()
+    except:
+        return None
 
 
 def make_indexname(index, suffix):
@@ -128,7 +132,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = configM.elastic(alias)
     if create_new:
         # Create the index
-        ans = es.indices.create(index=index, body=open(mapping).read())
+        ans = es.indices.create(index=index, body=mapping)
         print ans
 
     for lex in lexicon:
@@ -361,7 +365,7 @@ def create_mode(alias, suffix, with_id=False):
 
     typ = configM.searchconfig[alias]['type']
     for index in to_create:
-        data = open(get_mapping(index), 'r').read()
+        data = get_mapping(index)
         newname = make_indexname(index, suffix)
         try:
             ans = es.indices.create(index=newname, body=data)
@@ -383,7 +387,7 @@ def create_mode(alias, suffix, with_id=False):
 
 def add_lexicon(to_add_name, to_add_file, alias, suffix):
     es = configM.elastic(alias)
-    data = open(get_mapping(alias), 'r').read()
+    data = get_mapping(alias)
     indexname = make_indexname(alias, suffix)
     typ = configM.searchconfig[alias]['type']
     try:
@@ -478,8 +482,8 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     print 'Reindex from %s to %s' % (source_index, target_index)
     es = configM.elastic(alias)
     if create_index:
-        print 'read %s' % get_mapping(alias), 'create %s' % target_index
-        data = open(get_mapping(alias), 'r').read()
+        print 'create %s' % target_index
+        data = get_mapping(alias)
         ans = es.indices.create(index=target_index, body=data)
         print 'Created index', ans
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead

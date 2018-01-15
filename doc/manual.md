@@ -140,9 +140,10 @@ the necessary changes as below.
 
     This file keeps the configurations needed to call the authorization system. To read or
     modify a lexicon, this system must permit the user to do so. If you don't have a autherization
-    system you can use the dummy setup inculded in [Karp's Docker version](TODO). It will let
+    system you can use the dummy setup inculded in [Karp's Docker version]().
+    It will let
     anyone read and modify all your lexicons.
-    If you want to use another system read [this page](TODO) on how it should work, and then
+    If you want to use another system read [this page](wsauth_manual.html) on how it should work, and then
     enter the configurations in the `config.json` file.
 * "DB": 0-1
     * `admin_emails` 0: a list to which emails will be sent upon karp failures.
