@@ -53,6 +53,7 @@ def searchconf(mode, field, failonerror=True):
     # looks up field in modes.json, eg. "autocomplete"
     # returns the karp field name (eg. baseform.raw)
     try:
+        logging.debug('\n%s\n' % searchconfig[mode])
         return searchconfig[mode][field]
     except Exception as e:
         if mode not in searchconfig:
@@ -84,8 +85,8 @@ def searchfield(mode, field):
 
 def all_searchfield(mode):
     # returns the json path of the field anything
-    fields = searchconf(mode, 'anything')
-    return sum([F.lookup_multiple(f, mode) for f in fields], [])
+    logging.debug('%LOOK FOR ANYTHING\n')
+    return F.lookup_multiple('anything', mode)
 
 
 def mode_fields(mode):
@@ -154,7 +155,7 @@ def get_lexiconlist(mode):
     for group in modeconf.get('groups', []):
         grouplist.append(group)
     for lex, lexconf in C.lexiconconfig.items():
-        if lexconf[0] in grouplist:
+        if lexconf.get('order', -1) in grouplist:
             lexiconlist.add(lex)
 
     return list(lexiconlist)

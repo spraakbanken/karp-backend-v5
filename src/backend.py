@@ -232,8 +232,8 @@ def init():
         import re
         project_dir = os.path.join(os.path.dirname(__file__))
         logging.debug('path %s' % project_dir)
-        html_dir = os.path.join('src', 'html')
-        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], html_dir)
+        # html_dir = os.path.join('src', 'html')
+        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'],  'html')
         doc_file = 'index_dokumentation.html'
         logging.debug('open %s' % os.path.join(html_dir, doc_file))
         with app.open_resource(os.path.join(html_dir, doc_file)) as f:
