@@ -109,10 +109,15 @@ have to specify the order of your lexicons later in the configuration part
 
 
 ## Prerequisites
-TODO
+* [ElasticSearch2](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2)
+* SQL, preferrably [MariaDB](https://mariadb.org/)
+* a WSGI server
+  for example [mod_wsgi](http://modwsgi.readthedocs.io/en/develop/) with [Apache](http://httpd.apache.org/), Waitress, Gunicorn, uWSGI. . .
+http://modwsgi.readthedocs.io/en/develop/
+http://httpd.apache.org/
+* an authentication server. Read more about this [here](https://github.com/spraakbanken/karp-docker/blob/master/dummyauth/README.md)
+* [Python >= 2.7](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
 
-## Downloading the Code
-TODO
 
 ## Configurations
 ### Some notes on virtualenv

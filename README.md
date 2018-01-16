@@ -1,22 +1,29 @@
+**This package - code and documentation - is still under construction.**
+
+Karp is the lexical platform of Språkbanken.
+
 Karp in Docker
 =============
-For easy testing, use [Docker](TODO) to run Karp-b.
+For easy testing, use [Docker](https://docs.docker.com/engine/installation/) to run Karp-b.
 
-* Follow the steps given [here](TODO github/karp-docker/README)
+* Follow the steps given [here](https://github.com/spraakbanken/karp-docker)
 
 
 * Run `docker-compose up -d`
 * Test it by running `curl localhost:8081/app/test`
 
 
+If you want to use Karp without Docker, keep on reading.
 Prerequisites
 =============
 
-* [ElasticSearch2](TODO)
-* SQL, preferrably [MariaDB](TODO)
+* [ElasticSearch2](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2)
+* SQL, preferrably [MariaDB](https://mariadb.org/)
 * a WSGI server
-  for example [mod_wsgi with Apache](TODO), Waitress, Gunicorn, uWSGI. . .
-* an authentication server  # TODO more about this somewhere
+  for example [mod_wsgi](http://modwsgi.readthedocs.io/en/develop/) with [Apache](http://httpd.apache.org/), Waitress, Gunicorn, uWSGI. . .
+http://modwsgi.readthedocs.io/en/develop/
+http://httpd.apache.org/
+* an authentication server. Read more about this [here](https://github.com/spraakbanken/karp-docker/blob/master/dummyauth/README.md)
 * [Python >= 2.7](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
 
 
@@ -34,11 +41,13 @@ Karp uses virtuals envs for python. To get running:
 Configuration
 =============
 
-Copy config.json.example to config.json and make your changes. (read more in the docs)
+Copy `config.json.example` to `config.json` and make your changes.
+You will also need to make configurations for your lexicons.
+Read more [here](TODO manual.md).
 
 
 Tests
 =====
 TODO: DO MORE TESTS!
-Test that Karp-b is runnig by starting it
+Test that Karp-b is working by starting it
 `python src/main.py`
