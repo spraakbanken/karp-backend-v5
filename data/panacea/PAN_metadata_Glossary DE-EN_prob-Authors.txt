@@ -1,0 +1,10 @@
+Copying and Author information
+
+Resource name: Bilingual Glossary German-English with Probabilities
+Resource identifier: 
+Licence: CC-BY
+
+Authors:
+
+() Linguatec GmbH
+

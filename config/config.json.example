@@ -1,7 +1,7 @@
 {
   "AUTH": {
-    "AUTH_RESOURCES" : "http://wsauth:8082/app/resources",
-    "AUTH_SERVER" : "http://wsauth:8082/app/authenticate",
+    "AUTH_RESOURCES" : "http://wsauth:80/app/resources",
+    "AUTH_SERVER" : "http://wsauth:80/app/authenticate",
     "AUTH_SECRET" : "secret"
   },
   "DB": {
