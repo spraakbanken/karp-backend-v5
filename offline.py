@@ -14,7 +14,7 @@ if sys.argv[1] == '--create_mode':
    upload.create_mode(mode, suffix)
    print 'Upload successful'
 
-if sys.argv[1] == '--publish_group':
+if sys.argv[1] == '--publish_mode':
    group = sys.argv[2]
    suffix = sys.argv[3]
    upload.publish_group(group, suffix)

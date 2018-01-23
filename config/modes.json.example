@@ -1,13 +1,23 @@
 {
     "default": {
         "elastic_url": ["http://elasticsearch:9200"],
-        "sql": "default",
+        "sql": "karp",
         "type": "lexicalentry",
         "secret_fields": ["lastmodifiedBy"],
         "src": "",
-        "suggestionalias": "karpsuggestion"
+        "suggestionalias": "karpsuggestion",
+        "sort_by": [],
+        "head_sort_field": [],
+        "autocomplete_field": [],
+        "minientry_fields": [],
+        "statistics_buckets": [],
+        "boosts": []
     },
-    "testindex": {
+    "testindex1": {
+        "is_index": true,
+        "indexalias": "testmode1"
+    },
+    "testindex2": {
         "sort_by": ["lexiconOrder", "_score", "baseform.sort", "baseform"],
         "head_sort_field": ["lexiconOrder"],
         "autocomplete_field": ["baseform"],
@@ -15,18 +25,18 @@
         "statistics_buckets": ["pos.bucket"],
         "boosts": ["baseform"],
         "is_index": true,
-        "indexalias": "testmode"
+        "indexalias": "testmode2"
     },
-    "testmode": {
+    "karp": {
         "sort_by": ["lexiconOrder", "_score", "baseform.sort", "baseform"],
         "head_sort_field": ["lexiconOrder"],
         "autocomplete_field": ["baseform"],
         "minientry_fields": ["lexiconName", "baseform", "definition"],
         "statistics_buckets": ["lexiconName.bucket", "pos.bucket"],
         "boosts": ["baseform"],
-        "groups": ["testindex"],
+        "groups": ["testindex1", "testindex2"],
         "sql": false,
         "is_index": false,
-        "indexalias": "testmode"
+        "indexalias": "karp"
     }
 }

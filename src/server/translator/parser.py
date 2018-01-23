@@ -12,11 +12,11 @@ import logging
 
 
 def get_mode(query):
-    return parse_qs(query).get('mode', ['karp'])[0]
+    return parse_qs(query).get('mode', [configM.standardmode])[0]
 
 
 def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, 'mode': 'karp'}
+    settings = {"allowed": permitted, 'mode': configM.standardmode}
     settings.update(in_settings)
     return settings
 
@@ -235,7 +235,7 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
         text = configM.formatquery(mode, 'anything', text)
 
     qs = []
-    for field in configM.all_searchfield(mode, 'all_fields'):
+    for field in configM.all_searchfield(mode):
         qs += ['"match": {"%s": {"query": "%s", "operator": "and"}}' % (field, text)]
     if isfilter:
         qs = ['"query" : {%s}' % q for q in qs]

@@ -1,7 +1,7 @@
 {
   "AUTH": {
-    "AUTH_RESOURCES" : "http://wsauth:80/app/ws/resources",
-    "AUTH_SERVER" : "http://wsauth:80/app/ws/authenticate",
+    "AUTH_RESOURCES" : "http://wsauth:80/app/resources",
+    "AUTH_SERVER" : "http://wsauth:80/app/authenticate",
     "AUTH_SECRET" : "secret"
   },
   "DB": {
@@ -19,6 +19,7 @@
   "SETUP":{
     "ABSOLUTE_PATH" : ".",
     "SCRIPT_PATH" : ".",
+    "STANDARDMODE": "karp",
     "SCAN_LIMIT": 1000000,
     "MAX_PAGE": 1000,
     "MINIENTRY_PAGE": 10000,

@@ -1,13 +1,10 @@
-
 {
-  "default": {
-    "path": "data/karplex/",
+  "panacea": {
+    "path": "data/panacea/",
     "no_escape": false,
     "format": "json",
-    "usedtags": []
-  },
-  "testlex": {
-    "mode": "testlex",
+    "usedtags": [],
+    "mode": "panacea",
     "order": 0
   }
 }

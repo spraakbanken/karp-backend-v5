@@ -1,9 +1,11 @@
+# coding: utf-8
 import src.server.helper.configmanager as configM
 import copy
 from .. import errorhandler as Err
 import json
 from re import findall
 import sys
+import unicodedata
 
 lexiconconf = configM.lexiconconfig
 
@@ -25,6 +27,9 @@ def checkelem(elem, lexicon):
     # lists are returned with all its elements checked/escaped
     # other types (numbers, bools) are just returned
     if type(elem) is str or type(elem) is unicode:
+        # normalize unicode characters
+        # 'o\u0308' >>> u'\xf6'
+        elem = unicodedata.normalize("NFC", elem)
         # strings are escaped
         return escape(elem)
     if type(elem) is dict:

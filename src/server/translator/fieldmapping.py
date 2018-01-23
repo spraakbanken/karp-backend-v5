@@ -10,13 +10,14 @@ try:
     fields = json.load(open(absolute_path+'/config/fieldmappings.json'))
 except Exception as e:
     logging.exception(e)
+standardmode = C.config['SETUP']['STANDARDMODE']
 
 
-def lookup(field, mode='karp', own_fields={}):
+def lookup(field, mode=standardmode, own_fields={}):
     return lookup_spec(field, mode, own_fields=own_fields)[0]
 
 
-def lookup_spec(field, mode='karp', own_fields={}):
+def lookup_spec(field, mode=standardmode, own_fields={}):
     try:
         val = get_value(field, mode, own_fields=own_fields)
         if type(val) is dict:
@@ -30,7 +31,7 @@ def lookup_spec(field, mode='karp', own_fields={}):
         raise eh.KarpGeneralError(msg)
 
 
-def lookup_multiple_spec(field, mode='karp'):
+def lookup_multiple_spec(field, mode=standardmode):
     try:
         val = get_value(field, mode)
         if type(val) is dict:
@@ -44,7 +45,7 @@ def lookup_multiple_spec(field, mode='karp'):
         raise eh.KarpGeneralError(msg)
 
 
-def lookup_multiple(field, mode='karp'):
+def lookup_multiple(field, mode=standardmode):
     return lookup_multiple_spec(field, mode)[0]
 
 
