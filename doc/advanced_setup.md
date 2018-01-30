@@ -17,7 +17,7 @@ but in a simple .json file on your server.
 
 To do this, we first define how the functions should work.
 
-```
+```python
 # mykarp.py
 import flask
 import urlparse
