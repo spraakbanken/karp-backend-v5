@@ -4,7 +4,7 @@ import backend
 
 
 def load_urls():
-    flaskhelper.register(backend.init())
+    flaskhelper.register(backend.init)
 
 
 app = flaskhelper.app

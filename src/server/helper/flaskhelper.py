@@ -2,6 +2,7 @@ from datetime import timedelta
 from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
 from functools import update_wrapper
+import logging
 import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.update as update
@@ -61,12 +62,49 @@ def crossdomain(origin=None, methods=None, headers=None,
     return decorator
 
 
-def register(urls):
+def register(initiator):
+    urls = []
+    def route(url='', methods=None, crossdomain=True, name=None):
+        ''' Decorator function @route
+            Adds the function to a list of urls, which should later be processed
+            by Flask (see flaskhelper.py)
+            If 'name' is not given, the url will be the name of the function.
+            If 'url', it will appended to the function name, and may contain variable
+            parts of the path
+            'methods' is a list of allowed methods, defaults to 'GET'
+            Example:
+            @route()
+            def mypage():
+               return render_page("hello")
+            ==> /mypage
+
+            @route('<pagename>')
+            def mypage(pagename=''):
+               return render_page("welcome to"+pagename)
+            ==> /mypage/any_page_name
+        '''
+        def f(func):
+            if name is not None:
+                urlname = name
+            elif url:
+                urlname = '/%s/%s' % (func.__name__, url)
+            else:
+                urlname = '/%s' % func.__name__
+            logging.debug('add url\n\n')
+            urls.append((urlname, func, methods, crossdomain))
+            return func
+        return f
+    initiator(route)
     for url, func, methods, cross in urls:
         if cross:
             # add the crossdomain decorator to the view function
             func = crossdomain(origin='*', methods=methods)(func)
         app.add_url_rule(url, endpoint=url, view_func=func, methods=methods)
+
+
+
+
+
 
 
 # TODO test if error handling works. If not: move the decorator to top level
@@ -75,7 +113,6 @@ def register(urls):
 @crossdomain(origin='*')
 def handle_invalid_usage(error):
     try:
-        import logging
         request.get_data()
         data = request.data
         data = data.decode('utf8')

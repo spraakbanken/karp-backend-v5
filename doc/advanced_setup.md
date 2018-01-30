@@ -41,8 +41,7 @@ Now, use the Karp `@route` decorator to add these to
 the ones known by Karp. The `@route` decorator is similar to the one
 in [Flask](http://flask.pocoo.org/docs/0.12/quickstart/), but will assume that the wanted url is the same
 as the name of the function.
-The first argument of the decorator should be a list. 
-Each decorated function will add an url to this list.
+Each decorated function will add an url to Karp.
 
 There are four keyword arguments to the decorator; `url`, `methods`, `crossdomain` and `name`.
 
@@ -56,29 +55,24 @@ There are four keyword arguments to the decorator; `url`, `methods`, `crossdomai
 
 ```python
 # mykarp.py
-# import the route decorator
-from src.server.helper.utils import route
 
 # the function init will be called when karp starts
 def init():
-    # the list of urls to export
-    urls = []
 
     # add the first one: 'infoabout/<lexicon>'
-    @route(urls, '<lexicon>')
+    @route('<lexicon>')
     def infoabout():
         return getinfo()
 
 
     # add another: '/addinfo'
-    @route(urls, methods=["POST"])
+    @route(methods=["POST"])
     def addinfo():
         return postinfo()
 
-    return urls
 ```
 
-Finally, update Karp's `main.py` to make it load your urls:
+Finally, update Karp's `main.py` to register your urls:
 
 ```python
 import backend as karpbackend  # the standard karp
@@ -87,9 +81,9 @@ import mykarp  # your karp
 
 
 def load_urls():
-    flaskhelper.register(karpbackend.init())
+    flaskhelper.register(karpbackend.init)
     # add this line:
-    flaskhelper.register(mykarp.init())
+    flaskhelper.register(mykarp.init)
 
 app = flaskhelper.app
 

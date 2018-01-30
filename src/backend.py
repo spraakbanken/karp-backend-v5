@@ -2,7 +2,6 @@
 
 from flask import jsonify, request, session
 from src.server.helper.flaskhelper import app
-from src.server.helper.utils import route
 import src.server.checkdbhistory as checkdbhistory
 import src.server.searching as searching
 import src.server.suggestions as suggestions
@@ -16,10 +15,9 @@ import logging
 """
 
 
-def init():
-    urls = []
+def init(route):
 
-    @route(urls)
+    @route()
     def autoupdate():
         import server.autoupdates as a
         import datetime
@@ -30,101 +28,101 @@ def init():
         doc2 = a.auto_update_document(doc, 'saol', 'update', 'testuser', date)
         return doc2
 
-    @route(urls)
+    @route()
     def explain():
         """ Asking a query and requesting a specific page of the answer """
         return searching.explain()
 
-    @route(urls)
+    @route()
     def query(page=0):
         """ Querying the database """
         return searching.query(page=page)
 
-    @route(urls)
+    @route()
     def querycount(page=0):
         """ Querying the database """
         return searching.querycount(page=page)
 
-    @route(urls)
+    @route()
     def minientry():
         """ Returns just some information about the results """
         return searching.minientry()
 
-    @route(urls)
+    @route()
     def statistics():
         """ Returns the counts and statistics """
         return searching.statistics()
 
-    @route(urls)
+    @route()
     def statlist():
         """ Returns the counts and statistics """
         return searching.statlist()
 
-    @route(urls)
+    @route()
     def random():
         return searching.random()
 
-    @route(urls)
+    @route()
     def autocomplete():
         return searching.autocomplete()
 
     # For seeing the posted data formated
-    @route(urls, 'format')
+    @route('format')
     def format():
         return searching.formatpost()
 
     # For seeing the posted data formated
-    @route(urls, '<lexicon>')
+    @route('<lexicon>')
     def export(lexicon):
         return searching.export(lexicon)
 
     # For deleting a lexical entry from elastic and sql
-    @route(urls, '<lexicon>/<_id>')
+    @route('<lexicon>/<_id>')
     def delete(lexicon, _id):
         return update.delete_entry(lexicon, _id, sql=True)
 
     # For updating a document
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def mkupdate(lexicon, _id):
         return update.update_doc(lexicon, _id)
 
     # For adding a document
-    @route(urls, '<lexicon>', methods=['POST'])
+    @route('<lexicon>', methods=['POST'])
     def add(lexicon):
         return update.add_doc(lexicon)
 
     # For adding a document which already has an id (one that has been deleted)
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def readd(lexicon, _id):
             return update.add_doc(lexicon, _id=_id)
 
     # For adding many document
-    @route(urls, '<lexicon>', methods=['POST'])
+    @route('<lexicon>', methods=['POST'])
     def addbulk(lexicon):
         return update.add_multi_doc(lexicon)
 
-    @route(urls, '<lexicon>/<parentid>', methods=['POST'])
+    @route('<lexicon>/<parentid>', methods=['POST'])
     def addchild(lexicon, parentid):
         return update.add_child(lexicon, parentid, suggestion=False)
 
     # For checking which resources a user may edit
-    @route(urls, methods=['GET'])
+    @route(methods=['GET'])
     def checkuser():
         return update.checkuser()
 
     # For retrieving update history of an entry
-    @route(urls, '<lexicon>/<_id>')
+    @route('<lexicon>/<_id>')
     def checkhistory(lexicon, _id):
         return checkdbhistory.checkhistory(lexicon, _id)
 
     # For retrieving update history of a user
-    @route(urls)
+    @route()
     def checkuserhistory():
         return checkdbhistory.checkuserhistory()
 
     # For retrieving update history of one lexicon
-    @route(urls, '<lexicon>')
-    @route(urls, '<lexicon>/<date>')
+    @route('<lexicon>')
+    @route('<lexicon>/<date>')
     def checklexiconhistory(lexicon, date=''):
         try:
             return checkdbhistory.checklexiconhistory(lexicon, date=date)
@@ -132,72 +130,72 @@ def init():
             raise e
 
     # For retrieving the lexicon order of a lexicon
-    @route(urls)
+    @route()
     def lexiconorder():
         return searching.lexiconorder()
 
     # For retrieving the difference between two versions
-    @route(urls, '<lexicon>/<_id>/latest')
-    @route(urls, '<lexicon>/<_id>/latest/<fromdate>')
-    @route(urls, '<lexicon>/<_id>/<fromdate>/<todate>')
+    @route('<lexicon>/<_id>/latest')
+    @route('<lexicon>/<_id>/latest/<fromdate>')
+    @route('<lexicon>/<_id>/<fromdate>/<todate>')
     def checkdifference(_id, lexicon, todate='', fromdate=''):
         return checkdbhistory.comparejson(lexicon, _id, todate=todate,
                                           fromdate=fromdate)
 
     # For submitting a suggestion
-    @route(urls, name='/suggestnew/<lexicon>', methods=['POST'])
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route(name='/suggestnew/<lexicon>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def suggest(lexicon, _id=None):
         return suggestions.suggest(lexicon, _id)
 
     # For seeing suggestions
-    @route(urls)
+    @route()
     def checksuggestions():
         return suggestions.checksuggestions()
 
     # For accepting a suggestion
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def acceptsuggestion(lexicon, _id):
         return suggestions.acceptsuggestion(lexicon, _id)
 
     # For accepting a suggestion
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def acceptandmodified(lexicon, _id):
         return suggestions.acceptmodified(lexicon, _id)
 
     # For rejecting a suggestion
-    @route(urls, '<lexicon>/<_id>', methods=['POST'])
+    @route('<lexicon>/<_id>', methods=['POST'])
     def rejectsuggestion(lexicon, _id):
         return suggestions.rejectsuggestion(lexicon, _id)
 
     # For seeing the status of a suggestion
-    @route(urls, '<lexicon>/<_id>')
+    @route('<lexicon>/<_id>')
     def checksuggestion(lexicon, _id):
         return suggestions.checksuggestion(lexicon, _id)
 
     # For seeing entries that are the alphabetically close
-    @route(urls, '<lexicon>')
+    @route('<lexicon>')
     def getcontext(lexicon):
         return searching.get_context(lexicon)
 
-    @route(urls, '<mode>')
+    @route('<mode>')
     def modeinfo(mode):
         """ Asking a query and requesting a specific page of the answer """
         return searching.modeinfo(mode)
 
-    @route(urls, '<lexicon>')
+    @route('<lexicon>')
     def lexiconinfo(lexicon):
         """ Asking a query and requesting a specific page of the answer """
         return searching.lexiconinfo(lexicon)
 
-    @route(urls)
+    @route()
     def modes():
         jsonmodes = {}
         for mode, info in configM.searchconfig.items():
             jsonmodes[mode] = info.get('groups', {})
         return jsonify(jsonmodes)
 
-    @route(urls)
+    @route()
     def groups():
         modes = {}
         for name, val in configM.lexiconconfig.items():
@@ -215,7 +213,7 @@ def init():
     # Other ways of finding and sending files:
     # http://flask.pocoo.org/docs/0.10/api/#flask.Flask.open_resource
     # http://flask.pocoo.org/docs/0.10/api/#flask.Flask.send_static_file
-    @route(urls)
+    @route()
     def order():
         orderlist = []
         for name, val in configM.lexiconconfig.conf.items():
@@ -223,8 +221,8 @@ def init():
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist
 
-    @route(urls, name='/')
-    @route(urls, name='/index')
+    @route(name='/')
+    @route(name='/index')
     def helppage():
         logging.debug('index page')
         logging.debug('\n\n')
@@ -241,11 +239,9 @@ def init():
         contents = re.sub('URL/', request.url.encode('utf8'), contents)
         return contents
 
-    @route(urls, '/logout')
+    @route('/logout')
     def logout():
         # remove the username from the session if it's there
         session.pop('username', None)
         session.pop('lexicon_list', None)
         return jsonify({"logged_out": True})
-
-    return urls
