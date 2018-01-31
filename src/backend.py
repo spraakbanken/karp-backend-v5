@@ -18,20 +18,14 @@ import logging
 def init(route):
 
     @route()
-    def autoupdate():
-        import server.autoupdates as a
-        import datetime
-        """ Asking a query and requesting a specific page of the answer """
-        logging.debug('\n\nhello')
-        doc = {}
-        date = datetime.datetime.now()
-        doc2 = a.auto_update_document(doc, 'saol', 'update', 'testuser', date)
-        return doc2
+    def explain():
+        """ Asking a query and show the elastic query """
+        return searching.explain()
 
     @route()
-    def explain():
-        """ Asking a query and requesting a specific page of the answer """
-        return searching.explain()
+    def test():
+        """ Show the elastic query """
+        return searching.test()
 
     @route()
     def query(page=0):
@@ -180,12 +174,12 @@ def init(route):
 
     @route('<mode>')
     def modeinfo(mode):
-        """ Asking a query and requesting a specific page of the answer """
+        """ Show information about a mode """
         return searching.modeinfo(mode)
 
     @route('<lexicon>')
     def lexiconinfo(lexicon):
-        """ Asking a query and requesting a specific page of the answer """
+        """ Show information about a lexicon """
         return searching.lexiconinfo(lexicon)
 
     @route()

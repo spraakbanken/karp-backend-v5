@@ -115,25 +115,26 @@ def querycount(page=0):
                    "size": configM.setupconfig['MAX_PAGE']}
         settings = parser.make_settings(permitted, default)
         q_ans = requestquery(page=page)
-        # TODO does search_type=count work with the new es version?
-        # if not, use query_then_fetch, size=0
 
         # raise the size for the statistics call
         stat_size = configM.setupconfig['MAX_PAGE']
         count_elasticq, more = parser.statistics(request.query_string,
                                                  settings,
                                                  order={"lexiconOrder":
-                                                        ("_term", "asc")},
+                                                        ("_key", "asc")},
                                                  show_missing=False,
                                                  force_size=stat_size)
         mode = settings['mode']
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
+        logging.debug('Will ask %s' % count_elasticq)
+        # TODO does search_type=count work with the new es version?
+        # if not, use query_then_fetch, size=0
         count_ans = es.search(index=index,
                               body=loads(count_elasticq),
-                              search_type="count",
+                              search_type="query_then_fetch",
                               # raise the size for the statistics call
-                              size=stat_size
+                              size=0 #stat_size
                               )
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except eh.KarpException as e:  # pass on karp exceptions
@@ -150,6 +151,18 @@ def querycount(page=0):
         raise eh.KarpQueryError("Could not parse data", debug_msg=e,
                                 query=request.query_string)
     return jsonify({'query': q_ans, 'distribution': distribution})
+
+
+def test():
+    query = request.query_string
+    auth, permitted = validate_user(mode="read")
+    try:
+        # default
+        settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
+        elasticq = parser.parse(query, settings)
+    except PErr.QueryError as e:
+        raise eh.KarpQueryError("Parse error", debug_msg=e, query=query)
+    return jsonify({'elastic_json_query': loads(elasticq)})
 
 
 def explain():
@@ -269,7 +282,8 @@ def statistics():
         index, typ = configM.get_mode_index(settings['mode'])
         # TODO allow more than 100 000 hits here?
         ans = es.search(index=index, body=loads(elasticq),
-                        search_type="count", size=settings['size'])
+                        #search_type="count", size=settings['size'])
+                        search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
     except PErr.AuthenticationError as e:
@@ -305,7 +319,8 @@ def statlist():
         size = settings['size']
         index, typ = configM.get_mode_index(settings['mode'])
         ans = es.search(index=index, body=loads(elasticq),
-                        search_type="count", size=size)
+                        #search_type="count", size=size)
+                        search_type="query_then_fetch", size=0)
         tables = []
         for key, val in ans['aggregations']['q_statistics'].items():
             if key.startswith('STAT_'):
@@ -334,7 +349,9 @@ def check_bucketsize(bucket_sizes, size, index, es):
     is_more = {}
     for sizebucket, bucketname in bucket_sizes:
         countans = es.search(index=index, body=loads(sizebucket),
-                             search_type="count")
+                             size=0,
+                             #search_type="count")
+                             search_type="query_then_fetch")
         logging.debug('countans %s' % countans)
         bucketsize = countans['aggregations']['more']['value']
         logging.debug('size %s, type %s' % (bucketsize, type(bucketsize)))
@@ -433,16 +450,16 @@ def autocomplete():
         ans = {}
         # if multi is not true, only one iteration of this loop will be done
         for q in qs:
-            boost = '''"functions": [{"boost_factor" : "500",
-                        "filter":{"term":{"%s":"%s"}}}]''' % (headboost, q)
+            boost = '''{"term": {"%s": {"boost" : "500", "value": "%s"}}}''' % (headboost, q)
 
             autocompleteq = configM.extra_src(mode, 'autocomplete', autocompletequery)
             exp = autocompleteq(mode, boost, q)
             autocomplete_field = configM.searchonefield(mode, 'autocomplete_field')
-            fields = ['"exists": {"field" : "%s"}' % autocomplete_field]
+            fields = '"exists": {"field" : "%s"}' % autocomplete_field
             # last argument is the 'fields' used for highlightning
             # TODO use filter?
-            elasticq = parser.search([exp] + p_extra, fields, '', usefilter=True)
+            elasticq = parser.search([exp, fields] + p_extra, [], '', usefilter=True)
+            logging.debug('Will send %s' % elasticq)
 
             es = configM.elastic(mode=mode)
             logging.debug('_source: %s' % autocomplete_field)
@@ -478,13 +495,12 @@ def autocompletequery(mode, boost, q):
         Returns a query object to be sent to elastic search
     """
     # other modes: don't care about msd
-    look_in = []
+    look_in = [boost]
     for boost_field in configM.searchfield(mode, 'boosts'):
         look_in.append('{"match_phrase" : {"%s" : "%s"}}' % (boost_field, q))
 
-    exp = '''"query" : {"function_score": {%s,
-             "query" : { "bool" : {"should" :
-             [%s]}}}}''' % (boost, ','.join(look_in))
+    exp = '''"bool" : {"should" :
+             [%s]}''' % (','.join(look_in))
 
     return exp
 

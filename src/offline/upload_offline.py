@@ -53,7 +53,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         sql_bulk = []
         for res in helpers.streaming_bulk(elastic, data):
             # res is a tuple, res[0]==True
-            ansname = 'index' if with_id else 'create'
+            ansname = 'index' # if with_id else 'create' -- changed from ES2
             _id = res[1].get(ansname).get('_id')
             source = data[ok].get('_source')
             if isinstance(source, dict):

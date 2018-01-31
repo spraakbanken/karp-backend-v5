@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import parsererror as PErr
 
 # TODO isfilter is (probably) not used anymore, delete from code
@@ -16,17 +17,16 @@ class Operator:
     query = ''     # The resulting query string
     isfilter = False  # Should the query be expressed as an filter?
 
-    def __init__(self, etype, op, isfilter=False, special_op={}):
+    def __init__(self, etype, op, isfilter=False):
         """ Creates an elasticObject object from
             etype, a string defining the expression type ("and","not")
             op,    a string defining the operation ("equals","missing"...)
             filter, a bool stating whether a filter should be constructed
-            special_op, a dictionary containg special instructions
-            for certain operators
         """
         self.ok_in_filter = True
         self.set_etype(etype)
-        self.set_op(op, isfilter, special_op=special_op)
+        self.set_op(op, isfilter)
+
 
     def string(self, field=None, query=None):
         """ Method for adding the field and/or operand name to the question
@@ -98,6 +98,7 @@ class Operator:
         """
         ops = []
         no_opers = len(operands)
+        logging.debug('operand %s ' % self.operator)
         if no_opers > self.max_operands or no_opers < self.min_operands:
             raise PErr.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
@@ -137,11 +138,9 @@ class Operator:
         if self.etype == "not":
             return '"bool" : {"must_not" : [%s]}' % ','.join(ops)
 
-    def set_op(self, op, isfilter=False, special_op={}):
+    def set_op(self, op, isfilter=False):
         """ Method for setting the operator, called when an object is
             initialized. Sets all relevant object fields
-            special_op is a dictionary containing special rules for certain
-            operators.
         """
         self.operator = op
         self.max_operands = 100  # could be infinite...
@@ -149,13 +148,12 @@ class Operator:
         self.ok_in_filter = True
         operators = ["equals", "contains", "missing", "exists", "regexp",
                      "startswith", "endswith", "lte", "gte"]
-        special_operator = special_op.get(op, '')
 
         if op == "equals":
             # Always use match_phrase, works better with tokenization.
             # (Eg. "gälla..5" in comment won't be found with term
             # self.operator =  "term" if max_words<=1 else "match_phrase"
-            self.operator = special_operator or "match_phrase"
+            self.operator = "match_phrase"
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter
@@ -165,12 +163,12 @@ class Operator:
             # This could be useful for searching in some "strict" (no
             # full-text) fields, like pos and might, in theory, be faster. In
             # practice, it is not (as of July 2015).
-            self.operator = special_operator or "term"
+            self.operator = "term"
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             self.isfilter = True
 
         elif op == "contains":
-            self.operator = special_operator or "match"
+            self.operator = "match"
             self.query = '"%s": {"FIELD": {"query": "QUERY", "operator": "and"}}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter (might be possible, not tested)
@@ -181,7 +179,7 @@ class Operator:
             # existing value
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
-            self.operator = special_operator or "missing"
+            self.operator = "missing"
             # self.isfilter = True
             self.query = '"missing" : {"field" : "FIELD"}'
         elif op == "exists":
@@ -189,31 +187,31 @@ class Operator:
             # existing value
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
-            self.operator = special_operator or "exist"
+            self.operator = "exist"
             # self.isfilter = True
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "regexp":
-            self.operator = special_operator or "regexp"
+            self.operator = "regexp"
             self.query = '"regexp" : {"FIELD" : "QUERY"}'
         elif op == "startswith":
             self.operator = "startswith"
-            op = special_operator or 'regexp'
+            op = 'regexp'
             self.query = '"%s" : {"FIELD" : "QUERY.*"}' % op
         elif op == "endswith":
             self.operator = "endswith"
-            op = special_operator or 'regexp'
+            op = 'regexp'
             self.query = '"%s" : {"FIELD" : ".*QUERY"}' % op
         elif op == "lte":
             self.operator = "lte"
-            op = special_operator or 'range'
+            op = 'range'
             self.query = '"%s" : {"FIELD" : {"lte" : "QUERY"}}' % op
         elif op == "gte":
             self.operator = "gte"
-            op = special_operator or 'range'
+            op = 'range'
             self.query = '"%s" : {"FIELD" : {"gte" : "QUERY"}}' % op
         elif op == "range":
             self.operator = "range"
-            op = special_operator or 'range'
+            op = 'range'
             self.max_operands = 2  # allows exactly two operands
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
