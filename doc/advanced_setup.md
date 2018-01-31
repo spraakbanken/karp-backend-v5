@@ -3,7 +3,7 @@
 
 Add extra urls
 =======
-If you would like your Karp to handle mor requests than the standard
+If you would like your Karp to handle more requests than the standard
 Karp, you can add an extra file where you define more url calls.
 For example, say that you want to make it possible to call
 `/infoabout/<lexicon>`
@@ -40,7 +40,8 @@ def getinfo(lexicon):
 Now, use the Karp `@route` decorator to add these to
 the ones known by Karp. The `@route` decorator is similar to the one
 in [Flask](http://flask.pocoo.org/docs/0.12/quickstart/), but will assume that the wanted url is the same
-as the name of the function.
+as the name of the function. By default it also allow cross domain calls to this url.
+
 Each decorated function will add an url to Karp.
 
 There are four keyword arguments to the decorator; `url`, `methods`, `crossdomain` and `name`.
@@ -57,7 +58,7 @@ There are four keyword arguments to the decorator; `url`, `methods`, `crossdomai
 # mykarp.py
 
 # the function init will be called when karp starts
-def init():
+def init(route):
 
     # add the first one: 'infoabout/<lexicon>'
     @route('<lexicon>')
@@ -118,7 +119,7 @@ The function that are decorated should take five arguments:
 |`date` |  the current date and time |
 
 The decorator `@auto_update` takes any number of arguments, each of them stating a lexicon
-that uses this automatical update.
+that uses this automatic update.
 
 Create a file where you define how the updates work.
 
@@ -135,6 +136,7 @@ from src.server.autoupdates import auto_update
 def add_computed_field(obj, lexicon, actiontype, user, date):
     if actiontype == 'add':
         obj['whathapppend'] = "I was added"
+        obj['auto_id'] = generate_id(lexicon)
     else:
         obj['whathapppend'] = "I've been around for a while"
     return
@@ -155,10 +157,13 @@ in your new file `mykarp.py` from the section above.
 
 Add extra src
 =============
-TODO
 Some functions in Karp relies on information specific to each lexicon.
 For example, the `export` function only works if every resource defines
 how it should be converted to other formats.
+For these functions, it is possible to inject your own source code in to Karp.
+Karp will look then for user defined code for the current mode and run it. If
+no user defined code is available, the default code will be used instead.
+
 Currently, there are five points in Karp's source code where you may define
 your own functionality:
 
@@ -168,17 +173,26 @@ your own functionality:
 | `format`       | (ans, es, mode, index, toformat) | is run for normal search (`query`). Adds data. |
 | `export`       | (ans, es, mode, index, toformat) |  is run for normal search (`query`).  Replaces the json data. |
 | `format_query` | (field, query)                   | alters the user's query string (eg by lowercasing it) |
-| `autocomplete` | (mode, boost, q)                 | is run for autocomplete query |
+| `autocomplete` | (mode, boost, query)             | is run for autocomplete query |
 
 
 It might be a good idea to call the same function for the three first
-calls (although they accept different arguments, for pratical reasons).
+calls (although they accept different arguments, for practical reasons).
 
-It is also possible to change how the `autocomplete` call behaves for
-different modes.
+| Argument |     |
+|----------|-----|
+| ans      | the result from ES (a json object) |
+| lexicon  | the lexicon, eg. "saldo"|
+| mode     | the current mode, eg "external" |
+| toformat | a string defining the wanted format, eg "csv" |
+| index    | the current index in case more data from ES is needed |
+| field    | the field the query is matched to, eg "wordform" |
+| query    | the querystring, eg "ost" |
+| boost    | the fields that the query should preferably be found in |
 
 
-Add the path to your config file `modes.json`.
+To add source code, simple create a python file with one or many of the functions above.
+Then put the path to this file `modes.json`.
 ```json
 "mymode": {
     ...
@@ -186,6 +200,20 @@ Add the path to your config file `modes.json`.
 }
 ```
 
+It is also possible to change how the `autocomplete` call behaves for
+different modes. The `autocomplete` will always look for entries that have a value set
+for the field defined for `autocomplete` in `config/modes.json` and then show this field.
+In the default setup, it will also search for the given query string in the
+fields specified as `boost` fields in `config/modes.json` (eg. `wordforms`).
+For example, the query `autocomplete?q=ost` will search entries matching
 
+1. the `autocomplete` field exists
+2. `ost` is found in the `boost` fields [modifiable part]
 
-Add extra stuff (skbl, match)
+and return the `autocomplete` field for these entries.
+
+The extra source code added to this part may modify the part 2 above. For the SB mode
+`external`, the query above would search for entries where
+
+1. the `autocomplete` field exists
+2. `ost` is found in a word form field which is not a compounding form
