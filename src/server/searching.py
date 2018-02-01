@@ -277,9 +277,9 @@ def statistics():
 
         elasticq, more = parser.statistics(query, settings, exclude=exclude)
         es = configM.elastic(mode=settings['mode'])
-        is_more = check_bucketsize(more, settings, mode, es)
-
         index, typ = configM.get_mode_index(settings['mode'])
+        is_more = check_bucketsize(more, settings, index, es)
+
         # TODO allow more than 100 000 hits here?
         ans = es.search(index=index, body=loads(elasticq),
                         #search_type="count", size=settings['size'])
@@ -314,10 +314,10 @@ def statlist():
         elasticq, more = parser.statistics(query, settings, exclude=exclude,
                                            prefix='STAT_')
         es = configM.elastic(mode=settings['mode'])
-        is_more = check_bucketsize(more, settings["size"], mode, es)
+        index, typ = configM.get_mode_index(settings['mode'])
+        is_more = check_bucketsize(more, settings["size"], index, es)
         # TODO allow more than 100 000 hits here?
         size = settings['size']
-        index, typ = configM.get_mode_index(settings['mode'])
         ans = es.search(index=index, body=loads(elasticq),
                         #search_type="count", size=size)
                         search_type="query_then_fetch", size=0)
