@@ -301,7 +301,7 @@ Set this to the same value as in `scan_limit` in `config.json`.
 ES provides a set of built-in analyzers, and at Språkbanken we have added some
 more to fit our data.
 The default analyzer in ES will split words on special characters (-,\_,.,"...).
-If that’s not what you want, consider the built-in `keyword` analyzer treats the
+If that’s not what you want, consider the type `keyword`, which treats the
 whole string as one token (useful for different types of identifiers, or
 possibly multiwords expression that should not be analyzed as separate
 tokens).
@@ -340,21 +340,21 @@ This will give you the file `newmappingconf.json`, which you can use as your `ma
 Modify the settings mentioned above as needed.
 What’s important is to look at the fields `copy_to`, `analyzer`,
 `index` and `type` for each of your data fields.
-In the below example, we see that `"blissName"` is of type `"string"`, and is copied to `all_text`,
+In the below example, we see that `"blissName"` is of type `"text"`, and is copied to `all_text`,
 meaning that it will be searchable in free text searches.
 Since no analyzer is specified, ES will use its standard text analyzer.
-`"category"` is also a `string`, but should be analyzed with our custom analyzer.
+`"category"` is also a `text`, but should be analyzed with our custom analyzer.
 `"blissID"` is not indexed at all, meaning that it will not be searchable, neither in simple
 nor extended queries.
 
 ```json
 "blissName": {
   "copy_to" : "all_text",
-  "type": "string"
+  "type": "text"
 },
 "category": {
   "copy_to" : "all_text",
-  "type": "string",
+  "type": "text",
   "analyzer" : "full_name"
 },
 "blissID": {
@@ -371,7 +371,7 @@ This is done by adding the special field called `fields`. In the example mapping
 you’ll see that `FormRepresentations.baseform` has an extra line:
 
 ```json
-"fields" : {"sortform" : {"type" : "string", "analyzer" : "keyword"}}
+"fields" : {"sortform" : {"type" : "keyword"}}
 ```
 
 By using this, we can search both `FormRepresentations.baseform` - where multiword
