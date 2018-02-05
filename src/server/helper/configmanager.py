@@ -155,7 +155,7 @@ def get_lexiconlist(mode):
     for group in modeconf.get('groups', []):
         grouplist.append(group)
     for lex, lexconf in C.lexiconconfig.items():
-        if lexconf.get('order', -1) in grouplist:
+        if lexconf.get('mode', '') in grouplist:
             lexiconlist.add(lex)
 
     return list(lexiconlist)

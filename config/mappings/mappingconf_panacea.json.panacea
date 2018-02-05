@@ -1,30 +1,31 @@
 {
-    "testmapping": {
-        "mappings": {
+   "mappings": {
             "lexicalentry": {
                 "properties": {
                     "pos_german": {
-                        "type": "string"
+                        "type": "keyword"
                     },
                     "lexiconName": {
-                        "type": "string"
+                        "type": "keyword"
                     },
                     "lexiconOrder": {
-                        "type": "long"
+                        "type": "byte"
                     },
                     "lemma_german": {
-                        "type": "string"
+                        "type": "text",
+                        "fields": {"raw": {"type": "keyword"}}
                     },
                     "english": {
                         "properties": {
                             "lemma_english": {
-                                "type": "string"
+                                "type": "text",
+                                "fields": {"raw": {"type": "keyword"}}
                             },
                             "target_prob": {
                                 "type": "double"
                             },
                             "pos_english": {
-                                "type": "string"
+                                "type": "keyword"
                             },
                             "corpus_prob": {
                                 "type": "double"

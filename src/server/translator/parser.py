@@ -170,8 +170,11 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     logging.debug('construct from %s' % operands)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
-        if not f_query.ok_in_filter:
-            q = '"query" : {%s}' % q
+        # TODO for querycount (statistics) with extended queries
+        # if something else breaks, add f_query.ok_in_filter for this instance
+        # and uncomment the below if clause
+        # if not f_query.ok_in_filter:
+        #     q = '"query" : {%s}' % q
         filters.append(q)
     else:
         exps.append(q)
@@ -269,6 +272,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
                  is wanted
         Returns a string, representing complete elasticsearch object
     """
+    logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
     if isfilter:  # add to filter list
         filters += exps
         exps = []  # nothing left to put in query
@@ -292,7 +296,9 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
         q = construct_exp(exps+filters, querytype="must")
         return '{"query"  : {"bool" : {"filter": {"bool": {%s}}}} %s}' % (q, highlight_str)
 
+    logging.debug("construct %s " % filters)
     f = construct_exp(filters, querytype="filter")
+    logging.debug("got %s\n\n" % f)
     if isfilter:
         return f
 

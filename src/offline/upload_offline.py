@@ -412,6 +412,40 @@ def make_structure():
     return es.indices.update_aliases('{"actions" : [%s]}'
                                      % ','.join(add_actions))
 
+def delete_all():
+    # delete all indices
+    for alias, aliasconf in configM.searchconfig.items():
+        es = configM.elastic(alias)
+        try:
+            es.indices.delete('*')
+        except:
+            print 'could not delete es data form mode %s' % alias
+        try:
+            # delete all our lexicons in sql
+            for name in configM.get_lexiconlist(alias):
+                db.deletebulk(lexicon=name)
+        except:
+            print 'could not delete sql data form mode %s' % alias
+    print 'Successfully deleted all data'
+
+
+def delete_mode(mode):
+    # delete all indices
+    es = configM.elastic(mode)
+    try:
+        #print 'delete', '%s*' % mode
+        es.indices.delete('%s*' % mode)
+    except:
+        print 'could not delete es data form mode %s' % mode
+    try:
+        # delete all our lexicons in sql
+        for name in configM.get_lexiconlist(mode):
+            db.deletebulk(lexicon=name)
+    except:
+        print 'could not delete sql data form mode %s' % mode
+    print 'Successfully deleted all data'
+
+
 ####################
 
 usage = """Usage:

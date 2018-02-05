@@ -24,7 +24,7 @@ class Operator:
             filter, a bool stating whether a filter should be constructed
         """
         self.ok_in_filter = True
-        self.set_etype(etype)
+        self.set_etype(etype, op)
         self.set_op(op, isfilter)
 
 
@@ -87,8 +87,11 @@ class Operator:
 
         return self.query
 
-    def set_etype(self, etype):
+    def set_etype(self, etype, op):
         "Sets the expression type"
+        if op == "missing":
+            # missing filter is deprecated, use negated 'exists' instead
+            etype = "and" if etype == "not" else "not"
         self.etype = etype
 
     def construct_query(self, operands):
@@ -177,11 +180,12 @@ class Operator:
         elif op == "missing":
             # This filter consider empty strings (but not empty lists) to be an
             # existing value
+            # missing is deprecated in ES, use negated 'exists' instead
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
-            self.operator = "missing"
+            self.operator = "exist"  # "missing"
             # self.isfilter = True
-            self.query = '"missing" : {"field" : "FIELD"}'
+            self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "exists":
             # This filter consider empty strings (but not empty lists) to be an
             # existing value

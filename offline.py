@@ -20,3 +20,16 @@ if sys.argv[1] == '--publish_mode':
    upload.publish_group(group, suffix)
    print 'Upload successful'
 
+
+# Commented since dangerous!
+if sys.argv[1] == '--delete_all':
+   upload.delete_all()
+   print 'Deletion successful'
+
+
+# Commented since dangerous!
+if sys.argv[1] == '--delete_mode':
+   mode = sys.argv[2]
+   upload.delete_mode(mode)
+   print 'Deletion successful'
+

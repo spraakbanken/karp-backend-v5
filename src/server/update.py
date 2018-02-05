@@ -119,7 +119,7 @@ def update_doc(lexicon, _id, data=None, live=True):
     try:
         index, typ = configM.get_lexicon_index(lexicon)
         es = configM.elastic(lexicon=lexicon)
-        origin = es.get(index=index, id=_id)
+        origin = es.get(index=index, doc_type=typ, id=_id)
     except Exception as e:
         logging.warning("Looking for entry at the wrong place:")
         logging.exception(e)
@@ -318,7 +318,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
 def add_child(lexicon, parentid, suggestion=False):
 
     es, index, typ = helpers.get_update_index(lexicon, suggestion=suggestion)
-    parent = es.get(index=index, id=parentid).get("_source")
+    parent = es.get(index=index, doc_type=typ, id=parentid).get("_source")
 
     data = helpers.read_data()
     data_doc = data.get('doc', '') or data.get('_source')
