@@ -55,7 +55,8 @@ def create_table(metadata):
                          sql.Column('source', sql.types.Text(2**24-1)),
                          sql.Column('msg', sql.String(160)),
                          sql.Column('lexicon', sql.String(50), index=True),
-                         sql.Column('status', status_change)
+                         sql.Column('status', status_change),
+                         sql.Column('version', sql.Integer)
                          )
     sql.Index('historyindex', db_entry.c.lexicon, db_entry.c.status, db_entry.c.date)
     return db_entry
