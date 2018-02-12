@@ -274,7 +274,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
         Returns a string, representing complete elasticsearch object
     """
     logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
-    constant_s = ('"constant_score": {', '}') if constant_score else ('','')
+    constant_s = ('"constant_score": {"filter": {', '}}') if constant_score else ('','')
     if isfilter:  # add to filter list
         filters += exps
         exps = []  # nothing left to put in query
@@ -295,8 +295,10 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
 
     # extended queries: always use filter, scoring is never used
     if usefilter and not isfilter:
-        q = construct_exp(exps+filters, querytype="must")
-        return '{"query" : {%s: {"filter": {"bool": {"filter": {"bool": {%s}}} %s}}}}%s' % (q, constant_s[0], highlight_str, constant_s[1])
+        q = construct_exp(exps+filters, querytype="must", constant_score=constant_s[0])
+        logging.debug('Constant 0 0: %s \n 1: %s' % (constant_s))
+        logging.debug('{"query" : {%s "bool": {%s}}%s %s}' % (constant_s[0], q, constant_s[1], highlight_str))
+        return '{"query" : {%s "bool": {%s}}%s %s}' % (constant_s[0], q, constant_s[1], highlight_str)
 
     logging.debug("construct %s " % filters)
     f = construct_exp(filters, querytype="filter")
@@ -305,10 +307,12 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
         return f
 
     if f and exps:
-        q = construct_exp(exps, querytype="must")
-        return '{"query": {%s "filter": {"bool" : {%s,%s}}}}%s' % (constant_s[0], f, q, constant_s[1])
+        q = construct_exp(exps, querytype="must", constant_score=constant_s[0])
+        logging.debug('Constant 1 0: %s \n 1: %s' % (constant_s))
+        return '{"query": {%s "bool" : {%s,%s}}}%s' % (constant_s[0], f, q, constant_s[1])
     else:
-        q = construct_exp(exps, constant_score=constant_score)
+        logging.debug('Constant 2 0: %s \n 1: %s' % (constant_s))
+        q = construct_exp(exps, querytype="query", constant_score=constant_s[0])
     return '{%s %s}' % (f+q, highlight_str)
 
 
@@ -414,7 +418,7 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
 
         count_errors = '' #'"show_term_doc_count_error": true, '
         to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
-                       % (prefix, bucket, count_errors, terms, bucket, add_size,
+                       % (prefix, bucket, terms, count_errors, bucket, add_size,
                           mode, bucket_order, to_add)
 
         # construct query for entries missing the current field/bucket
