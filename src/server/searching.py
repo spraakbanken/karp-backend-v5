@@ -5,7 +5,6 @@ from flask import request, jsonify, Response
 from itertools import chain
 from json import loads, dumps
 import re
-from urllib2 import unquote
 
 import src.dbhandler.dbhandler as db
 import src.server.errorhandler as eh
@@ -37,17 +36,16 @@ def query(page=0):
 def requestquery(page=0):
     """ The Function for querying our database """
     # page is assumed to be 0 indexed here
-    query = request.query_string
     auth, permitted = validate_user(mode="read")
     try:
         # default values
         default = {'size': 25, 'page': page, 'version': 'true'}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.parse(query, settings)
+        elasticq = parser.parse(settings)
     except PErr.QueryError as e:
         logging.exception(e)
         raise eh.KarpQueryError('Parse error', debug_msg=e.message,
-                                query=query)
+                                query=request.query_string)
     except PErr.AuthenticationError as e:
         logging.exception(e)
         msg = e.message
@@ -58,7 +56,7 @@ def requestquery(page=0):
     except Exception as e:  # catch *all* exceptions
         logging.exception(e)
         raise eh.KarpQueryError("Could not parse data", debug_msg=e,
-                                query=query)
+                                query=request.query_string)
     mode = settings['mode']
     sort = sortorder(settings, mode, settings.get('query_command', ''))
     start = settings['start'] if 'start' in settings\
@@ -74,7 +72,6 @@ def requestquery(page=0):
                               '_source_exclude': exclude,
                               'version': settings['version'],
                               'search_type': settings.get('search_type', None)})
-                              #'search_type': 'dfs_query_then_fetch'})
 
     if settings.get('highlight', False):
         clean_highlight(ans)
@@ -119,8 +116,7 @@ def querycount(page=0):
 
         # raise the size for the statistics call
         stat_size = configM.setupconfig['MAX_PAGE']
-        count_elasticq, more = parser.statistics(request.query_string,
-                                                 settings,
+        count_elasticq, more = parser.statistics(settings,
                                                  order={"lexiconOrder":
                                                         ("_key", "asc")},
                                                  show_missing=False,
@@ -135,7 +131,7 @@ def querycount(page=0):
                               body=loads(count_elasticq),
                               search_type="query_then_fetch",
                               # raise the size for the statistics call
-                              size=0 #stat_size
+                              size=0  # stat_size
                               )
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except eh.KarpException as e:  # pass on karp exceptions
@@ -155,26 +151,24 @@ def querycount(page=0):
 
 
 def test():
-    query = request.query_string
     auth, permitted = validate_user(mode="read")
     try:
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(query, settings)
+        elasticq = parser.parse(settings)
     except PErr.QueryError as e:
-        raise eh.KarpQueryError("Parse error", debug_msg=e, query=query)
+        raise eh.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     return jsonify({'elastic_json_query': loads(elasticq)})
 
 
 def explain():
-    query = request.query_string
     auth, permitted = validate_user(mode="read")
     try:
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(query, settings)
+        elasticq = parser.parse(settings)
     except PErr.QueryError as e:
-        raise eh.KarpQueryError("Parse error", debug_msg=e, query=query)
+        raise eh.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     es = configM.elastic(mode=settings['mode'])
     index, typ = configM.get_mode_index(settings['mode'])
     ex_ans = es.indices.validate_query(index=index,
@@ -189,12 +183,11 @@ def minientry():
     max_page = configM.setupconfig['MINIENTRY_PAGE']
     auth, permitted = validate_user(mode="read")
     try:
-        query = request.query_string
-        mode = parser.get_mode(query)
+        mode = parser.get_mode()
         default = {'show': configM.searchfield(mode, 'minientry_fields'),
                    'size': 25}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.parse(query, settings)
+        elasticq = parser.parse(settings)
         show = settings['show']
         if not auth:
             # show = show - exclude
@@ -221,7 +214,7 @@ def minientry():
         raise eh.KarpAuthenticationError(msg)
     except PErr.QueryError as e:
         raise eh.KarpQueryError("Parse error, %s" % e.message, debug_msg=e,
-                                query=query)
+                                query=request.query_string)
     except eh.KarpException as e:  # pass on karp exceptions
         logging.exception(e)
         raise
@@ -233,12 +226,11 @@ def minientry():
 def random():
     auth, permitted = validate_user(mode="read")
     try:
-        query = request.query_string
-        mode = parser.get_mode(query)
+        mode = parser.get_mode()
         default = {"show": configM.searchfield(mode, 'minientry_fields'),
                    "size": 1}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.random(query, settings)
+        elasticq = parser.random(settings)
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
         es_q = {'index': index, 'body': loads(elasticq),
@@ -262,21 +254,20 @@ def random():
         raise
     except Exception as e:  # catch *all* exceptions
         logging.exception(e)
-        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=query)
+        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def statistics():
     """ Returns the counts and stats for the query """
     auth, permitted = validate_user(mode="read")
     try:
-        query = request.query_string
-        mode = parser.get_mode(query)
+        mode = parser.get_mode()
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
         exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
 
-        elasticq, more = parser.statistics(query, settings, exclude=exclude)
+        elasticq, more = parser.statistics(settings, exclude=exclude)
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
         is_more = check_bucketsize(more, settings, index, es)
@@ -284,7 +275,6 @@ def statistics():
         # TODO allow more than 100 000 hits here?
         logging.debug('stat body %s' % elasticq)
         ans = es.search(index=index, body=loads(elasticq),
-                        #search_type="count", size=settings['size'])
                         search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
@@ -297,7 +287,7 @@ def statistics():
         raise
     except Exception as e:  # catch *all* exceptions
         logging.exception(e)
-        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=query)
+        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def statlist():
@@ -305,15 +295,14 @@ def statlist():
     """ Returns the counts and stats for the query """
     auth, permitted = validate_user(mode="read")
     try:
-        query = request.query_string
-        mode = parser.get_mode(query)
+        mode = parser.get_mode()
         logging.debug('mode is %s' % mode)
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
 
         exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
-        elasticq, more = parser.statistics(query, settings, exclude=exclude,
+        elasticq, more = parser.statistics(settings, exclude=exclude,
                                            prefix='STAT_')
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
@@ -321,7 +310,6 @@ def statlist():
         # TODO allow more than 100 000 hits here?
         size = settings['size']
         ans = es.search(index=index, body=loads(elasticq),
-                        #search_type="count", size=size)
                         search_type="query_then_fetch", size=0)
         tables = []
         for key, val in ans['aggregations']['q_statistics'].items():
@@ -344,7 +332,7 @@ def statlist():
     except Exception as e:  # catch *all* exceptions
         # raise
         logging.exception(e)
-        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=query)
+        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def check_bucketsize(bucket_sizes, size, index, es):
@@ -352,7 +340,6 @@ def check_bucketsize(bucket_sizes, size, index, es):
     for sizebucket, bucketname in bucket_sizes:
         countans = es.search(index=index, body=loads(sizebucket),
                              size=0,
-                             #search_type="count")
                              search_type="query_then_fetch")
         logging.debug('countans %s' % countans)
         bucketsize = countans['aggregations']['more']['value']
@@ -399,11 +386,9 @@ def formatpost():
     auth, permitted = validate_user(mode="read")
     # find the wanted format
     settings = parser.make_settings(permitted, {'size': 25})
-    query = request.query_string
-    parsed = parser.parse_qs(query)
-    parser.parse_extra(parsed, settings)
+    parser.parse_extra(settings)
     to_format = settings.get('format', '')
-    mode = parser.get_mode(query)
+    mode = parser.get_mode()
     logging.debug('mode "%s"' % mode)
     index, typ = configM.get_mode_index(mode)
 
@@ -430,22 +415,23 @@ def autocomplete():
         The format of result depends on which flag that is set.
     """
     auth, permitted = validate_user(mode="read")
-    query = request.query_string
+    #query = request.query_string
     try:
         settings = parser.make_settings(permitted, {'size': 1000})
-        parsed = parser.parse_qs(query)
-        mode = parser.get_mode(query)
-        p_extra = parser.parse_extra(parsed, settings)
-        qs = parsed.get('q', []) or parsed.get('query', [])
-        multi = False
-        if not qs:
+        mode = parser.get_mode()
+        p_extra = parser.parse_extra(settings)
+        if 'q' in request.args or 'query' in request.args:
+            qs = [request.args.get('q', '') or request.args.get('query', '')]
+            logging.debug('qs is %s' % qs)
+            multi = False
+        else:
             # check if there are multiple words forms to complete
             qs = settings.get('multi', [])
             logging.debug('qs %s' % qs)
             multi = True
 
         # use utf8, escape '"'
-        qs = [re.sub('"', '\\"', q.decode('utf8')) for q in qs]
+        qs = [re.sub('"', '\\"', q) for q in qs]
 
         headboost = configM.searchfield(mode, 'boosts')[0]
         res = {}
@@ -487,7 +473,7 @@ def autocomplete():
         raise
     except Exception as e:  # catch *all* exceptions
         logging.exception(e)
-        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=query)
+        raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 # standard autocomplete
@@ -545,10 +531,9 @@ def testquery():
     auth, permitted = validate_user(mode="read")
     try:
         from translator import parser
-        query = request.query_string
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(query, settings)
+        elasticq = parser.parse(settings)
         mode = settings['mode']
         if not settings.get('sort', ''):
             # default: group by lexicon, then sort by score
@@ -557,15 +542,14 @@ def testquery():
             sort = settings['sort']
         start = settings['start'] if 'start' in settings\
                                   else settings['page'] * settings['size']
-        query = unquote(query)
-        elasticq = parser.parse(query)
+        elasticq = parser.parse()
         return elasticq + dumps({'sort': sort, '_from': start,
                                  'size': settings['size'],
                                  'version': 'true'})
     except Exception as e:  # catch *all* exceptions
         # TODO only catch relevant exceptions
         logging.exception(e)
-        raise eh.KarpGeneralError(e, query)
+        raise eh.KarpGeneralError(e, request.query_string)
 
 
 def get_context(lexicon):
@@ -578,11 +562,8 @@ def get_context(lexicon):
                                          'lexicon %s' % lexicon)
     # make default settings
     settings = parser.make_settings(permitted, {"size": 10, "resource": lexicon})
-    # parse querystring
-    query = request.query_string
-    parsed = parser.parse_qs(query)
     # parse parameter settings
-    parser.parse_extra(parsed, settings)
+    parser.parse_extra(settings)
 
     # set searching configurations
     mode = configM.get_lexicon_mode(lexicon)
@@ -633,7 +614,8 @@ def get_context(lexicon):
 
     # Construct queries to ES
     exps = []
-    querystring = settings.get('q', '').decode('utf8')  # the query string from the user
+    # the query string from the user
+    querystring = settings.get('q', '').decode('utf8')
     parser.parse_ext('and|resource|equals|%s' % lexicon, exps, [], mode)
     if querystring:
         if querystring.startswith('simple'):
@@ -643,10 +625,12 @@ def get_context(lexicon):
         parser.parse_ext(querystring, exps, [], mode)
 
     preexps = copy.deepcopy(exps)  # deep copy for the pre-query
-    hits_post = get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
-                             origentry_sort, mode, settings, es, index, place='post')
-    hits_pre = get_pre_post(preexps, center_id, sortfield, sortfieldname, sortvalue,
-                            origentry_sort, mode, settings, es, index, place='pre')
+    hits_post = get_pre_post(exps, center_id, sortfield, sortfieldname,
+                             sortvalue, origentry_sort, mode, settings,
+                             es, index, place='post')
+    hits_pre = get_pre_post(preexps, center_id, sortfield, sortfieldname,
+                            sortvalue, origentry_sort, mode, settings,
+                            es, index, place='pre')
     return jsonify({"pre": hits_pre[:settings['size']],
                     "post": hits_post[:settings['size']],
                     "center": centerentry})
@@ -717,17 +701,15 @@ def export(lexicon):
                                          'lexicon %s' % lexicon)
 
     settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
-    query = request.query_string
-    parsed = parser.parse_qs(query)
-    parser.parse_extra(parsed, settings)
+    parser.parse_extra(settings)
     date = settings.get('date', '')
     mode = settings.get('mode', '')
     if date:
-        from dateutil.parser import parserinfo, parse
+        import dateutil.parser as dateP
         from datetime import datetime
         # parse the date as inclusive (including the whole selected day)
-        date = parse(date, parserinfo(yearfirst=True),
-                     default=datetime(1999, 01, 01, 23, 59))
+        date = dateP.parse(date, dateP.parserinfo(yearfirst=True),
+                           default=datetime(1999, 01, 01, 23, 59))
 
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)

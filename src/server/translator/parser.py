@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import elasticObjects
 from elasticsearch import helpers as EShelpers
+from flask import request
 import fieldmapping as F
 import parsererror as PErr
 import src.server.helper.configmanager as configM
 import re
-from urlparse import parse_qs
 
 import logging
 """ Responsible for the translation from the query api to elastic queries """
 
 
-def get_mode(query):
-    return parse_qs(query).get('mode', [configM.standardmode])[0]
+# TODO removed first argument
+def get_mode():
+    return request.args.get('mode', configM.standardmode)
 
 
 def make_settings(permitted, in_settings):
@@ -21,7 +22,8 @@ def make_settings(permitted, in_settings):
     return settings
 
 
-def parse(query, settings={}, isfilter=False):
+# TODO removed first argument
+def parse(settings={}, isfilter=False):
     """ Parses a query on the form simple||..., extended||...
         returns the corresponding elasticsearch query object
         settings is a dictionary where the 'size' (the number of wanted hits)
@@ -30,11 +32,11 @@ def parse(query, settings={}, isfilter=False):
                  should be returned
         """
     # isfilter is used for minientries and some queries to statistics
-    parsed = parse_qs(query)
+    parsed = request.args
     # only one query is allowed
-    query = parsed.get('q', [''])[0] or parsed.get('query')
-    query = query.decode('utf8')  # use utf8, same as lexiconlist
-    p_extra = parse_extra(parsed, settings)
+    query = parsed.get('q', ['']) or parsed.get('query')
+    #query = query.decode('utf8')  # use utf8, same as lexiconlist
+    p_extra = parse_extra(settings)
     command, query = query.split('||', 1)
     settings['query_command'] = command
     highlight = settings.get('highlight', False)
@@ -57,14 +59,15 @@ def parse(query, settings={}, isfilter=False):
                       highlight=highlight, usefilter=usefilter)
 
 
-def get_command(query):
-    parsed = parse_qs(query)
-    query = parsed.get('q', [''])[0] or parsed.get('query')
+# TODO removed first argument
+def get_command():
+    query = request.args.get('q', ['']) or request.args.get('query')
     command, query = query.split('||', 1)
     return command
 
 
-def parse_extra(parsed, settings):
+# TODO removed first argument
+def parse_extra(settings):
     """ Parses extra information, such as resource and size """
     # TODO specify available options per url/function
     info = []
@@ -72,21 +75,23 @@ def parse_extra(parsed, settings):
                  'show', 'show_all', 'status', 'index', 'cardinality',
                  'highlight', 'format', 'export', 'mode', 'center', 'multi',
                  'date']
-    for k in parsed.keys():
+    for k in request.args.keys():
         if k not in available:
             raise PErr.QueryError("Option not recognized: %s.\
                                    Available options: %s"
                                   % (k, ','.join(available)))
 
-    if 'mode' in parsed:
+    if 'mode' in request.args:
         # logging.debug('change mode -> %s' % (parsed))
-        settings['mode'] = parsed['mode'][0]
+        settings['mode'] = request.args['mode']
 
     mode = settings.get('mode')
     logging.info('Mode %s' % mode)
     # set resources, based on the query and the user's permissions
-    if 'resource' in parsed:
-        wanted = sum((r.split(',') for r in parsed['resource']), [])
+    if 'resource' in request.args:
+        wanted = request.args['resource'].split(',')
+        # TODO this slightly changes the behaviour
+        #wanted = sum((request.args['resource'].split(',') for r in request.args['resource']), [])
     else:
         wanted = []
     ok_lex = []  # lists all allowed lexicons
@@ -111,43 +116,45 @@ def parse_extra(parsed, settings):
     # the below line is used by checklexiconhistory and checksuggestions
     settings['resource'] = ok_lex
 
-    if 'size' in parsed:
-        size = parsed['size'][0]
+    if 'size' in request.args:
+        size = request.args['size']
         settings['size'] = float(size) if size == 'inf' else int(size)
-    if 'sort' in parsed:
+    if 'sort' in request.args:
+        #settings['sort'] = F.lookup_multiple(request.args['sort'].split(','), mode)
         # TODO many sort?
         settings['sort'] = sum([F.lookup_multiple(s, mode)
-                                for s in parsed['sort'][0].split(',')], [])
-    if 'page' in parsed:
-        settings['page'] = min(int(parsed['page'][0])-1, 0)
-    if 'start' in parsed:
-        settings['start'] = int(parsed['start'][0])
-    if 'buckets' in parsed:
-        settings['buckets'] = [F.lookup(r, mode) for r
-                               in parsed['buckets'][0].split(',')]
+                               for s in request.args['sort'].split(',')], [])
+    if 'page' in request.args:
+        settings['page'] = min(int(request.args['page'])-1, 0)
+    if 'start' in request.args:
+        settings['start'] = int(request.args['start'])
+    if 'buckets' in request.args:
+         settings['buckets'] = [F.lookup(r, mode) for r
+                                in request.args['buckets'].split(',')]
 
-    if 'show' in parsed:
+    if 'show' in request.args:
+        #settings['show'] = F.lookup_multiple(request.args['show'][0].split(','), mode)
         settings['show'] = sum([F.lookup_multiple(s, mode)
-                                for s in parsed['show'][0].split(',')], [])
+                                for s in request.args['show'].split(',')], [])
     # to be used in random
-    if 'show_all' in parsed:
+    if 'show_all' in request.args:
         settings['show'] = []
 
-    if 'cardinality' in parsed:
+    if 'cardinality' in request.args:
         settings['cardinality'] = True
-    if 'highlight' in parsed:
+    if 'highlight' in request.args:
         settings['highlight'] = True
 
     # status is only used by checksuggestions
     list_flags = ['status', 'index', 'multi']
     for flag in list_flags:
-        if flag in parsed:
-            settings[flag] = sum((r.split(',') for r in parsed[flag]), [])
+        if flag in request.args:
+            settings[flag] = request.args[flag].split(',')
 
     single_flags = ['format', 'export', 'center', 'q', 'date']
     for flag in single_flags:
-        if flag in parsed:
-            settings[flag] = parsed[flag][0]
+        if flag in request.args:
+            settings[flag] = request.args[flag]
     return info
 
 
@@ -247,7 +254,7 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
     for field in boost_list:
         # TODO used to be term, is match ok?
         qs.append('"match": {"%s" : {"query": "%s", "boost": "%d"}}'
-                        % (field, text, boost_score))
+                  % (field, text, boost_score))
         boost_score -= 100
 
     q = '"bool" : {"should" :[%s]}' % ','.join('{'+q+'}' for q in qs)
@@ -265,7 +272,8 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
     return '{"query": {%s} %s}' % (q, highlight_str)
 
 
-def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True):
+def search(exps, filters, fields, isfilter=False, highlight=False,
+           usefilter=False, constant_score=True):
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
         filters is a list of filters (unfinished elasticsearch objects)
@@ -274,7 +282,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
         Returns a string, representing complete elasticsearch object
     """
     logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
-    constant_s = ('"constant_score": {"filter": {', '}}') if constant_score else ('','')
+    constant_s = ('"constant_score": {"filter": {', '}}') if constant_score else ('', '')
     if isfilter:  # add to filter list
         filters += exps
         exps = []  # nothing left to put in query
@@ -297,7 +305,6 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
     if usefilter and not isfilter:
         q = construct_exp(exps+filters, querytype="must", constant_score=constant_s[0])
         logging.debug('Constant 0 0: %s \n 1: %s' % (constant_s))
-        logging.debug('{"query" : {%s "bool": {%s}}%s %s}' % (constant_s[0], q, constant_s[1], highlight_str))
         return '{"query" : {%s "bool": {%s}}%s %s}' % (constant_s[0], q, constant_s[1], highlight_str)
 
     logging.debug("construct %s " % filters)
@@ -342,9 +349,9 @@ def construct_exp(exps, querytype="filter", constant_score=True):
     return query
 
 
-def random(query, settings):
-    parsed = parse_qs(query)
-    resource = parse_extra(parsed, settings)
+# TODO removed first argument
+def random(settings):
+    resource = parse_extra(settings)
     resource = '"query": {%s}, ' % resource[0] if resource else ''
     elasticq = '''{"query": {"function_score": { %s "random_score": {}}}}
                ''' % (resource)
@@ -352,17 +359,17 @@ def random(query, settings):
     return elasticq
 
 
-def statistics(query, settings, exclude=[], order={}, prefix='',
+# TODO removed first argument
+def statistics(settings, exclude=[], order={}, prefix='',
                show_missing=True, force_size=-1):
     """ Constructs a ES query for an statistics view (aggregated information)
         Contains the number of hits in each lexicon, grouped by POS
     """
-    parsed = parse_qs(query)
-    q = parsed.get('q', '')
-    resource = parse_extra(parsed, settings)
+    q = request.args.get('q', '')
+    resource = parse_extra(settings)
     # q is the search query and/or the chosen resource
     if q:
-        q = parse(query, isfilter=True, settings=settings)
+        q = parse(isfilter=True, settings=settings)
     else:  # always filter to show only the permitted resources
         q = '"filter" : {%s}' % resource[0]
 
@@ -381,7 +388,7 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
     to_add = ''
     normal = not settings.get('cardinality')
     more = []  # collect queries about max size for each bucket
-    shard_size = 1000 # TODO how big? get from config
+    shard_size = 1000  # TODO how big? get from config
     # For saldo:
     # 26 000 => document count errors
     # 27 000 => no errors
@@ -416,10 +423,10 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
             max_size = 10000
             add_size = ',"size" : %s, "shard_size": %s' % (min(size or max_size, max_size), shard_size)
 
-        count_errors = '' #'"show_term_doc_count_error": true, '
+        count_errors = ''  # '"show_term_doc_count_error": true, '
         to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
-                       % (prefix, bucket, terms, count_errors, bucket, add_size,
-                          mode, bucket_order, to_add)
+                       % (prefix, bucket, terms, count_errors, bucket,
+                          add_size, mode, bucket_order, to_add)
 
         # construct query for entries missing the current field/bucket
         to_add_missing = '"%s%s_missing" : {"missing" : {"field" : "%s" %s} %s}'\
