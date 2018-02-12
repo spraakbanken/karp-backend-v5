@@ -282,6 +282,7 @@ def statistics():
         is_more = check_bucketsize(more, settings, index, es)
 
         # TODO allow more than 100 000 hits here?
+        logging.debug('stat body %s' % elasticq)
         ans = es.search(index=index, body=loads(elasticq),
                         #search_type="count", size=settings['size'])
                         search_type="query_then_fetch", size=0)
@@ -630,7 +631,7 @@ def get_context(lexicon):
     sortvalue = control_escape(origentry_sort)
     logging.debug(u'Orig entry escaped key %s' % sortvalue)
 
-    # Construct queries to es
+    # Construct queries to ES
     exps = []
     querystring = settings.get('q', '').decode('utf8')  # the query string from the user
     parser.parse_ext('and|resource|equals|%s' % lexicon, exps, [], mode)
@@ -642,40 +643,36 @@ def get_context(lexicon):
         parser.parse_ext(querystring, exps, [], mode)
 
     preexps = copy.deepcopy(exps)  # deep copy for the pre-query
-    parser.parse_ext('and|%s|gte|%s' % (sortfieldname, sortvalue),
-                     exps, [], mode)
-    elasticq_post = parser.search(exps, [], [], usefilter=True, constant_score=False)
+    hits_post = get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
+                             origentry_sort, mode, settings, es, index, place='post')
+    hits_pre = get_pre_post(preexps, center_id, sortfield, sortfieldname, sortvalue,
+                            origentry_sort, mode, settings, es, index, place='pre')
+    return jsonify({"pre": hits_pre[:settings['size']],
+                    "post": hits_post[:settings['size']],
+                    "center": centerentry})
 
-    parser.parse_ext('and|%s|lte|%s' % (sortfieldname, sortvalue),
-                     preexps, [], mode)
-    elasticq_pre = parser.search(preexps, [], [], usefilter=True, constant_score=False)
+
+def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
+                 origentry_sort, mode, settings, es, index, place='post'):
+    op = {'post': {'op': 'gte', 'sort': 'asc'},
+          'pre': {'op': 'lte', 'sort': 'desc'}}
+    parser.parse_ext('and|%s|%s|%s' % (sortfieldname, op[place]['op'], sortvalue),
+                     exps, [], mode)
+    elasticq_q = parser.search(exps, [], [], usefilter=True, constant_score=True)
 
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
     show = configM.searchfield(mode, 'minientry_fields')
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
-    ans_pre = parser.adapt_query(size*3, 0, es, elasticq_pre,
-                                 {'size': size*3, 'from_': 0,
-                                  'sort': ['%s:desc' % f for f in sortfield],
-                                  'index': index,
-                                  '_source': show,
-                                  'search_type': 'dfs_query_then_fetch'})
+    ans = parser.adapt_query(size*3, 0, es, elasticq_q,
+                             {'size': size*3, 'from_': 0,
+                              'sort': ['%s:%s' % (f, op[place]['sort']) for f in sortfield],
+                              'index': index,
+                              '_source': show})
 
-    ans_post = parser.adapt_query(size*3, 0, es, elasticq_post,
-                                  {'size': size*3, 'from_': 0,
-                                   'sort': ['%s:asc' % f for f in sortfield],
-                                   'index': index,
-                                   '_source': show,
-                                   'search_type': 'dfs_query_then_fetch'})
-
-    hits_pre = ans_pre.get('hits', {}).get('hits', [])
-    hits_post = ans_post.get('hits', {}).get('hits', [])
-    hits_pre = go_to_sortkey(hits_pre, origentry_sort, center_id)
-    hits_post = go_to_sortkey(hits_post, origentry_sort, center_id)
-    return jsonify({"pre": hits_pre[:settings['size']],
-                    "post": hits_post[:settings['size']],
-                    "center": centerentry})
+    hits = ans.get('hits', {}).get('hits', [])
+    return go_to_sortkey(hits, origentry_sort, center_id)
 
 
 def go_to_sortkey(hits, sort, center_id):
