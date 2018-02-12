@@ -73,7 +73,8 @@ def requestquery(page=0):
                               'index': index,
                               '_source_exclude': exclude,
                               'version': settings['version'],
-                              'search_type': 'dfs_query_then_fetch'})
+                              'search_type': settings.get('search_type', None)})
+                              #'search_type': 'dfs_query_then_fetch'})
 
     if settings.get('highlight', False):
         clean_highlight(ans)
@@ -608,7 +609,7 @@ def get_context(lexicon):
     else:
         exps = []
         parser.parse_ext('and|resource|equals|%s' % lexicon, exps, [], mode)
-        center_q = parser.search(exps, [], [], usefilter=True)
+        center_q = parser.search(exps, [], [], usefilter=True, constant_score=False)
         lexstart = es.search(index=index, doc_type=typ, size=1, body=center_q,
                              sort=['%s:asc' % f for f in sortfield])
         center_id = lexstart['hits']['hits'][0]['_id']
@@ -627,7 +628,6 @@ def get_context(lexicon):
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
     sortvalue = control_escape(origentry_sort)
-    sortvalue = control_escape(origentry_sort)
     logging.debug(u'Orig entry escaped key %s' % sortvalue)
 
     # Construct queries to es
@@ -644,11 +644,11 @@ def get_context(lexicon):
     preexps = copy.deepcopy(exps)  # deep copy for the pre-query
     parser.parse_ext('and|%s|gte|%s' % (sortfieldname, sortvalue),
                      exps, [], mode)
-    elasticq_post = parser.search(exps, [], [], usefilter=True)
+    elasticq_post = parser.search(exps, [], [], usefilter=True, constant_score=False)
 
     parser.parse_ext('and|%s|lte|%s' % (sortfieldname, sortvalue),
                      preexps, [], mode)
-    elasticq_pre = parser.search(preexps, [], [], usefilter=True)
+    elasticq_pre = parser.search(preexps, [], [], usefilter=True, constant_score=False)
 
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1

@@ -51,3 +51,21 @@ Tests
 TODO: DO MORE TESTS!
 Test that Karp-b is working by starting it
 `python src/main.py`
+
+
+Known bugs
+==========
+Counts from the `statistics` call may not be accurate when performing
+subaggregations (multiple buckets) on big indices unless the query
+restricts the search space. Using
+[`breadth_first`](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_collect_mode)
+ mode does not (always) help.
+
+
+Possible workarounds:
+
+ - use [composite aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-composite-aggregation.html)
+ instead, but this does not work with filtering.
+ - set a bigger shard_size (27 000 works for saldo), but this might break your ES cluster.
+ - have smaller indices (one lexicon per index) but this does not help for big lexicons or statistics over many lexicons.
+ - don't allow deeper subaggregations than 2. Chaning the `size` won't help.

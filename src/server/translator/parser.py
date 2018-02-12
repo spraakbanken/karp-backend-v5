@@ -40,6 +40,7 @@ def parse(query, settings={}, isfilter=False):
     highlight = settings.get('highlight', False)
     mode = settings.get('mode')
     if command == 'simple':
+        settings['search_type'] = 'dfs_query_then_fetch'
         return freetext(query, mode, isfilter=isfilter, extra=p_extra,
                         highlight=highlight)
     if command == "extended":
@@ -264,7 +265,7 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
     return '{"query": {%s} %s}' % (q, highlight_str)
 
 
-def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=False):
+def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True):
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
         filters is a list of filters (unfinished elasticsearch objects)
@@ -273,6 +274,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
         Returns a string, representing complete elasticsearch object
     """
     logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
+    constant_s = ('"constant_score": {', '}') if constant_score else ('','')
     if isfilter:  # add to filter list
         filters += exps
         exps = []  # nothing left to put in query
@@ -294,7 +296,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
     # extended queries: always use filter, scoring is never used
     if usefilter and not isfilter:
         q = construct_exp(exps+filters, querytype="must")
-        return '{"query"  : {"bool" : {"filter": {"bool": {%s}}}} %s}' % (q, highlight_str)
+        return '{"query" : {%s: {"filter": {"bool": {"filter": {"bool": {%s}}} %s}}}}%s' % (q, constant_s[0], highlight_str, constant_s[1])
 
     logging.debug("construct %s " % filters)
     f = construct_exp(filters, querytype="filter")
@@ -304,13 +306,13 @@ def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=Fal
 
     if f and exps:
         q = construct_exp(exps, querytype="must")
-        return '{"query"  : {"bool" : {%s,%s}}}' % (f, q)
+        return '{"query": {%s "filter": {"bool" : {%s,%s}}}}%s' % (constant_s[0], f, q, constant_s[1])
     else:
-        q = construct_exp(exps)
+        q = construct_exp(exps, constant_score=constant_score)
     return '{%s %s}' % (f+q, highlight_str)
 
 
-def construct_exp(exps, querytype="query"):
+def construct_exp(exps, querytype="filter", constant_score=True):
     """ Creates the final search object
         Returns a string representing the query object
         exps is a list of strings (unfinished elasticsearch objects)
@@ -325,11 +327,15 @@ def construct_exp(exps, querytype="query"):
         if querytype == "must":
             return '"must" : [%s]' % ','.join('{'+e+'}' for e in exps)
 
-        combinedquery = "query" if querytype == "must" else querytype
+        combinedquery = "filter" if querytype == "must" else querytype
         return '"%s" : {"bool" : {"must" : [%s]}}'\
                % (combinedquery, ','.join('{'+e+'}' for e in exps))
     # otherwise just put the expression in a query
-    return '"%s" : {%s}' % (querytype, exps[0])
+    if constant_score:
+        query = '"%s": {"constant_score": {%s}}' % (querytype, exps[0])
+    else:
+        query = '"%s": {%s}' % (querytype, exps[0])
+    return query
 
 
 def random(query, settings):
@@ -357,6 +363,7 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
         q = '"filter" : {%s}' % resource[0]
 
     buckets = settings.get('buckets')
+    logging.debug('buckets %s' % buckets)
     # buckets = buckets - exclude
     if exclude:
         # buckets = buckets - exclude
@@ -370,6 +377,10 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
     to_add = ''
     normal = not settings.get('cardinality')
     more = []  # collect queries about max size for each bucket
+    shard_size = 1000 # TODO how big? get from config
+    # For saldo:
+    # 26 000 => document count errors
+    # 27 000 => no errors
     for bucket in reversed(buckets):
         terms = 'terms' if normal else 'cardinality'
         # the sorting order for this bucket, used by querycount
@@ -381,12 +392,12 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
         to_add = ','+to_add if to_add else to_add
 
         # add size if the query is normal (i.e. not for cardinality queries)
-        add_size = ',"size" : %s' % size if normal else ''
+        add_size = ',"size" : %s, "shard_size": %s' % (size if normal else '', shard_size)
 
         # construct query for entries with the current field/bucket
         # mode = ', "collect_mode" : "breadth_first"' if normal else ''
         mode = ''
-        if len(buckets) > 3 or size > 1000:
+        if len(buckets) > 2 or size > 1000:
             # TODO to avoid es breaking, do not allow arbitrary deep bucketing
             # If the size is very small, also use breadth_first since it will
             # be faster
@@ -399,10 +410,11 @@ def statistics(query, settings, exclude=[], order={}, prefix='',
             mode = ', "collect_mode" : "breadth_first"'
             # if there are more than 3 buckets, also restrict the size
             max_size = 10000
-            add_size = ',"size" : %s' % min(size or max_size, max_size)
+            add_size = ',"size" : %s, "shard_size": %s' % (min(size or max_size, max_size), shard_size)
 
-        to_add_exist = '"%s%s" : {"%s" : {"field" : "%s" %s %s %s} %s}'\
-                       % (prefix, bucket, terms, bucket, add_size,
+        count_errors = '' #'"show_term_doc_count_error": true, '
+        to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
+                       % (prefix, bucket, count_errors, terms, bucket, add_size,
                           mode, bucket_order, to_add)
 
         # construct query for entries missing the current field/bucket
