@@ -3,27 +3,24 @@ from json import loads
 import logging
 import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
-from urlparse import parse_qs
 
 
 def get_user():
     auth = request.authorization
+    if auth is None:
+        return 'UnkownUser'
     return auth.username
 
 
 def get_size(default=10, settings={}):
     from src.server.translator.parser import parse_extra
-    query = request.query_string
-    parsed = parse_qs(query)
-    parse_extra(parsed, settings)
+    parse_extra(settings)
     return settings.get('size', default)
 
 
 def get_querysettings(settings):
     from src.server.translator.parser import parse_extra
-    query = request.query_string
-    parsed = parse_qs(query)
-    parse_extra(parsed, settings)
+    parse_extra(settings)
 
 
 def check_lexiconName(lexicon, entry_lexicon, _id, action):

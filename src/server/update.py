@@ -26,9 +26,7 @@ def checkuser():
 def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
     # delete by id
     try:
-        query = request.query_string
-        parsed = parse_qs(query)
-        msg = parsed.get('message', ['removed'])[0]
+        msg = request.args.get('message', ['removed'])
         es, index, typ = helpers.get_update_index(lexicon, suggestion=suggestion)
         ans_entry = es.get(index=index, doc_type=typ, id=_id)
         lexiconName = ans_entry['_source']['lexiconName']
@@ -219,11 +217,12 @@ def add_multi_doc(lexicon, index=''):
             doc['lexiconName'] = lexicon
             validate.validate_json(doc, lexicon)
             date = datetime.datetime.now()
+            logging.debug('\n\nWill go to autoupdate\n\n')
             auto_update_document(doc, lexicon, 'add', user, date)
             bulk.append({'_index': index, '_type': typ, '_source': doc})
 
         for index, res in enumerate(eshelpers.streaming_bulk(es, bulk)):
-            _id = res[1].get('create').get('_id')
+            _id = res[1].get('index').get('_id')
             source = bulk[index].get('_source')
             if isinstance(source, dict):
                 source = dumps(source)

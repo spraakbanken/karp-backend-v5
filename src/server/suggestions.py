@@ -1,5 +1,6 @@
 from elasticsearch import exceptions as esExceptions
 import src.server.errorhandler as eh
+from src.dbhandler.dbhandler import dbselect
 from flask import request, jsonify
 from json import loads
 import logging
@@ -14,7 +15,6 @@ def suggest(lexicon, _id):
 
 
 def checksuggestions():
-    from dbhandler.dbhandler import dbselect
     auth, permitted = validate_user()
     settings = {'allowed': permitted}
     helpers.get_querysettings(settings)
@@ -37,6 +37,7 @@ def checksuggestions():
 def acceptsuggestion(lexicon, _id):
     try:
         ans = savesuggestion(lexicon, _id)
+        logging.debug('saved sugg')
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
@@ -70,10 +71,9 @@ def acceptmodified(lexicon, _id):
 
 
 def savesuggestion(lexicon, _id, status='accepted', source=''):
-    from dbhandler.dbhandler import dbselect
     sugg_index, typ = configM.get_lexicon_suggindex(lexicon)
     es = configM.elastic(lexicon=lexicon)
-    suggestion = es.get(index=sugg_index, id=_id)
+    suggestion = es.get(index=sugg_index, doc_type=typ, id=_id)
     auth, permitted = validate_user()
     set_lexicon = suggestion["_source"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, 'rejectsuggestion', _id)
@@ -113,7 +113,6 @@ def savesuggestion(lexicon, _id, status='accepted', source=''):
 
 
 def rejectsuggestion(lexicon, _id):
-    from dbhandler.dbhandler import dbselect
     try:
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
     except Exception as e:
@@ -156,7 +155,6 @@ def rejectsuggestion(lexicon, _id):
 
 
 def checksuggestion(lexicon, _id):
-    from dbhandler.dbhandler import dbselect
     # TODO add exception handling
     try:
         return jsonify({'updates': dbselect(lexicon, suggestion=True,

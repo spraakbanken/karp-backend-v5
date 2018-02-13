@@ -154,7 +154,7 @@ def init(route):
 
     # For accepting a suggestion
     @route('<lexicon>/<_id>', methods=['POST'])
-    def acceptandmodified(lexicon, _id):
+    def acceptandmodify(lexicon, _id):
         return suggestions.acceptmodified(lexicon, _id)
 
     # For rejecting a suggestion
