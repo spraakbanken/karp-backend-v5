@@ -109,11 +109,11 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
             engine, db_entry = get_engine(lexicon,
                                           suggestion=bool(suggestion_id))
 
+        try:
+            version = int(version)
+        except ValueError as e:
+            version = -1
         if suggestion_id:
-            try:
-                version = int(version)
-            except ValueError as e:
-                version = -1
             # If the suggestion_id is a bool, set it to be empty
             # A string here means that the suggestion is a modification,
             # while True means that it is a suggested addition.
@@ -132,7 +132,7 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
             ins = db_entry.insert().values(id=_id, lexicon=lexicon,
                                            date=date or datetime.datetime.now(),
                                            user=user, msg=msg, source=doc,
-                                           status=status
+                                           status=status, version=version
                                            )
         conn = engine.connect()
         conn.execute(ins)
@@ -200,11 +200,12 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
         res = []
         for entry in conn.execute(selects):
             # transform the date into a string now to enforce isoformat
+            version = 8 if suggestion else 7
             obj = {'id': entry[0], 'date': str(entry[1]), 'user': entry[2],
                    'doc': json.loads(entry[3]), 'lexicon': entry[5],
-                   'message': entry[4], 'status': entry[6]}
+                   'message': entry[4], 'status': entry[6],
+                   'version': entry[version]}
             if suggestion:
-                obj['version'] = entry[8]
                 obj['acceptmessage'] = entry[9]
                 obj['origid'] = entry[7]
             res.append(obj)

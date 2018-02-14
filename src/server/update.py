@@ -161,7 +161,8 @@ def update_doc(lexicon, _id, data=None, live=True):
         raise eh.KarpElasticSearchError("Unexpected error during update.")
 
     db_loaded, db_error = update_db(_id, data_doc, user, msg, lexiconName,
-                                    status='changed', date=date, version=version)
+                                    status='changed', date=date,
+                                    version=ans.get('_version', version))
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans}
     if db_error:
@@ -292,6 +293,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
         auto_update_document(data_doc, lexiconName, 'add', user, date)
         ans = es.index(index=index, doc_type=typ, body=data_doc, id=_id)
         _id = ans.get('_id')
+        version = ans.get('_version', -1)
         db_loaded, db_error = update_db(_id, data_doc, user, message,
                                         lexiconName, version=version,
                                         suggestion=orgin_id, status=status,
