@@ -6,7 +6,7 @@
         "secret_fields": ["lastmodifiedBy"],
         "src": "",
         "suggestionalias": "karpsuggestion",
-        "sort_by": ["lexiconOrder", "_score", "baseform"],
+        "sort_by": ["lexiconOrder", "_score", "baseform.sort"],
         "head_sort_field": ["lexiconOrder"],
         "autocomplete_field": ["baseform"],
         "minientry_fields": ["lexiconName", "baseform", "baseform_en"],

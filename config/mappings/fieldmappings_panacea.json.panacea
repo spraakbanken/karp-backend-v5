@@ -1,5 +1,6 @@
 {
   "baseform": ["lemma_german"],
+  "baseform.sort": ["lemma_german.raw"],
   "pos": ["pos_german"],
   "baseform_en": ["english.lemma_english"],
   "pos_en": ["english.pos_english"],
