@@ -403,7 +403,10 @@ def statistics(settings, exclude=[], order={}, prefix='',
         to_add = ','+to_add if to_add else to_add
 
         # add size if the query is normal (i.e. not for cardinality queries)
-        add_size = ',"size" : %s, "shard_size": %s' % (size if normal else '', shard_size)
+        if normal:
+            add_size = ',"size" : %s, "shard_size": %s' %(size, shard_size)
+        else:
+            add_size = ''
 
         # construct query for entries with the current field/bucket
         # mode = ', "collect_mode" : "breadth_first"' if normal else ''

@@ -193,6 +193,8 @@ def init(route):
     def groups():
         modes = {}
         for name, val in configM.lexiconconfig.items():
+            if name == "default":
+                continue
             if val['mode'] in modes:
                 modes[val['mode']].append('%s (%s)' % (name, val['order']))
             else:
