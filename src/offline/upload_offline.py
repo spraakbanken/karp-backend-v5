@@ -225,6 +225,7 @@ def publish_group(group, suffix):
     # of the group from an mode. Eg. publish_group(saldo)
     # may lead to 'saldogroup' not containing 'external'.
     es = configM.elastic(group)
+    print group, suffix
     if not configM.searchconfig.get(group)['is_index']:
         for subgroup in configM.searchconfig.get(group)['groups']:
             publish_group(subgroup, suffix)
@@ -302,7 +303,7 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
     except Exception:
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
-        print ans
+        #print ans
         print 'Any documentes uploaded to ES index %s are removed.' % indexname
         print 'If data was uploaded to SQL you will have to \
                remove it manually.'
@@ -396,12 +397,12 @@ def publish_all(suffix):
 
 
 def make_structure():
-    # TODO does not work, what is confelastic?
     add_actions = []
+    # TODO does not work, what is confelastic?
     for alias, aliasconf in configM.searchconfig.items():
         # Only publish if it is a group, meta-aliases will point to the correct
         # subaliases anyway.
-        es = confelastic(alias)
+        es = configM.elastic(alias)
         if not aliasconf.get("is_index"):
             # if it is a mode (not just an index), remove the old pointers
             add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
@@ -523,6 +524,7 @@ if __name__ == "__main__":
         # will create seven indices (saldo_170119, bliss_170119 etc)
         mode = sys.argv[2]
         suffix = sys.argv[3]
+        print 'Create %s_%s' % (mode, suffix)
         create_mode(mode, suffix)
         print 'Upload successful'
 

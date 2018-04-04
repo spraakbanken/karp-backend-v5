@@ -8,28 +8,42 @@ if sys.argv[1] == '--create_metadata':
     outpath = 'config/fieldmappings.json'
     metadata.print_all(outpath)
 
-if sys.argv[1] == '--create_mode':
-   mode = sys.argv[2]
-   suffix = sys.argv[3]
-   upload.create_mode(mode, suffix)
-   print 'Upload successful'
+elif sys.argv[1] == '--create_mode':
+    mode = sys.argv[2]
+    suffix = sys.argv[3]
+    upload.create_mode(mode, suffix)
+    print 'Upload successful'
 
-if sys.argv[1] == '--publish_mode':
-   group = sys.argv[2]
-   suffix = sys.argv[3]
-   upload.publish_group(group, suffix)
-   print 'Upload successful'
 
+elif sys.argv[1] == '--import_mode':
+    mode = sys.argv[2]
+    suffix = sys.argv[3]
+    upload.create_mode(mode, suffix, with_id=True)
+    print 'Upload successful'
+
+elif sys.argv[1] == '--publish_mode':
+    group = sys.argv[2]
+    suffix = sys.argv[3]
+    upload.publish_group(group, suffix)
+    print 'Upload successful'
+
+elif sys.argv[1] == '--reindex_alias':
+    print 'reindex'
+    index = sys.argv[2]
+    target_suffix = sys.argv[3]
+    upload.reindex_alias(index, target_suffix)
 
 # Commented since dangerous!
-if sys.argv[1] == '--delete_all':
-   upload.delete_all()
-   print 'Deletion successful'
+# if sys.argv[1] == '--delete_all':
+#    upload.delete_all()
+#    print 'Deletion successful'
+#
+#
+# # Commented since dangerous!
+# if sys.argv[1] == '--delete_mode':
+#    mode = sys.argv[2]
+#    upload.delete_mode(mode)
+#    print 'Deletion successful'
 
-
-# Commented since dangerous!
-if sys.argv[1] == '--delete_mode':
-   mode = sys.argv[2]
-   upload.delete_mode(mode)
-   print 'Deletion successful'
-
+else:
+     print "Don't know what to do"
