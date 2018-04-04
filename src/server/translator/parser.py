@@ -388,7 +388,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     to_add = ''
     normal = not settings.get('cardinality')
     more = []  # collect queries about max size for each bucket
-    shard_size = 1000  # TODO how big? get from config
+    shard_size = 20000  # TODO how big? get from config
     # For saldo:
     # 26 000 => document count errors
     # 27 000 => no errors
@@ -411,7 +411,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
         # construct query for entries with the current field/bucket
         # mode = ', "collect_mode" : "breadth_first"' if normal else ''
         mode = ''
-        if len(buckets) > 2 or size > 1000:
+        if normal and (len(buckets) > 2 or size > 1000):
             # TODO to avoid es breaking, do not allow arbitrary deep bucketing
             # If the size is very small, also use breadth_first since it will
             # be faster
