@@ -14,6 +14,11 @@ elif sys.argv[1] == '--create_mode':
     upload.create_mode(mode, suffix)
     print 'Upload successful'
 
+elif sys.argv[1] == '--create_empty_index':
+    mode = sys.argv[2]
+    suffix = sys.argv[3]
+    upload.create_empty_index(mode, suffix)
+    print 'Index created successfully'
 
 elif sys.argv[1] == '--import_mode':
     mode = sys.argv[2]

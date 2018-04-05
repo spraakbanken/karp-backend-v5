@@ -252,6 +252,18 @@ def publish_group(group, suffix):
         return es.indices.update_aliases('{"actions" : [%s]}' % ','.join(add_actions))
 
 
+def create_empty_index(name, suffix, with_id=False):
+    es = configM.elastic(name)
+    data = get_mapping(name)
+    newname = make_indexname(name, suffix)
+    try:
+        ans = es.indices.create(index=newname, body=data)
+    except esExceptions.TransportError as e:
+        print e
+        raise Exception('Index already exists')
+    print ans
+
+
 def create_mode(alias, suffix, with_id=False):
     es = configM.elastic(alias)
     if configM.searchconfig[alias]['is_index']:
@@ -516,6 +528,16 @@ if __name__ == "__main__":
         alias = sys.argv[2]
         outfile = sys.argv[3]
         gm.getmapping(alias, outfile)
+
+    elif sys.argv[1] == '--create_empty_index':
+        # Creates an index suffixed with 'suffix'
+        # No data will be uploaded
+        # python upload_offline.py --create_empty_index blissword 170119
+        mode = sys.argv[2]
+        suffix = sys.argv[3]
+        print 'Create %s_%s' % (mode, suffix)
+        create_empty_index(mode, suffix)
+        print 'Upload successful'
 
     elif sys.argv[1] == '--create_mode':
         # Creates every index (suffixed with 'suffix')
