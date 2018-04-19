@@ -74,7 +74,7 @@ def parse_extra(settings):
     available = ['resource', 'size', 'sort', 'q', 'start', 'page', 'buckets',
                  'show', 'show_all', 'status', 'index', 'cardinality',
                  'highlight', 'format', 'export', 'mode', 'center', 'multi',
-                 'date']
+                 'date', 'statsize']
     for k in request.args.keys():
         if k not in available:
             raise PErr.QueryError("Option not recognized: %s.\
@@ -139,6 +139,9 @@ def parse_extra(settings):
     # to be used in random
     if 'show_all' in request.args:
         settings['show'] = []
+
+    if 'statsize' in request.args:
+        settings['statsize'] = request.args['statsize']
 
     if 'cardinality' in request.args:
         settings['cardinality'] = True
@@ -388,7 +391,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     to_add = ''
     normal = not settings.get('cardinality')
     more = []  # collect queries about max size for each bucket
-    shard_size = 20000  # TODO how big? get from config
+    shard_size = 27000  # TODO how big? get from config
     # For saldo:
     # 26 000 => document count errors
     # 27 000 => no errors

@@ -109,13 +109,13 @@ def querycount(page=0):
     auth, permitted = validate_user(mode="read")
     try:
         # TODO buckets should be gathered from some config
+        stat_size = request.args.get('statsize', configM.setupconfig['MAX_PAGE'])
         default = {"buckets": ['lexiconOrder', 'lexiconName'],
-                   "size": configM.setupconfig['MAX_PAGE']}
+                   "size": stat_size}
         settings = parser.make_settings(permitted, default)
         q_ans = requestquery(page=page)
 
         # raise the size for the statistics call
-        stat_size = configM.setupconfig['MAX_PAGE']
         count_elasticq, more = parser.statistics(settings,
                                                  order={"lexiconOrder":
                                                         ("_key", "asc")},
@@ -443,6 +443,7 @@ def autocomplete():
             autocompleteq = configM.extra_src(mode, 'autocomplete', autocompletequery)
             exp = autocompleteq(mode, boost, q)
             autocomplete_field = configM.searchonefield(mode, 'autocomplete_field')
+            autocomplete_fields = configM.searchfield(mode, 'autocomplete_field')
             fields = '"exists": {"field" : "%s"}' % autocomplete_field
             # last argument is the 'fields' used for highlightning
             # TODO use filter?
@@ -455,7 +456,7 @@ def autocomplete():
             index, typ = configM.get_mode_index(mode)
             ans = parser.adapt_query(settings['size'], 0, es, loads(elasticq),
                                      {'size': settings['size'], 'index': index,
-                                      '_source': autocomplete_field}
+                                      '_source': autocomplete_fields}
                                      )
             # save the results for multi
             res[q] = ans
