@@ -3,6 +3,7 @@
 from flask import jsonify, request, session
 from src.server.helper.flaskhelper import app
 import src.server.checkdbhistory as checkdbhistory
+import src.server.idgenerator as idgenerator
 import src.server.searching as searching
 import src.server.suggestions as suggestions
 import src.server.update as update
@@ -61,9 +62,14 @@ def init(route):
         return searching.autocomplete()
 
     # For seeing the posted data formated
-    @route('format')
+    @route()
     def format():
         return searching.formatpost()
+
+    # For getting a possible new identifier for an entry
+    @route('<mode>')
+    def suggestid(mode):
+        return jsonify({"suggested_id": idgenerator.suggest_id(mode)})
 
     # For seeing the posted data formated
     @route('<lexicon>')

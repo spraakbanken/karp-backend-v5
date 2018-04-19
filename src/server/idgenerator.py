@@ -40,6 +40,12 @@ def reset_sequence(index_name):
         pass
 
 
+def suggest_id(index):
+    es = configM.elastic(mode=index)
+    counter = es.get(index="sequence", doc_type="sequence", id=index)
+    return counter['_version']+1
+
+
 def get_id_sequence(index_name, size):
     tasks = "".join(['{"index": {"_index": "sequence", "_type": "sequence", "_id": "' + index_name + '"}}\n{}\n' for _ in range(0, size)])
     es = configM.elastic(mode=index_name)
