@@ -218,20 +218,65 @@ def init(route):
     @route(name='/')
     @route(name='/index')
     def helppage():
-        logging.debug('index page')
-        logging.debug('\n\n')
+        """Render API documentation."""
         import os
-        import re
-        project_dir = os.path.join(os.path.dirname(__file__))
-        logging.debug('path %s' % project_dir)
-        # html_dir = os.path.join('src', 'html')
-        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'],  'html')
-        doc_file = 'index_dokumentation.html'
-        logging.debug('open %s' % os.path.join(html_dir, doc_file))
-        with app.open_resource(os.path.join(html_dir, doc_file)) as f:
-            contents = f.read()
-        contents = re.sub('URL/', request.url.encode('utf8'), contents)
-        return contents
+        import markdown
+
+        logging.debug('index page')
+
+        SB_API_URL = "https://ws.spraakbanken.gu.se/ws/karp/v6"
+        KARP_VERSION = "6"
+        STYLES_CSS = 'static/api.css'
+        logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
+
+        doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'html')
+        doc_file = 'api.md'
+
+        with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:
+            md_text = doc.read()
+            logging.debug("md_text: %s", type(md_text))
+            md_text = md_text.decode("UTF-8")
+            logging.debug("md_text: %s", type(md_text))
+
+        # Replace placeholders
+        md_text = md_text.replace("[SBURL]", SB_API_URL)
+        # md_text = md_text.replace("[URL]", request.base_url)
+        # md_text = md_text.replace("[VERSION]", KARP_VERSION)
+
+        # Convert Markdown to HTML
+        md = markdown.Markdown(extensions=["markdown.extensions.toc",
+                                           "markdown.extensions.smarty",
+                                           "markdown.extensions.def_list",
+                                           "markdown.extensions.tables"])
+        md_html = md.convert(md_text)
+        md_html = md_html.replace("<pre><code>", '<pre><code class="json">')
+
+        html = ["""<!doctype html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Karp API v%s</title>
+                <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css"
+                  rel="stylesheet">
+                <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+                <script>hljs.initHighlightingOnLoad();</script>
+                <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+                <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet">
+                <link href="%s" rel="stylesheet">
+              </head>
+              <body>
+                <div class="toc-wrapper">
+                  <div class="header">
+                    <img src="static/karp.png"><br><br>
+                    Karp API <span>v%s</span>
+                  </div>
+                  %s
+                </div>
+               <div class="content">
+                """ % (KARP_VERSION, STYLES_CSS, KARP_VERSION, md.toc), md_html, "</div></body></html>"]
+
+        return "\n".join(html)
+
 
     @route('/logout')
     def logout():
