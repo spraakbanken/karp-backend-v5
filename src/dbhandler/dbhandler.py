@@ -47,7 +47,7 @@ def get_engine(lexicon, mode='', suggestion=False, echo=True):
 
 def create_table(metadata):
     db_entry = sql.Table('karpentry', metadata,
-                         sql.Column('id', sql.String(22), index=True),
+                         sql.Column('id', sql.String(50), index=True),
                          sql.Column('date', sql.types.DateTime, index=True),
                          sql.Column('user', sql.String(320), index=True),
                          # Text(2**24-1) corresponds to MediumText in MySQL
@@ -64,7 +64,7 @@ def create_table(metadata):
 
 def create_suggestion_table(metadata):
     db_entry = sql.Table('karpsuggestions', metadata,
-                         sql.Column('id', sql.String(22), index=True),
+                         sql.Column('id', sql.String(50), index=True),
                          sql.Column('date', sql.types.DateTime, index=True),
                          sql.Column('user', sql.String(320), index=True),
                          # Text(2**24-1) corresponds to MediumText in MySQL
