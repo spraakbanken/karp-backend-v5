@@ -14,6 +14,7 @@ Jinja2==2.7.3
 jsonpath-rw==1.4.0
 lettuce==0.2.22
 linecache2==1.0.0
+Markdown==2.6.11
 MarkupSafe==0.23
 mock==2.0.0
 pbr==0.11.0
