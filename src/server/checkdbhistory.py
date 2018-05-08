@@ -43,7 +43,8 @@ def checklexiconhistory(lexicon, date):
         auth, permitted = validate_user()
         if lexicon not in permitted:
             raise eh.KarpAuthenticationError('You are not allowed to update lexicon %s' % lexicon)
-        settings = {"allowed": permitted}
+        mode = configM.get_lexicon_mode(lexicon)
+        settings = {"allowed": permitted, "mode": mode}
         helpers.get_querysettings(settings)
         size = settings.get('size', 10)
         status = settings.get('status', ['added', 'changed', 'removed'])
