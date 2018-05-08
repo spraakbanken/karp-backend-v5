@@ -161,13 +161,13 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     etype, field, op = xs[:3]
     field_info = get_field(field, mode)
     operands = [re.sub('\\\\\|', '|', x) for x in xs[3:]]  # replace \| by |
-    operation = parse_operation(etype, op, isfilter=isfilter,
-                                special_op=field_info['op'])
+    operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
     format_query = configM.extra_src(mode, 'format_query', None)
     if format_query is not None:
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
+    logging.debug('construct from %s' % operands)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         if not f_query.ok_in_filter:
@@ -185,9 +185,8 @@ def get_field(field, mode):
         returns a dictionary """
 
     fields, constraints = F.lookup_multiple_spec(field, mode)
-    special_op = configM.lookup_op(field, mode)
     highlight = ['*'] if field == 'anything' else fields
-    return {"fields": fields, "constraints": constraints, "op": special_op,
+    return {"fields": fields, "constraints": constraints,
             "highlight": highlight}
 
 
@@ -208,7 +207,7 @@ def parse_field(field_info, op):
     return op
 
 
-def parse_operation(etype, op, isfilter=False, special_op={}):
+def parse_operation(etype, op, isfilter=False):
     """ Parses an expression type and an operation
         etype is an unparsed string ("and", "not")
         op    is an unparsed string ("equals", "missing", "regexp"...)
@@ -216,8 +215,7 @@ def parse_operation(etype, op, isfilter=False, special_op={}):
                  is wanted
         returns an elasticObject
         """
-    return elasticObjects.Operator(etype, op, isfilter=isfilter,
-                                   special_op=special_op)
+    return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
 def freetext(text, mode, extra=[], isfilter=False, highlight=False):
@@ -237,8 +235,16 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
     qs = []
     for field in configM.all_searchfield(mode):
         qs += ['"match": {"%s": {"query": "%s", "operator": "and"}}' % (field, text)]
-    if isfilter:
-        qs = ['"query" : {%s}' % q for q in qs]
+    # if isfilter:
+    #     qs = ['"query" : {%s}' % q for q in qs]
+
+    boost_list = configM.searchfield(mode, 'boosts')
+    boost_score = len(boost_list)*100
+    for field in boost_list:
+        # TODO used to be term, is match ok?
+        qs.append('"match": {"%s" : {"query": "%s", "boost": "%d"}}'
+                        % (field, text, boost_score))
+        boost_score -= 100
 
     q = '"bool" : {"should" :[%s]}' % ','.join('{'+q+'}' for q in qs)
     if extra:
@@ -251,18 +257,8 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
     else:
         highlight_str = ''
 
-    to_boost = []
-    boost_list = configM.searchfield(mode, 'boosts')
-    boost_score = len(boost_list)*100
-    for field in boost_list:
-        to_boost.append('{"boost_factor": "%d", "filter":{"term":{"%s":"%s"}}}'
-                        % (boost_score, field, text))
-        boost_score -= 100
-
-    querystring = '''{"query": {"function_score":
-                        {"functions": [%s], "query": {%%s} }}%%s}
-                  ''' % ','.join(to_boost)
-    return querystring % (q, highlight_str)
+    logging.debug('WOOW WE HAVE {"query": {%s} %s}' % (q, highlight_str))
+    return '{"query": {%s} %s}' % (q, highlight_str)
 
 
 def search(exps, filters, fields, isfilter=False, highlight=False, usefilter=False):
@@ -331,14 +327,12 @@ def construct_exp(exps, querytype="query"):
 
 
 def random(query, settings):
-    import random
     parsed = parse_qs(query)
     resource = parse_extra(parsed, settings)
-    resource = '"filter": {%s}, ' % resource[0] if resource else ''
-    seed = random.random()
-    elasticq = '''{"query": {"function_score": { %s "functions":
-                   [{"random_score": {"seed":  "%s" }}], "score_mode": "sum"}}}
-               ''' % (resource, seed)
+    resource = '"query": {%s}, ' % resource[0] if resource else ''
+    elasticq = '''{"query": {"function_score": { %s "random_score": {}}}}
+               ''' % (resource)
+    logging.debug('Will send %s' % elasticq)
     return elasticq
 
 
@@ -445,6 +439,7 @@ def adapt_query(size, _from, es, query, kwargs):
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= configM.setupconfig['SCAN_LIMIT']:
         kwargs['body'] = query
+        logging.debug('Will ask for %s' % kwargs)
         return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search

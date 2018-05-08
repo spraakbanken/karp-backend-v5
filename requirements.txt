@@ -2,7 +2,7 @@ certifi==2015.9.6.2
 chardet==2.3.0
 decorator==4.0.11
 demjson==2.2.3
-elasticsearch==2.4.1
+elasticsearch==6.1.1
 elasticsearch-dsl==2.2.0
 extras==1.0.0
 fixtures==3.0.0
@@ -14,6 +14,7 @@ Jinja2==2.7.3
 jsonpath-rw==1.4.0
 lettuce==0.2.22
 linecache2==1.0.0
+Markdown==2.6.11
 MarkupSafe==0.23
 mock==2.0.0
 pbr==0.11.0

@@ -168,9 +168,3 @@ def get_lexicon_mode(lexicon):
         # TODO what to return
         logging.warning("Lexicon %s not in conf" % lexicon)
         return ''
-
-
-def lookup_op(field, mode=standardmode):
-    " Checks if there are special conditions for this field "
-    specials = searchconf(mode, 'special_fields', failonerror=False) or {}
-    return specials.get(field, {})
