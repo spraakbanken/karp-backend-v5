@@ -388,14 +388,36 @@ def statistics(settings, exclude=[], order={}, prefix='',
         size = force_size
     else:
         size = settings.get('size')
+    #shard_size = 500000  # TODO how big? get from config
+    buckets.reverse()
+    settings['full_bucket_max'] = 1000
+    tot, limit, values =  test(q, buckets, size, settings)
+    if tot > limit:
+        logging.debug('too big %s (%s)', tot, values)
+        shard_size = 10  # will be the same as size
+        max_size = 10000000
+        max_full = 1
+    else:
+        shard_size = tot*1.5+10
+        logging.debug('ok %s', tot)
+        max_size = size
+        max_full = len(buckets)
+        #raise PErr.QueryError("Too complicated question: %s. Degree: %s, max: %s" % (q, tot, limit))
+
+    #raise PErr.QueryError("Ok question: %s. Degree: %s, max: %s" % (q, tot, limit))
     to_add = ''
     normal = not settings.get('cardinality')
-    more = []  # collect queries about max size for each bucket
-    shard_size = 27000  # TODO how big? get from config
+    # more = []  # collect queries about max size for each bucket
     # For saldo:
     # 26 000 => document count errors
     # 27 000 => no errors
-    for bucket in reversed(buckets):
+    used = 1
+    max_tot = limit
+    full = 0
+    logging.debug('do buckets %s', buckets)
+    logging.debug('more? %s or %s > %s', [x > size for x in values], tot, limit)
+    more = any([x > size for x in values]) # or tot > limit
+    for bucket, val in zip(buckets, values):
         terms = 'terms' if normal else 'cardinality'
         # the sorting order for this bucket, used by querycount
         bucket_order = ''
@@ -426,8 +448,23 @@ def statistics(settings, exclude=[], order={}, prefix='',
             # TODO breadth_first should only be used when size is really small
             mode = ', "collect_mode" : "breadth_first"'
             # if there are more than 3 buckets, also restrict the size
-            max_size = 10000
-            add_size = ',"size" : %s, "shard_size": %s' % (min(size or max_size, max_size), shard_size)
+            logging.debug('full %s, max_full %s', full, max_full)
+            if full >= max_full:
+                max_size = settings['full_bucket_max']
+                settings['full_bucket_max'] /= 2
+            logging.debug('can use %s (%s %s %s)', min(size, max_size, max_tot), size, max_size, max_tot)
+            add_size = ',"size" : %s, "shard_size": %s' % (min(size or max_size, max_size, max_tot), shard_size)
+            logging.debug('using %s', add_size)
+            thissize = min(size, max_size, val, max_tot)
+            if thissize >= size:
+                full += 1
+            logging.debug('%s use size %s (%s, %s, %s)', bucket, thissize, size, max_size, val)
+            #limit = limit - thissize*used
+            used = thissize*used
+            logging.debug('total used %s', used)
+            max_tot = max(settings['full_bucket_max'], limit - used)
+            logging.debug('size left %s (%s - %s)', max_tot, limit, used)
+            #size = size/2
 
         count_errors = ''  # '"show_term_doc_count_error": true, '
         to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
@@ -445,16 +482,53 @@ def statistics(settings, exclude=[], order={}, prefix='',
         else:
             to_add = '"aggs" : {%s}' % (to_add_exist)
         # construct a query to see the cardinality of this field
-        more.append(('{"aggs": {"more" : {"cardinality" : {"field" : "%s"}}}}'
-                    % bucket, bucket))
+        # more.append(('{"aggs": {"more" : {"cardinality" : {"field" : "%s"}}}}'
+        #             % bucket, bucket))
         # set normal to True, since only the innermost bucket grouping can
         # contain cardinality information
         # (otherwise the innermost won't be shown)
         normal = True
 
+    more = more or full > max_full
     agg = '{"aggs" : {"q_statistics": {%s, %s}}}' \
           % (q, to_add) if q else '{%s}' % to_add
     return agg, more
+
+
+def test(query, buckets, size, settings):
+    import json
+    total = 1
+    LIMIT = 500000000
+    values = [settings['full_bucket_max']]*len(buckets)
+    for ix, bucket in enumerate(buckets):
+        # the sorting order for this bucket, used by querycount
+        bucket_order = ''
+
+        # construct query for entries with the current field/bucket
+        to_add = '"aggs": {"bucketcount" : {"cardinality" : {"field" : "%s" %s}}}'\
+                  % (bucket, bucket_order)
+
+        agg = '{"aggs" : {"q_statistics": {%s, %s}}}' \
+              % (query, to_add) if query else '{%s}' % to_add
+        es = configM.elastic(mode=settings['mode'])
+        index, typ = configM.get_mode_index(settings['mode'])
+        ans = es.search(index=index, body=json.loads(agg),
+                        search_type="query_then_fetch", size=0)
+        bucket_count = ans['aggregations']['q_statistics']['bucketcount']['value']
+        #     if key.startswith('STATS_'):
+        #         bucket_count = val.get('value')
+
+        # bucket_count = ans['aggregations']['q_statistics']['doc_count']
+        total *= bucket_count
+        values[ix] = bucket_count
+        logging.debug('\n\nBucket count: %s, total: %s' % (bucket_count, total))
+        if total > LIMIT:
+            break
+            logging.debug('stop at %s', bucket)
+
+    return total, LIMIT, values
+
+
 
 
 def adapt_query(size, _from, es, query, kwargs):

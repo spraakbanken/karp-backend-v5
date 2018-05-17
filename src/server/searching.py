@@ -302,25 +302,29 @@ def statlist():
         settings = parser.make_settings(permitted, default)
 
         exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
-        elasticq, more = parser.statistics(settings, exclude=exclude,
+        elasticq, is_more = parser.statistics(settings, exclude=exclude,
                                            prefix='STAT_')
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
-        is_more = check_bucketsize(more, settings["size"], index, es)
+        #is_more = check_bucketsize(more, settings["size"], index, es)
         # TODO allow more than 100 000 hits here?
         size = settings['size']
         ans = es.search(index=index, body=loads(elasticq),
                         search_type="query_then_fetch", size=0)
         tables = []
+        errors = {'count': 0}
         for key, val in ans['aggregations']['q_statistics'].items():
             if key.startswith('STAT_'):
-                tables.extend(generate_table(val, []))
+                tables.extend(generate_table(val, [], errors))
         # the length of tables might be longer than size, so truncate it
         # generating shorter tables is not faster than generating all of it
         # and then truncating
         if size:
             tables = tables[:size]
-        return jsonify({"stat_table": tables, "is_more": is_more})
+        ans = {"stat_table": tables, "is_more": is_more}
+        if errors.get('count', 0) > 0:
+            ans['ERROR_COUNT'] = errors['count']
+        return jsonify(ans)
 
     except eh.KarpException as e:  # pass on karp exceptions
         logging.exception(e)
@@ -349,18 +353,21 @@ def check_bucketsize(bucket_sizes, size, index, es):
     return is_more
 
 
-def generate_table(dictionary, table):
+def generate_table(dictionary, table, errors):
     name = dictionary.get('key', '')
     end = True
     tables = []
     for key, val in dictionary.items():
         if key.startswith('STAT_'):
             end = False
-            tables.extend(generate_table(val, table + [name]))
+            tables.extend(generate_table(val, table + [name], errors))
         if key == 'buckets':
             end = False
             for bucket in val:
-                tables.extend(generate_table(bucket, table))
+                tables.extend(generate_table(bucket, table, errors))
+        if key == "doc_count_error_upper_bound":
+            errors['count'] = max(val, errors.get('count', 0))
+
     if end:
         count = dictionary.get('doc_count', 0)
         if count:
