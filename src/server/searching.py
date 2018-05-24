@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+""" Methods for querying the data base """
 import copy
 import elasticsearch
+import logging
+import re
 from flask import request, jsonify, Response
 from itertools import chain
 from json import loads, dumps
-import re
 
 import src.dbhandler.dbhandler as db
 import src.server.errorhandler as eh
@@ -15,8 +17,6 @@ import src.server.translator.fieldmapping as F
 from src.server.translator import parser
 from src.server.translator import parsererror as PErr
 
-import logging
-""" Methods for querying the data base """
 
 
 def query(page=0):
@@ -44,7 +44,7 @@ def requestquery(page=0):
         elasticq = parser.parse(settings)
     except PErr.QueryError as e:
         logging.exception(e)
-        raise eh.KarpQueryError('Parse error', debug_msg=e.message,
+        raise eh.KarpQueryError('Parse error - '+e.message, debug_msg=e.debug_msg,
                                 query=request.query_string)
     except PErr.AuthenticationError as e:
         logging.exception(e)
@@ -124,15 +124,13 @@ def querycount(page=0):
         mode = settings['mode']
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
-        logging.debug('Will ask %s' % count_elasticq)
-        # TODO does search_type=count work with the new es version?
-        # if not, use query_then_fetch, size=0
+        logging.debug('Will ask %s', count_elasticq)
         count_ans = es.search(index=index,
                               body=count_elasticq,
                               search_type="query_then_fetch",
                               # raise the size for the statistics call
                               size=0  # stat_size
-                              )
+                             )
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except eh.KarpException as e:  # pass on karp exceptions
         logging.exception(e)
@@ -203,7 +201,7 @@ def minientry():
                                   'from_': start, 'sort': sort,
                                   'size': min(settings['size'], max_page),
                                   'search_type': 'dfs_query_then_fetch'}
-                                 )
+                                )
         if settings.get('highlight', False):
             clean_highlight(ans)
 
@@ -274,7 +272,7 @@ def statistics():
         is_more = check_bucketsize(more, settings, index, es)
 
         # TODO allow more than 100 000 hits here?
-        logging.debug('stat body %s' % elasticq)
+        logging.debug('stat body %s', elasticq)
         ans = es.search(index=index, body=elasticq,
                         search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
@@ -292,12 +290,11 @@ def statistics():
 
 
 def statlist():
-    # TODO add is_more here (as above)
     """ Returns the counts and stats for the query """
     auth, permitted = validate_user(mode="read")
     try:
         mode = parser.get_mode()
-        logging.debug('mode is %s' % mode)
+        logging.debug('mode is %s', mode)
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
@@ -323,13 +320,13 @@ def statlist():
             tables = tables[:size]
         return jsonify({"stat_table": tables, "is_more": is_more})
 
-    except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
-        raise
     except PErr.AuthenticationError as e:
         logging.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
+    except eh.KarpException as e:  # pass on karp exceptions
+        logging.exception(e)
+        raise
     except Exception as e:  # catch *all* exceptions
         # raise
         logging.exception(e)
@@ -342,9 +339,9 @@ def check_bucketsize(bucket_sizes, size, index, es):
         countans = es.search(index=index, body=sizebucket,
                              size=0,
                              search_type="query_then_fetch")
-        logging.debug('countans %s' % countans)
+        logging.debug('countans %s', countans)
         bucketsize = countans['aggregations']['more']['value']
-        logging.debug('size %s, type %s' % (bucketsize, type(bucketsize)))
+        logging.debug('size %s, type %s', bucketsize, type(bucketsize))
         if int(bucketsize) > size:
             is_more[bucketname] = int(bucketsize)
     return is_more
@@ -390,11 +387,11 @@ def formatpost():
     parser.parse_extra(settings)
     to_format = settings.get('format', '')
     mode = parser.get_mode()
-    logging.debug('mode "%s"' % mode)
+    logging.debug('mode "%s"', mode)
     index, typ = configM.get_mode_index(mode)
 
     if to_format:
-        if type(data) != list:
+        if not isinstance(data, list):
             data = [data]
         errmsg = 'Unkown format %s for mode %s' % (settings['format'], mode)
         format_list = configM.extra_src(mode, 'format_list', helpers.notdefined(errmsg))
@@ -441,25 +438,23 @@ def autocomplete():
         for q in qs:
             boost = {"term": {headboost: {"boost" : "500", "value": q}}}
 
-            # TODO update to use objects, not string
             autocompleteq = configM.extra_src(mode, 'autocomplete', autocompletequery)
             exp = autocompleteq(mode, boost, q)
             autocomplete_field = configM.searchonefield(mode, 'autocomplete_field')
             autocomplete_fields = configM.searchfield(mode, 'autocomplete_field')
             fields = {"exists": {"field" : autocomplete_field}}
             # last argument is the 'fields' used for highlightning
-            # TODO use filter?
             elasticq = parser.search([exp, fields, resource], [], '', usefilter=True)
-            logging.debug('Will send %s' % elasticq)
+            logging.debug('Will send %s', elasticq)
 
             es = configM.elastic(mode=mode)
-            logging.debug('_source: %s' % autocomplete_field)
+            logging.debug('_source: %s', autocomplete_field)
             logging.debug(elasticq)
             index, typ = configM.get_mode_index(mode)
             ans = parser.adapt_query(settings['size'], 0, es, elasticq,
                                      {'size': settings['size'], 'index': index,
                                       '_source': autocomplete_fields}
-                                     )
+                                    )
             # save the results for multi
             res[q] = ans
         if multi:
@@ -532,7 +527,6 @@ def testquery():
     """ Returns the query expressed in elastics search api """
     auth, permitted = validate_user(mode="read")
     try:
-        from translator import parser
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
         elasticq = parser.parse(settings)
@@ -546,8 +540,10 @@ def testquery():
                                   else settings['page'] * settings['size']
         elasticq = parser.parse()
         return dumps(elasticq) + dumps({'sort': sort, '_from': start,
-                                 'size': settings['size'],
-                                 'version': 'true'})
+                                        'size': settings['size'],
+                                        'version': 'true'
+                                       }
+                                      )
     except Exception as e:  # catch *all* exceptions
         # TODO only catch relevant exceptions
         logging.exception(e)
@@ -604,16 +600,16 @@ def get_context(lexicon):
         # center_id = lexstart['hits']['hits'][0]['_id']
 
     if not lexstart['hits']['hits']:
-        logging.error('No center found %s, %s' % (center_id, lexstart))
+        logging.error('No center found %s, %s', center_id, lexstart)
         raise eh.KarpElasticSearchError("Could not find entry %s" % center_id)
 
     centerentry = lexstart['hits']['hits'][0]
-    logging.debug('center %s, %s' % (centerentry, centerentry['_id']))
+    logging.debug('center %s, %s', centerentry, centerentry['_id'])
     origentry_sort = [key for key in centerentry['sort'] if key is not None][0]
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
     sortvalue = control_escape(origentry_sort)
-    logging.debug(u'Orig entry escaped key %s' % sortvalue)
+    logging.debug(u'Orig entry escaped key %s', sortvalue)
 
     # Construct queries to ES
     exps = []
@@ -659,10 +655,10 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
                               '_source': show})
 
     hits = ans.get('hits', {}).get('hits', [])
-    return go_to_sortkey(hits, origentry_sort, center_id)
+    return go_to_sortkey(hits, center_id)
 
 
-def go_to_sortkey(hits, sort, center_id):
+def go_to_sortkey(hits, center_id):
     """ Step through the lists until the center entry is passed
         The center is at the beginning of the list, or after its homonymns
         (entries with the same primary sort key). Pass these.
@@ -680,8 +676,7 @@ def go_to_sortkey(hits, sort, center_id):
     return hits[n:]
 
 
-# TODO replace with a less hacky function
-# originally from
+# Replace with a less hacky function? originally from:
 # https://stackoverflow.com/questions/9778550/which-is-the-correct-way-to-encode-escape-characters-in-python-2-without-killing
 def control_escape(s):
     """ Escapes control characters so that they can be parsed by a json parser.
@@ -716,7 +711,7 @@ def export(lexicon):
 
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
-    logging.debug('exporting entries from %s ' % lexicon)
+    logging.debug('exporting entries from %s ', lexicon)
     for entry in db.dbselect(lexicon, engine=engine, db_entry=db_entry,
                              max_hits=-1, to_date=date):
         _id = entry['id']
@@ -725,15 +720,14 @@ def export(lexicon):
             if last < entry['date']:
                 to_keep[_id] = entry
         else:
-                to_keep[_id] = entry
+            to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
     ans = ans[:settings['size']]
 
-    logging.debug('exporting %s entries' % len(ans))
+    logging.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):
         toformat = settings.get('format')
-        index, typ = configM.get_mode_index(mode)
         msg = 'Unkown %s %s for mode %s' % ('format', toformat, mode)
         format_posts = configM.extra_src(mode, 'exportformat', helpers.notdefined(msg))
         lmf, err = format_posts(ans, lexicon, mode, toformat)

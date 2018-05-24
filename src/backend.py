@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" The backend, redirects url calls to the appropriate modules.
+    Is also responsible for which ES node to query.
+"""
 
 from flask import jsonify, request, session
 from src.server.helper.flaskhelper import app
@@ -9,13 +12,6 @@ import src.server.suggestions as suggestions
 import src.server.update as update
 import src.server.helper.configmanager as configM
 import logging
-
-
-""" The backend, redirects url calls to the appropriate modules.
-    Is also responsible for which ES node to query.
-"""
-
-
 def init(route):
 
     @route()
@@ -94,7 +90,7 @@ def init(route):
     # For adding a document which already has an id (one that has been deleted)
     @route('<lexicon>/<_id>', methods=['POST'])
     def readd(lexicon, _id):
-            return update.add_doc(lexicon, _id=_id)
+        return update.add_doc(lexicon, _id=_id)
 
     # For adding many document
     @route('<lexicon>', methods=['POST'])
@@ -231,11 +227,11 @@ def init(route):
         import os
         import re
         project_dir = os.path.join(os.path.dirname(__file__))
-        logging.debug('path %s' % project_dir)
+        logging.debug('path %s', project_dir)
         # html_dir = os.path.join('src', 'html')
-        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'],  'html')
+        html_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'html')
         doc_file = 'index_dokumentation.html'
-        logging.debug('open %s' % os.path.join(html_dir, doc_file))
+        logging.debug('open %s', os.path.join(html_dir, doc_file))
         with app.open_resource(os.path.join(html_dir, doc_file)) as f:
             contents = f.read()
         contents = re.sub('URL/', request.url.encode('utf8'), contents)

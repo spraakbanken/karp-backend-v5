@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-import elasticObjects
+""" Responsible for the translation from the query api to elastic queries """
+import logging
+import re
 from elasticsearch import helpers as EShelpers
 from flask import request
-import fieldmapping as F
-import parsererror as PErr
+import src.server.translator.elasticObjects as elasticObjects
+import src.server.translator.fieldmapping as F
+import src.server.translator.parsererror as PErr
 import src.server.helper.configmanager as configM
-import re
-
-import logging
-""" Responsible for the translation from the query api to elastic queries """
 
 
-# TODO removed first argument
+
 def get_mode():
     return request.args.get('mode', configM.standardmode)
 
@@ -22,15 +21,16 @@ def make_settings(permitted, in_settings):
     return settings
 
 
-# TODO removed first argument
-def parse(settings={}, isfilter=False):
+def parse(settings=None, isfilter=False):
     """ Parses a query on the form simple||..., extended||...
         returns the corresponding elasticsearch query object
         settings is a dictionary where the 'size' (the number of wanted hits)
                  will be set, if included in the query
         isfilter is set to True when a elastic Filter, rather than a query,
                  should be returned
-        """
+    """
+    if settings is None:
+        settings = {}
     # isfilter is used for minientries and some queries to statistics
     parsed = request.args
     # only one query is allowed
@@ -45,7 +45,7 @@ def parse(settings={}, isfilter=False):
         settings['search_type'] = 'dfs_query_then_fetch'
         return freetext(query, mode, isfilter=isfilter, extra=p_extra,
                         highlight=highlight)
-    if command == "extended":
+    elif command == "extended":
         filters = []  # filters will be put here
         fields = []
         p_ex = [p_extra]
@@ -60,16 +60,20 @@ def parse(settings={}, isfilter=False):
 
         return search(p_ex, filters, fields, isfilter=isfilter,
                       highlight=highlight, usefilter=usefilter)
+    else:
+        raise PErr.QueryError("Search command not recognized: %s.\
+                               Available options: simple, extended"
+                              % (command)
+                             )
 
 
-# TODO removed first argument
+
 def get_command():
     query = request.args.get('q', ['']) or request.args.get('query')
     command, query = query.split('||', 1)
     return command
 
 
-# TODO removed first argument
 def parse_extra(settings):
     """ Parses extra information, such as resource and size """
     # TODO specify available options per url/function
@@ -90,12 +94,10 @@ def parse_extra(settings):
         settings['mode'] = request.args['mode']
 
     mode = settings.get('mode')
-    logging.info('Mode %s' % mode)
+    logging.info('Mode %s', mode)
     # set resources, based on the query and the user's permissions
     if 'resource' in request.args:
         wanted = request.args['resource'].split(',')
-        # TODO this slightly changes the behaviour
-        #wanted = sum((request.args['resource'].split(',') for r in request.args['resource']), [])
     else:
         wanted = []
     ok_lex = []  # lists all allowed lexicons
@@ -125,16 +127,15 @@ def parse_extra(settings):
         settings['size'] = float(size) if size == 'inf' else int(size)
     if 'sort' in request.args:
         #settings['sort'] = F.lookup_multiple(request.args['sort'].split(','), mode)
-        # TODO many sort?
         settings['sort'] = sum([F.lookup_multiple(s, mode)
-                               for s in request.args['sort'].split(',')], [])
+                                for s in request.args['sort'].split(',')], [])
     if 'page' in request.args:
         settings['page'] = min(int(request.args['page'])-1, 0)
     if 'start' in request.args:
         settings['start'] = int(request.args['start'])
     if 'buckets' in request.args:
-         settings['buckets'] = [F.lookup(r, mode) for r
-                                in request.args['buckets'].split(',')]
+        settings['buckets'] = [F.lookup(r, mode) for r
+                               in request.args['buckets'].split(',')]
 
     if 'show' in request.args:
         #settings['show'] = F.lookup_multiple(request.args['show'][0].split(','), mode)
@@ -182,15 +183,10 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     if format_query is not None:
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
-    logging.debug('construct from %s' % operands)
-    logging.debug('f_query %s' % f_query)
+    logging.debug('construct from %s', operands)
+    logging.debug('f_query %s', f_query)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
-        # TODO for querycount (statistics) with extended queries
-        # if something else breaks, add f_query.ok_in_filter for this instance
-        # and uncomment the below if clause
-        # if not f_query.ok_in_filter:
-        #     q = '"query" : {%s}' % q
         logging.debug('filter %s, %s', q, filters)
         filters.append(q)
     else:
@@ -240,7 +236,7 @@ def parse_operation(etype, op, isfilter=False):
     return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
-def freetext(text, mode, extra={}, isfilter=False, highlight=False):
+def freetext(text, mode, extra=None, isfilter=False, highlight=False):
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
         text is the text to search for
@@ -250,6 +246,8 @@ def freetext(text, mode, extra={}, isfilter=False, highlight=False):
         Returns a query object to be sent to elastic search
 
     """
+    if extra is None:
+        extra = {}
     if 'format_query' in configM.mode_fields(mode):
         # format the query text as specified in settings
         text = configM.formatquery(mode, 'anything', text)
@@ -261,25 +259,21 @@ def freetext(text, mode, extra={}, isfilter=False, highlight=False):
     boost_list = configM.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
-        # TODO used to be term, is match ok?
         qs.append({"match": {field : {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
     q = {"bool" : {"should" :[qs]}}
-    #q = '"bool" : {"should" :[%s]}' % ','.join('{'+q+'}' for q in qs)
     if extra:
         q = {"bool" : {"must" :[q, extra]}}
-        #q = '"bool" : {"must" :[%s]}' % ','.join('{'+e+'}' for e in [q]+extra)
     if isfilter:
         return {"filter" : q}
 
     res = {"query": q}
     if highlight:
-        res["highlight"] = {"fields": {"*": {"highlight_query": q}}, "require_field_match": False}
-        #highlight_str = ',"highlight": {"fields": {"*": {"highlight_query": {%s}}}, "require_field_match": false}' % q
-
+        res["highlight"] = {"fields": {"*": {"highlight_query": q}},
+                            "require_field_match": False
+                           }
     return res
-    #return '{"query": {%s} %s}' % (q, highlight_str)
 
 
 def search(exps, filters, fields, isfilter=False, highlight=False,
@@ -291,7 +285,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
                  is wanted
         Returns a string, representing complete elasticsearch object
     """
-    logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
+    logging.debug("start parsing expss %s \n filters %s ", exps, filters)
     if isfilter:
         filters += exps  # add to filter list
         exps = []  # nothing left to put in query
@@ -304,9 +298,9 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
         q_obj = {"bool": q_obj}
 
     else:
-        logging.debug("construct %s " % filters)
+        logging.debug("construct %s ", filters)
         f_obj = construct_exp(filters, querytype="filter")
-        logging.debug("got %s\n\n" % f_obj)
+        logging.debug("got %s\n\n", f_obj)
         if isfilter:
             logging.debug('case 2')
             q_obj = f_obj
@@ -332,9 +326,9 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
             logging.debug('field_q %s', field_q)
             for field in field_q['fields']:
                 high_fields[field] = {"number_of_fragments": 0,
-                             "highlight_query": field_q["highlight_query"],
-                             "require_field_match": False
-                             }
+                                      "highlight_query": field_q["highlight_query"],
+                                      "require_field_match": False
+                                     }
 
         res["highlight"] = {"fields": high_fields, "require_field_match": False}
         logging.debug('highlight %s', res['highlight'])
@@ -352,7 +346,7 @@ def construct_exp(exps, querytype="filter", constant_score=True):
     logging.debug('exps %s', exps)
     if not exps:
         return ''
-    if type(exps) is list:
+    if isinstance(exps, list):
         # If there are more than one expression,
         # combine them with 'must' (=boolean 'and')
         if querytype == "must":
@@ -368,17 +362,15 @@ def construct_exp(exps, querytype="filter", constant_score=True):
     return query
 
 
-# TODO removed first argument
 def random(settings):
     resource = parse_extra(settings)
     elasticq = {"query": {"function_score": {"random_score": {}}}}
     if resource:
         elasticq["query"]["function_score"]["query"] = resource
-    logging.debug('Will send %s' % elasticq)
+    logging.debug('Will send %s', elasticq)
     return elasticq
 
 
-# TODO removed first argument
 def statistics(settings, exclude=[], order={}, prefix='',
                show_missing=True, force_size=-1):
     """ Constructs a ES query for an statistics view (aggregated information)
@@ -393,7 +385,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
         q = {"filter" : resource}
 
     buckets = settings.get('buckets')
-    logging.debug('buckets %s' % buckets)
+    logging.debug('buckets %s', buckets)
     # buckets = buckets - exclude
     if exclude:
         # buckets = buckets - exclude
@@ -440,7 +432,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
             # breadth_first might make the query slower, but helps avoiding
             # memory problems
             # TODO breadth_first should only be used when size is really small
-            bucket_settings["collect_mode"] =  "breadth_first"
+            bucket_settings["collect_mode"] = "breadth_first"
             # if there are more than 3 buckets, also restrict the size
             max_size = 10000
             bucket_settings["size"] = min(size or max_size, max_size)
@@ -453,16 +445,16 @@ def statistics(settings, exclude=[], order={}, prefix='',
 
         # construct query for entries missing the current field/bucket
         missing_field = "%s%s_missing" % (prefix, bucket)
-        to_add_missing =  {"missing" : {"field" : bucket}}
+        to_add_missing = {"missing" : {"field" : bucket}}
 
         if to_add:
             to_add_exist["aggs"] = to_add
             to_add_missing["aggs"] = to_add
 
         for key, val in bucket_settings.items():
-              to_add_exist[terms][key] = val
-              if key == "order":
-                  to_add_missing["missing"][key] = val
+            to_add_exist[terms][key] = val
+            if key == "order":
+                to_add_missing["missing"][key] = val
 
         # normal queries contain the 'missing' buckets
         if normal and show_missing:
@@ -502,13 +494,13 @@ def adapt_query(size, _from, es, query, kwargs):
     # If _from is a float ignore it. Typically this happens because size is
     # inf and neither _from nor page were not set, which will set _from to
     # page*size = 0*inf = nan
-    if type(_from) == float:
+    if isinstance(_from, float):
         del kwargs['from_']
 
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= configM.setupconfig['SCAN_LIMIT']:
         kwargs['body'] = query
-        logging.debug('Will ask for %s' % kwargs)
+        logging.debug('Will ask for %s', kwargs)
         return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search

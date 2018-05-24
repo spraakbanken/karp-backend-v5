@@ -1,17 +1,17 @@
 # -*- coding=UTF-8 -*-
-import src.server.helper.configmanager as configM
+"""
+Connect to the sql data base and interact with it.
+Emails the admins (config/config.json) if an error occurs.
+"""
 import datetime
 import json
 import logging
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
-"""
-Connect to the sql data base and interact with it.
-Emails the admins (dbconf.json) if an error occurs.
-"""
+import src.server.helper.configmanager as configM
 
 
-dbconf = configM.config['DB']
+DBCONF = configM.config['DB']
 
 
 @compiles(sql.VARCHAR, 'mysql')
@@ -20,8 +20,8 @@ def compile_varchar(element, compiler, **kw):
     """ Forces mysql to use case sensitiveness for strings types """
     return "VARCHAR(%s) COLLATE utf8_bin" % (element.length)
 
-status_change = sql.types.Enum("added", "changed", "removed", "imported")
-status_sugg = sql.types.Enum("waiting", "accepted",
+STATUS_CHANGE = sql.types.Enum("added", "changed", "removed", "imported")
+STATUS_SUGG = sql.types.Enum("waiting", "accepted",
                              "rejected", "accepted_modified")
 
 
@@ -55,9 +55,9 @@ def create_table(metadata):
                          sql.Column('source', sql.types.Text(2**24-1)),
                          sql.Column('msg', sql.String(160)),
                          sql.Column('lexicon', sql.String(50), index=True),
-                         sql.Column('status', status_change),
+                         sql.Column('status', STATUS_CHANGE),
                          sql.Column('version', sql.Integer)
-                         )
+                        )
     sql.Index('historyindex', db_entry.c.lexicon, db_entry.c.status, db_entry.c.date)
     return db_entry
 
@@ -73,12 +73,12 @@ def create_suggestion_table(metadata):
                          sql.Column('msg', sql.String(160)),
                          sql.Column('lexicon', sql.String(50), index=True),
                          # For suggestions
-                         sql.Column('status', status_sugg, index=True),
+                         sql.Column('status', STATUS_SUGG, index=True),
                          sql.Column('origid', sql.String(22), index=True),
                          # Remember which version this is a copy of
                          sql.Column('version', sql.Integer),
                          sql.Column('acceptmsg', sql.String(160)),
-                         )
+                        )
     return db_entry
 
 
@@ -119,7 +119,7 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
             # while True means that it is a suggested addition.
             # No suggestion_id at all (empty string or False) would mean that
             # it is not a suggestion but a real update.
-            if type(suggestion_id) is bool:
+            if isinstance(suggestion_id, bool):
                 suggestion_id = ''
             ins = db_entry.insert().values(id=_id, origid=suggestion_id,
                                            date=date or datetime.datetime.now(),
@@ -127,13 +127,13 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
                                            version=version, msg=msg,
                                            acceptmsg="", status="waiting",
                                            lexicon=lexicon
-                                           )
+                                          )
         else:
             ins = db_entry.insert().values(id=_id, lexicon=lexicon,
                                            date=date or datetime.datetime.now(),
                                            user=user, msg=msg, source=doc,
                                            status=status, version=version
-                                           )
+                                          )
         conn = engine.connect()
         conn.execute(ins)
         conn.close()
@@ -175,9 +175,11 @@ def update_bulk(lexicon, bulk):
 
 
 def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
-             status=[], max_hits=10, engine=None, db_entry=None,
+             status=None, max_hits=10, engine=None, db_entry=None,
              suggestion=False, mode=''):
     # does not accept a list of lexicons anymore
+    if status is None:
+        status = []
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, mode=mode,
@@ -185,12 +187,18 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
 
         conn = engine.connect()
         operands = []
-        if user: operands.append(db_entry.c.user == user)
-        if _id: operands.append(db_entry.c.id == _id)
-        if from_date: operands.append(db_entry.c.date >= from_date)
-        if to_date: operands.append(db_entry.c.date <= to_date)
-        if exact_date: operands.append(db_entry.c.date == exact_date)
-        if lexicon: operands.append(db_entry.c.lexicon == lexicon)
+        if user:
+            operands.append(db_entry.c.user == user)
+        if _id:
+            operands.append(db_entry.c.id == _id)
+        if from_date:
+            operands.append(db_entry.c.date >= from_date)
+        if to_date:
+            operands.append(db_entry.c.date <= to_date)
+        if exact_date:
+            operands.append(db_entry.c.date == exact_date)
+        if lexicon:
+            operands.append(db_entry.c.lexicon == lexicon)
         add_list_operands([(status, db_entry.c.status)],
                           operands)
         selects = sql.select([db_entry]).where(sql.and_(*operands))
@@ -213,15 +221,15 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
         return res
 
     except SQLNull(lexicon):
-        logging.warning("Attempt to search for %s in SQL, no db available"
-                        % lexicon)
+        logging.warning("Attempt to search for %s in SQL, no db available",
+                        lexicon)
         return []
 
 
 def add_list_operands(to_add, operands):
     for vals, row_val in to_add:
         disjunct_operands = []
-        if type(vals) is str:
+        if isinstance(vals, str):
             vals = [vals]
         for val in vals:
             disjunct_operands.append(row_val == val)
@@ -234,13 +242,16 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, suggestion=True)
-        if type(msg) is unicode:
+        if isinstance(msg, unicode):
             msg = msg.encode('utf-8')
         conn = engine.connect()
         operands = []
-        if status: operands.append(db_entry.c.status == status)
-        if msg: operands.append(db_entry.c.msg == msg)
-        if origid: operands.append(db_entry.c.origid == origid)
+        if status:
+            operands.append(db_entry.c.status == status)
+        if msg:
+            operands.append(db_entry.c.msg == msg)
+        if origid:
+            operands.append(db_entry.c.origid == origid)
         update = db_entry.update().where(db_entry.c.id == _id)\
                          .values({'status': status, 'acceptmsg': msg})
         conn.execute(update)
@@ -255,13 +266,13 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
 
 def handle_error(e, user, msg, doc):
     mail_sent = 'No warnings sent by email'
-    if dbconf['ADMIN_EMAILS']:
-        import emailsender
+    if DBCONF['ADMIN_EMAILS']:
+        import src.dbhandler.emailsender as sender
         report = 'User: %s, msg: %s. \nDoc:\n%s' % (user, msg, doc)
         msg = 'Karp-b failure, %s.\n%s\n%s'\
               % (datetime.datetime.now(), e, report)
-        emailsender.send_notification(dbconf['ADMIN_EMAILS'], 'Karp failure', msg)
-        mail_sent = 'Warning sent to %s' % ', '.join(dbconf['ADMIN_EMAILS'])
+        sender.send_notification(DBCONF['ADMIN_EMAILS'], 'Karp failure', msg)
+        mail_sent = 'Warning sent to %s' % ', '.join(DBCONF['ADMIN_EMAILS'])
     return '%s. %s' % (str(e), mail_sent)
 
 

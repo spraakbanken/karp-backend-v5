@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-import parsererror as PErr
+import src.server.translator.parsererror as PErr
 
 # TODO isfilter is (probably) not used anymore, delete from code
 
@@ -16,7 +16,7 @@ class Operator:
 
     operator = ''  # The name of the operator
     query = ''     # The resulting query string
-    fields  = []
+    fields = []
     other_ops = []
     isfilter = False  # Should the query be expressed as an filter?
 
@@ -34,39 +34,39 @@ class Operator:
         return json.loads(self)
 
     def make_string(self, field=None, q_obj=None, query=None):
-         """ Similar to the string method, but does not update the self.query
-             q_obj is a query string (such as self.query)
-             field is a string
-             query is a string
-             other_op is a tuple of two strings
-             returns a string
-         """
-         if q_obj is None:
-             q_obj = self.query
-         # Creates, but does not set the query string
-         if field is not None:
-             q_obj = q_obj.replace('FIELD', field)
-         if query is not None:
-             q_obj = q_obj.replace('QUERY', query)
-         return q_obj
+        """ Similar to the string method, but does not update the self.query
+            q_obj is a query string (such as self.query)
+            field is a string
+            query is a string
+            other_op is a tuple of two strings
+            returns a string
+        """
+        if q_obj is None:
+            q_obj = self.query
+        # Creates, but does not set the query string
+        if field is not None:
+            q_obj = q_obj.replace('FIELD', field)
+        if query is not None:
+            q_obj = q_obj.replace('QUERY', query)
+        return q_obj
 
 
     def set_field(self, q_obj=None, field=None, other_op=None):
-         """ Similar to the string method, but does not update the self.query
-             q_obj is a query string (such as self.query)
-             field is a string
-             query is a string
-             other_op is a tuple of two strings
-             returns a string
-         """
-         if q_obj is None:
-             q_obj = self.query
-         if field is not None:
-             q_obj = q_obj.replace('FIELD', field)
-         if other_op is not None:
-             q_obj = q_obj.replace(other_op[0], other_op[1])
-         self.query = q_obj
-         return q_obj
+        """ Similar to the string method, but does not update the self.query
+            q_obj is a query string (such as self.query)
+            field is a string
+            query is a string
+            other_op is a tuple of two strings
+            returns a string
+        """
+        if q_obj is None:
+            q_obj = self.query
+        if field is not None:
+            q_obj = q_obj.replace('FIELD', field)
+        if other_op is not None:
+            q_obj = q_obj.replace(other_op[0], other_op[1])
+        self.query = q_obj
+        return q_obj
 
 
 
@@ -117,7 +117,7 @@ class Operator:
         """
         ops = []
         no_opers = len(operands)
-        logging.debug('operator %s ' % self.operator)
+        logging.debug('operator %s ', self.operator)
         if no_opers > self.max_operands or no_opers < self.min_operands:
             raise PErr.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
@@ -146,7 +146,7 @@ class Operator:
         if self.etype == "and":  # prepare conjunctions
             # Two special cases:
             # No operand (missing, exists) means we're done
-            if len(operands) == 0:
+            if not operands:
                 # return self.string()
                 return json.loads('{%s}' % self.make_string(self.query))
             # Just one operand => no disjunction
@@ -242,7 +242,7 @@ class Operator:
             self.operator = "endswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : ".*QUERY"}' % op
-            s#elf.query = lambda x,y,z: {op : {x : ".*"+y}}
+            #self.query = lambda x,y,z: {op : {x : ".*"+y}}
         elif op == "lte":
             self.operator = "lte"
             op = 'range'
