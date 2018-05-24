@@ -66,7 +66,7 @@ def requestquery(page=0):
     size = settings['size']
     index, typ = configM.get_mode_index(mode)
     exclude = configM.searchfield(mode, 'secret_fields') if not auth else []
-    ans = parser.adapt_query(size, start, configM.elastic(mode=mode), loads(elasticq),
+    ans = parser.adapt_query(size, start, configM.elastic(mode=mode), elasticq,
                              {'size': size, 'sort': sort, 'from_': start,
                               'index': index,
                               '_source_exclude': exclude,
@@ -128,7 +128,7 @@ def querycount(page=0):
         # TODO does search_type=count work with the new es version?
         # if not, use query_then_fetch, size=0
         count_ans = es.search(index=index,
-                              body=loads(count_elasticq),
+                              body=count_elasticq,
                               search_type="query_then_fetch",
                               # raise the size for the statistics call
                               size=0  # stat_size
@@ -158,7 +158,7 @@ def test():
         elasticq = parser.parse(settings)
     except PErr.QueryError as e:
         raise eh.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
-    return jsonify({'elastic_json_query': loads(elasticq)})
+    return jsonify({'elastic_json_query': elasticq})
 
 
 def explain():
@@ -172,9 +172,9 @@ def explain():
     es = configM.elastic(mode=settings['mode'])
     index, typ = configM.get_mode_index(settings['mode'])
     ex_ans = es.indices.validate_query(index=index,
-                                       body=loads(elasticq), explain=True)
+                                       body=elasticq, explain=True)
     q_ans = requestquery(page=0)
-    return jsonify({'elastic_json_query': loads(elasticq), 'ans': q_ans,
+    return jsonify({'elastic_json_query': elasticq, 'ans': q_ans,
                     'explain': ex_ans})
 
 
@@ -198,7 +198,7 @@ def minientry():
         start = settings['start'] if 'start' in settings else 0
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
-        ans = parser.adapt_query(settings['size'], start, es, loads(elasticq),
+        ans = parser.adapt_query(settings['size'], start, es, elasticq,
                                  {'index': index, '_source': show,
                                   'from_': start, 'sort': sort,
                                   'size': min(settings['size'], max_page),
@@ -231,9 +231,10 @@ def random():
                    "size": 1}
         settings = parser.make_settings(permitted, default)
         elasticq = parser.random(settings)
+        logging.debug('random %s', elasticq)
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
-        es_q = {'index': index, 'body': loads(elasticq),
+        es_q = {'index': index, 'body': elasticq,
                 'size': settings['size']}
         if settings['show']:
             show = settings['show']
@@ -274,7 +275,7 @@ def statistics():
 
         # TODO allow more than 100 000 hits here?
         logging.debug('stat body %s' % elasticq)
-        ans = es.search(index=index, body=loads(elasticq),
+        ans = es.search(index=index, body=elasticq,
                         search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
@@ -309,7 +310,7 @@ def statlist():
         is_more = check_bucketsize(more, settings["size"], index, es)
         # TODO allow more than 100 000 hits here?
         size = settings['size']
-        ans = es.search(index=index, body=loads(elasticq),
+        ans = es.search(index=index, body=elasticq,
                         search_type="query_then_fetch", size=0)
         tables = []
         for key, val in ans['aggregations']['q_statistics'].items():
@@ -338,7 +339,7 @@ def statlist():
 def check_bucketsize(bucket_sizes, size, index, es):
     is_more = {}
     for sizebucket, bucketname in bucket_sizes:
-        countans = es.search(index=index, body=loads(sizebucket),
+        countans = es.search(index=index, body=sizebucket,
                              size=0,
                              search_type="query_then_fetch")
         logging.debug('countans %s' % countans)
@@ -419,15 +420,15 @@ def autocomplete():
     try:
         settings = parser.make_settings(permitted, {'size': 1000})
         mode = parser.get_mode()
-        p_extra = parser.parse_extra(settings)
+        resource = parser.parse_extra(settings)
         if 'q' in request.args or 'query' in request.args:
             qs = [request.args.get('q', '') or request.args.get('query', '')]
-            logging.debug('qs is %s' % qs)
+            logging.debug('qs is %s', qs)
             multi = False
         else:
             # check if there are multiple words forms to complete
             qs = settings.get('multi', [])
-            logging.debug('qs %s' % qs)
+            logging.debug('qs %s', qs)
             multi = True
 
         # use utf8, escape '"'
@@ -438,23 +439,24 @@ def autocomplete():
         ans = {}
         # if multi is not true, only one iteration of this loop will be done
         for q in qs:
-            boost = '''{"term": {"%s": {"boost" : "500", "value": "%s"}}}''' % (headboost, q)
+            boost = {"term": {headboost: {"boost" : "500", "value": q}}}
 
+            # TODO update to use objects, not string
             autocompleteq = configM.extra_src(mode, 'autocomplete', autocompletequery)
             exp = autocompleteq(mode, boost, q)
             autocomplete_field = configM.searchonefield(mode, 'autocomplete_field')
             autocomplete_fields = configM.searchfield(mode, 'autocomplete_field')
-            fields = '"exists": {"field" : "%s"}' % autocomplete_field
+            fields = {"exists": {"field" : autocomplete_field}}
             # last argument is the 'fields' used for highlightning
             # TODO use filter?
-            elasticq = parser.search([exp, fields] + p_extra, [], '', usefilter=True)
+            elasticq = parser.search([exp, fields, resource], [], '', usefilter=True)
             logging.debug('Will send %s' % elasticq)
 
             es = configM.elastic(mode=mode)
             logging.debug('_source: %s' % autocomplete_field)
             logging.debug(elasticq)
             index, typ = configM.get_mode_index(mode)
-            ans = parser.adapt_query(settings['size'], 0, es, loads(elasticq),
+            ans = parser.adapt_query(settings['size'], 0, es, elasticq,
                                      {'size': settings['size'], 'index': index,
                                       '_source': autocomplete_fields}
                                      )
@@ -486,10 +488,9 @@ def autocompletequery(mode, boost, q):
     # other modes: don't care about msd
     look_in = [boost]
     for boost_field in configM.searchfield(mode, 'boosts'):
-        look_in.append('{"match_phrase" : {"%s" : "%s"}}' % (boost_field, q))
+        look_in.append({"match_phrase" : {boost_field : q}})
 
-    exp = '''"bool" : {"should" :
-             [%s]}''' % (','.join(look_in))
+    exp = {"bool" : {"should" : [look_in]}}
 
     return exp
 
@@ -544,7 +545,7 @@ def testquery():
         start = settings['start'] if 'start' in settings\
                                   else settings['page'] * settings['size']
         elasticq = parser.parse()
-        return elasticq + dumps({'sort': sort, '_from': start,
+        return dumps(elasticq) + dumps({'sort': sort, '_from': start,
                                  'size': settings['size'],
                                  'version': 'true'})
     except Exception as e:  # catch *all* exceptions
@@ -593,6 +594,7 @@ def get_context(lexicon):
         exps = []
         parser.parse_ext('and|resource|equals|%s' % lexicon, exps, [], mode)
         center_q = parser.search(exps, [], [], usefilter=True, constant_score=False)
+        center_q = {"query": center_q}
         lexstart = es.search(index=index, doc_type=typ, size=1, body=center_q,
                              sort=['%s:asc' % f for f in sortfield])
         center_id = lexstart['hits']['hits'][0]['_id']

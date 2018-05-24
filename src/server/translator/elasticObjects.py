@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import parsererror as PErr
 
@@ -15,6 +16,8 @@ class Operator:
 
     operator = ''  # The name of the operator
     query = ''     # The resulting query string
+    fields  = []
+    other_ops = []
     isfilter = False  # Should the query be expressed as an filter?
 
     def __init__(self, etype, op, isfilter=False):
@@ -27,33 +30,45 @@ class Operator:
         self.set_etype(etype, op)
         self.set_op(op, isfilter)
 
+    def make_object(self):
+        return json.loads(self)
 
-    def string(self, field=None, query=None):
-        """ Method for adding the field and/or operand name to the question
-            Updates the query object
-            field is a string
-            query is a string
-            returns a string
-        """
-        self.query = self.make_string(self.query, field, query)
-        return self.query
+    def make_string(self, field=None, q_obj=None, query=None):
+         """ Similar to the string method, but does not update the self.query
+             q_obj is a query string (such as self.query)
+             field is a string
+             query is a string
+             other_op is a tuple of two strings
+             returns a string
+         """
+         if q_obj is None:
+             q_obj = self.query
+         # Creates, but does not set the query string
+         if field is not None:
+             q_obj = q_obj.replace('FIELD', field)
+         if query is not None:
+             q_obj = q_obj.replace('QUERY', query)
+         return q_obj
 
-    def make_string(self, q_obj, field=None, query=None, other_op=None):
-        """ Similar to the string method, but does not update the self.query
-            q_obj is a query string (such as self.query)
-            field is a string
-            query is a string
-            other_op is a tuple of two strings
-            returns a string
-        """
-        # Creates, but does not set the query string
-        if field is not None:
-            q_obj = q_obj.replace('FIELD', field)
-        if query is not None:
-            q_obj = q_obj.replace('QUERY', query)
-        if other_op is not None:
-            q_obj = q_obj.replace(other_op[0], other_op[1])
-        return q_obj
+
+    def set_field(self, q_obj=None, field=None, other_op=None):
+         """ Similar to the string method, but does not update the self.query
+             q_obj is a query string (such as self.query)
+             field is a string
+             query is a string
+             other_op is a tuple of two strings
+             returns a string
+         """
+         if q_obj is None:
+             q_obj = self.query
+         if field is not None:
+             q_obj = q_obj.replace('FIELD', field)
+         if other_op is not None:
+             q_obj = q_obj.replace(other_op[0], other_op[1])
+         self.query = q_obj
+         return q_obj
+
+
 
     def multiple_fields_string(self, fields='', query=None, constraints=''):
         """ Similar to the string method but handles multiple field search.
@@ -65,7 +80,7 @@ class Operator:
         # Combine the fields in a bool query
         queries = []
         for f in fields:
-            queries.append(self.make_string(self.query, f, query))
+            queries.append(self.make_string(f, query))
         # Normally, the fields should be in a disjunction;
         # find X in either this or that field
         combinator = 'should'
@@ -76,6 +91,7 @@ class Operator:
 
         fieldquery = '"bool" : {"%s" : [' % (combinator) + \
                      ','.join('{' + q + '}' for q in queries) + ']}'
+        logging.debug('made fieldquery %s', fieldquery)
 
         if constraints:
             nestedquery = '"match_phrase": {"%s": "%s"}' % (constraints[1],
@@ -101,7 +117,7 @@ class Operator:
         """
         ops = []
         no_opers = len(operands)
-        logging.debug('operand %s ' % self.operator)
+        logging.debug('operator %s ' % self.operator)
         if no_opers > self.max_operands or no_opers < self.min_operands:
             raise PErr.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
@@ -111,35 +127,49 @@ class Operator:
             # If the operand is within the range of what the operator needs,
             # fill up its slots (eg. range)
             if index > 0 and index < self.min_operands:
-                ops[-1] = self.make_string(ops[-1], other_op=('OP%d' % index, operand))
+                ops[-1] = '{%s}' % self.set_field(ops[-1], other_op=('OP%d' % index, operand))
             # If there are more than the minimum number of operands we prepare
             # them one by one here, and save the list to be coordinated by 'or'
             # och 'and not'
             else:
+                logging.debug('append %s - %s', self.query, operand)
                 ops.append('{%s}' % self.make_string(self.query, query=operand))
+                logging.debug('ops is %s', ops)
 
+        logging.debug('finished, ops is %s', ops)
         if not operands:
             # if there are no operands (an unary operator), the query is
             # complete already
+            logging.debug('ping')
             ops = ['{%s}' % self.query]
 
         if self.etype == "and":  # prepare conjunctions
             # Two special cases:
             # No operand (missing, exists) means we're done
             if len(operands) == 0:
-                return self.string()
+                # return self.string()
+                return json.loads('{%s}' % self.make_string(self.query))
             # Just one operand => no disjunction
             if len(operands) == 1:
                 # don't use ops, they contain to many curly brackets
-                return self.string(query=operands[0])
+                obj = self.make_string(self.query, query=operands[0])
+                logging.debug('made %s', obj)
+                return json.loads('{%s}' % self.make_string(self.query, query=operands[0]))
+                # return self.string(query=operands[0])
 
             # Several operands here means disjunction, the 'and' tells us that
             # the result should later be conjuncted with the rest of the
             # queries.
-            return '"bool" : {"should" : [%s]}' % ','.join(ops)
+            logging.debug('ops is now %s', ops)
+            logging.debug('load %s', '{"bool" : {"should" : [%s]}}' % ','.join(ops))
+            return json.loads('{"bool" : {"should" : [%s]}}' % ','.join(ops))
 
         if self.etype == "not":
-            return '"bool" : {"must_not" : [%s]}' % ','.join(ops)
+            return json.loads('{"bool" : {"must_not" : [%s]}}' % ','.join(ops))
+
+
+    # def set_operand(self, operand):
+    #     return lambda q: self.query(operand, q)
 
     def set_op(self, op, isfilter=False):
         """ Method for setting the operator, called when an object is
@@ -157,6 +187,7 @@ class Operator:
             # (Eg. "gälla..5" in comment won't be found with term
             # self.operator =  "term" if max_words<=1 else "match_phrase"
             self.operator = "match_phrase"
+            #self.query = lambda x,y,z: {self.operator: {x: y}}
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter
@@ -167,11 +198,13 @@ class Operator:
             # full-text) fields, like pos and might, in theory, be faster. In
             # practice, it is not (as of July 2015).
             self.operator = "term"
+            #self.query = lambda x,y,z: {self.operator: {x: y}}
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             self.isfilter = True
 
         elif op == "contains":
             self.operator = "match"
+            #self.query = lambda x,y,z: {self.operator: {x: {"query": y, "operator": "and"}}}
             self.query = '"%s": {"FIELD": {"query": "QUERY", "operator": "and"}}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter (might be possible, not tested)
@@ -185,6 +218,7 @@ class Operator:
             self.min_operands = 0
             self.operator = "exist"  # "missing"
             # self.isfilter = True
+            #self.query = lambda x,y,z: {"exists" : {"field" : x}}
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "exists":
             # This filter consider empty strings (but not empty lists) to be an
@@ -193,25 +227,31 @@ class Operator:
             self.min_operands = 0
             self.operator = "exist"
             # self.isfilter = True
+            #self.query = lambda x,y,z: {"exists": {"field": x}}
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "regexp":
             self.operator = "regexp"
             self.query = '"regexp" : {"FIELD" : "QUERY"}'
+            #self.query = lambda x,y,z: {"regexp": {x: y}}
         elif op == "startswith":
             self.operator = "startswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : "QUERY.*"}' % op
+            #self.query = lambda x,y,z: {op : {x : y+".*"}}
         elif op == "endswith":
             self.operator = "endswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : ".*QUERY"}' % op
+            s#elf.query = lambda x,y,z: {op : {x : ".*"+y}}
         elif op == "lte":
             self.operator = "lte"
             op = 'range'
+            #self.query = lambda x,y,z: {op : {x : {"lte" : y}}}
             self.query = '"%s" : {"FIELD" : {"lte" : "QUERY"}}' % op
         elif op == "gte":
             self.operator = "gte"
             op = 'range'
+            #self.query = lambda x,y,z: {op : {x : {"gte" : y}}}
             self.query = '"%s" : {"FIELD" : {"gte" : "QUERY"}}' % op
         elif op == "range":
             self.operator = "range"
@@ -219,6 +259,7 @@ class Operator:
             self.max_operands = 2  # allows exactly two operands
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
+            #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'

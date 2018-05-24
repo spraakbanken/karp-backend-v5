@@ -48,14 +48,17 @@ def parse(settings={}, isfilter=False):
     if command == "extended":
         filters = []  # filters will be put here
         fields = []
+        p_ex = [p_extra]
         for e in query.split('||'):
-            fields.append(parse_ext(e, p_extra, filters, mode,
+            logging.debug('parsing %s', e)
+            fields.append(parse_ext(e, p_ex, filters, mode,
                                     isfilter=isfilter))
+            logging.debug('fields %s, p_ex %s', fields, p_ex)
         # unless the user wants to sort by _score, use a filter rather
         # than a query. will improve ES speed, since no scoring is done.
         usefilter = '_score' not in settings.get('sort', '')
 
-        return search(p_extra, filters, fields, isfilter=isfilter,
+        return search(p_ex, filters, fields, isfilter=isfilter,
                       highlight=highlight, usefilter=usefilter)
 
 
@@ -70,7 +73,8 @@ def get_command():
 def parse_extra(settings):
     """ Parses extra information, such as resource and size """
     # TODO specify available options per url/function
-    info = []
+    lex_wanted = []
+    info = {}
     available = ['resource', 'size', 'sort', 'q', 'start', 'page', 'buckets',
                  'show', 'show_all', 'status', 'index', 'cardinality',
                  'highlight', 'format', 'export', 'mode', 'center', 'multi',
@@ -98,14 +102,14 @@ def parse_extra(settings):
     for r in settings.get('allowed', []):
         if r in wanted or not wanted:
             ok_lex.append(r)
-            info.append('"term" : {"%s" : "%s"}'
-                        % (F.lookup("lexiconName", mode), r))
+            lex_wanted.append({"term" : {F.lookup("lexiconName", mode): r}})
 
-    if len(info) > 1:
+    if len(lex_wanted) > 1:
         # if more than one lexicon, the must be put into a 'should' ('or'),
         # not the 'must' query ('and') that will be constructed later
-        info = ['"bool" : {"should" : [%s]}'
-                % ','.join('{'+i+'}' for i in info)]
+        info = {"bool" : {"should" : lex_wanted}}
+    elif len(lex_wanted) == 1:
+        info = lex_wanted[0]
 
     if not ok_lex:
         # if no lexicon is set, ES will search all lexicons,
@@ -179,6 +183,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
     logging.debug('construct from %s' % operands)
+    logging.debug('f_query %s' % f_query)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         # TODO for querycount (statistics) with extended queries
@@ -186,8 +191,10 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         # and uncomment the below if clause
         # if not f_query.ok_in_filter:
         #     q = '"query" : {%s}' % q
+        logging.debug('filter %s, %s', q, filters)
         filters.append(q)
     else:
+        logging.debug('extend %s, %s', q, exps)
         exps.append(q)
         field_info['highlight_query'] = q
     return field_info
@@ -212,12 +219,13 @@ def parse_field(field_info, op):
 
     fields = field_info['fields']
     constraints = field_info['constraints']
+    logging.debug('fields %s', fields)
     if len(fields) > 1 or constraints:
         # If there's more than one field, use the multiple_field_string
         op.multiple_fields_string(fields=fields, constraints=constraints)
     else:
         # otherwise use the standard string
-        op.string(field=fields[0])
+        op.set_field(field=fields[0])
     return op
 
 
@@ -232,7 +240,7 @@ def parse_operation(etype, op, isfilter=False):
     return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
-def freetext(text, mode, extra=[], isfilter=False, highlight=False):
+def freetext(text, mode, extra={}, isfilter=False, highlight=False):
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
         text is the text to search for
@@ -248,31 +256,30 @@ def freetext(text, mode, extra=[], isfilter=False, highlight=False):
 
     qs = []
     for field in configM.all_searchfield(mode):
-        qs += ['"match": {"%s": {"query": "%s", "operator": "and"}}' % (field, text)]
-    # if isfilter:
-    #     qs = ['"query" : {%s}' % q for q in qs]
+        qs.append({"match": {field: {"query": text, "operator": "and"}}})
 
     boost_list = configM.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
         # TODO used to be term, is match ok?
-        qs.append('"match": {"%s" : {"query": "%s", "boost": "%d"}}'
-                  % (field, text, boost_score))
+        qs.append({"match": {field : {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
-    q = '"bool" : {"should" :[%s]}' % ','.join('{'+q+'}' for q in qs)
+    q = {"bool" : {"should" :[qs]}}
+    #q = '"bool" : {"should" :[%s]}' % ','.join('{'+q+'}' for q in qs)
     if extra:
-        q = '"bool" : {"must" :[%s]}' % ','.join('{'+e+'}' for e in [q]+extra)
+        q = {"bool" : {"must" :[q, extra]}}
+        #q = '"bool" : {"must" :[%s]}' % ','.join('{'+e+'}' for e in [q]+extra)
     if isfilter:
-        return '"filter" : {%s}' % q
+        return {"filter" : q}
 
+    res = {"query": q}
     if highlight:
-        highlight_str = ',"highlight": {"fields": {"*": {"highlight_query": {%s}}}, "require_field_match": false}' % q
-    else:
-        highlight_str = ''
+        res["highlight"] = {"fields": {"*": {"highlight_query": q}}, "require_field_match": False}
+        #highlight_str = ',"highlight": {"fields": {"*": {"highlight_query": {%s}}}, "require_field_match": false}' % q
 
-    logging.debug('WOOW WE HAVE {"query": {%s} %s}' % (q, highlight_str))
-    return '{"query": {%s} %s}' % (q, highlight_str)
+    return res
+    #return '{"query": {%s} %s}' % (q, highlight_str)
 
 
 def search(exps, filters, fields, isfilter=False, highlight=False,
@@ -285,45 +292,54 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
         Returns a string, representing complete elasticsearch object
     """
     logging.debug("start parsing expss %s \n filters %s " % (exps, filters))
-    constant_s = ('"constant_score": {"filter": {', '}}') if constant_score else ('', '')
-    if isfilter:  # add to filter list
-        filters += exps
+    if isfilter:
+        filters += exps  # add to filter list
         exps = []  # nothing left to put in query
 
-    if highlight:
-        field_query = []
-        for field_q in fields:
-            high_str = '"highlight_query": {%s}' % field_q["highlight_query"]
-            for f in field_q["highlight"]:
-                field_query.append((f, high_str))
-        # TODO require_field_match should be true only
-        # when the field '*' is queried
-        field_str = '"%s": {"number_of_fragments": 0, %s, "require_field_match": false}'
-        fields = ', '.join([field_str % f for f in field_query])
-        highlight_str = ',"highlight": {"fields": {%s}, "require_field_match": false}' % fields
-    else:
-        highlight_str = ''
-
     # extended queries: always use filter, scoring is never used
+    res = {}
     if usefilter and not isfilter:
-        q = construct_exp(exps+filters, querytype="must", constant_score=constant_s[0])
-        logging.debug('Constant 0 0: %s \n 1: %s' % (constant_s))
-        return '{"query" : {%s "bool": {%s}}%s %s}' % (constant_s[0], q, constant_s[1], highlight_str)
+        logging.debug('case 1')
+        q_obj = construct_exp(exps+filters, querytype="must", constant_score=constant_score)
+        q_obj = {"bool": q_obj}
 
-    logging.debug("construct %s " % filters)
-    f = construct_exp(filters, querytype="filter")
-    logging.debug("got %s\n\n" % f)
-    if isfilter:
-        return f
-
-    if f and exps:
-        q = construct_exp(exps, querytype="must", constant_score=constant_s[0])
-        logging.debug('Constant 1 0: %s \n 1: %s' % (constant_s))
-        return '{"query": {%s "bool" : {%s,%s}}}%s' % (constant_s[0], f, q, constant_s[1])
     else:
-        logging.debug('Constant 2 0: %s \n 1: %s' % (constant_s))
-        q = construct_exp(exps, querytype="query", constant_score=constant_s[0])
-    return '{%s %s}' % (f+q, highlight_str)
+        logging.debug("construct %s " % filters)
+        f_obj = construct_exp(filters, querytype="filter")
+        logging.debug("got %s\n\n" % f_obj)
+        if isfilter:
+            logging.debug('case 2')
+            q_obj = f_obj
+
+        elif f_obj and exps:
+            logging.debug('case 3')
+            qs = construct_exp(exps, querytype="must", constant_score=constant_score)
+            qs.update(f_obj)
+            q_obj = {"bool" : qs}
+        else:
+            logging.debug('case 4')
+            q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
+            logging.debug('got %s', q_obj)
+
+    if constant_score and usefilter and not isfilter:
+        res["constant_score"] = {"filter": q_obj}
+        res = {"query": res}
+    else:
+        res = q_obj
+    if highlight:
+        high_fields = {}
+        for field_q in fields:
+            logging.debug('field_q %s', field_q)
+            for field in field_q['fields']:
+                high_fields[field] = {"number_of_fragments": 0,
+                             "highlight_query": field_q["highlight_query"],
+                             "require_field_match": False
+                             }
+
+        res["highlight"] = {"fields": high_fields, "require_field_match": False}
+        logging.debug('highlight %s', res['highlight'])
+
+    return res
 
 
 def construct_exp(exps, querytype="filter", constant_score=True):
@@ -333,31 +349,31 @@ def construct_exp(exps, querytype="filter", constant_score=True):
         isfilter should be set to True when a filter, rather than a query,
                  is wanted
     """
+    logging.debug('exps %s', exps)
     if not exps:
         return ''
-    if len(exps) > 1:
+    if type(exps) is list:
         # If there are more than one expression,
         # combine them with 'must' (=boolean 'and')
         if querytype == "must":
-            return '"must" : [%s]' % ','.join('{'+e+'}' for e in exps)
+            return {"must": exps}
 
         combinedquery = "filter" if querytype == "must" else querytype
-        return '"%s" : {"bool" : {"must" : [%s]}}'\
-               % (combinedquery, ','.join('{'+e+'}' for e in exps))
+        return {combinedquery: {"bool": {"must": exps}}}
     # otherwise just put the expression in a query
     if constant_score:
-        query = '"%s": {"constant_score": {%s}}' % (querytype, exps[0])
+        query = {querytype: {"constant_score": exps}}
     else:
-        query = '"%s": {%s}' % (querytype, exps[0])
+        query = {querytype: exps}
     return query
 
 
 # TODO removed first argument
 def random(settings):
     resource = parse_extra(settings)
-    resource = '"query": {%s}, ' % resource[0] if resource else ''
-    elasticq = '''{"query": {"function_score": { %s "random_score": {}}}}
-               ''' % (resource)
+    elasticq = {"query": {"function_score": {"random_score": {}}}}
+    if resource:
+        elasticq["query"]["function_score"]["query"] = resource
     logging.debug('Will send %s' % elasticq)
     return elasticq
 
@@ -374,7 +390,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     if q:
         q = parse(isfilter=True, settings=settings)
     else:  # always filter to show only the permitted resources
-        q = '"filter" : {%s}' % resource[0]
+        q = {"filter" : resource}
 
     buckets = settings.get('buckets')
     logging.debug('buckets %s' % buckets)
@@ -388,32 +404,32 @@ def statistics(settings, exclude=[], order={}, prefix='',
         size = force_size
     else:
         size = settings.get('size')
-    to_add = ''
+    to_add = []
     normal = not settings.get('cardinality')
     more = []  # collect queries about max size for each bucket
     shard_size = 27000  # TODO how big? get from config
     # For saldo:
     # 26 000 => document count errors
     # 27 000 => no errors
+    bucket_settings = {}
     for bucket in reversed(buckets):
         terms = 'terms' if normal else 'cardinality'
         # the sorting order for this bucket, used by querycount
-        bucket_order = ''
-        if order.get(bucket):
-            bucket_order = ',"order" : {"%s": "%s"}' % order.get(bucket)
-
-        # embed previous agg in this one, separate by comma
-        to_add = ','+to_add if to_add else to_add
+        if bucket in order:
+            if "order" not in bucket_settings:
+                bucket_settings["order"] = {}
+            bucket_settings["order"]["bucket"] = order[bucket]
 
         # add size if the query is normal (i.e. not for cardinality queries)
+        bucket_settings = {}
         if normal:
-            add_size = ',"size" : %s, "shard_size": %s' %(size, shard_size)
-        else:
-            add_size = ''
+            bucket_settings["size"] = size
+            bucket_settings["shard_size"] = shard_size
+        #else:
+        #    add_size = ''
 
         # construct query for entries with the current field/bucket
         # mode = ', "collect_mode" : "breadth_first"' if normal else ''
-        mode = ''
         if normal and (len(buckets) > 2 or size > 1000):
             # TODO to avoid es breaking, do not allow arbitrary deep bucketing
             # If the size is very small, also use breadth_first since it will
@@ -424,37 +440,55 @@ def statistics(settings, exclude=[], order={}, prefix='',
             # breadth_first might make the query slower, but helps avoiding
             # memory problems
             # TODO breadth_first should only be used when size is really small
-            mode = ', "collect_mode" : "breadth_first"'
+            bucket_settings["collect_mode"] =  "breadth_first"
             # if there are more than 3 buckets, also restrict the size
             max_size = 10000
-            add_size = ',"size" : %s, "shard_size": %s' % (min(size or max_size, max_size), shard_size)
+            bucket_settings["size"] = min(size or max_size, max_size)
+            bucket_settings["shard_size"] = shard_size
 
-        count_errors = ''  # '"show_term_doc_count_error": true, '
-        to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
-                       % (prefix, bucket, terms, count_errors, bucket,
-                          add_size, mode, bucket_order, to_add)
+        # count_errors = ''  # '"show_term_doc_count_error": true, '
+        to_add_field = "%s%s" % (prefix, bucket)
+        #to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
+        to_add_exist = {terms: {"field" : bucket}}
 
         # construct query for entries missing the current field/bucket
-        to_add_missing = '"%s%s_missing" : {"missing" : {"field" : "%s" %s} %s}'\
-                         % (prefix, bucket, bucket, bucket_order, to_add)
+        missing_field = "%s%s_missing" % (prefix, bucket)
+        to_add_missing =  {"missing" : {"field" : bucket}}
+
+        if to_add:
+            to_add_exist["aggs"] = to_add
+            to_add_missing["aggs"] = to_add
+
+        for key, val in bucket_settings.items():
+              to_add_exist[terms][key] = val
+              if key == "order":
+                  to_add_missing["missing"][key] = val
 
         # normal queries contain the 'missing' buckets
         if normal and show_missing:
-            to_add = '"aggs" : {%s, %s}' % (to_add_exist, to_add_missing)
+            to_add = {to_add_field: to_add_exist, missing_field: to_add_missing}
         # cardinality queries do not
         else:
-            to_add = '"aggs" : {%s}' % (to_add_exist)
+            to_add = {to_add_field: to_add_exist}
         # construct a query to see the cardinality of this field
-        more.append(('{"aggs": {"more" : {"cardinality" : {"field" : "%s"}}}}'
-                    % bucket, bucket))
+        more.append(({"aggs": {"more" : {"cardinality" : {"field" : bucket}}}},
+                     bucket))
         # set normal to True, since only the innermost bucket grouping can
         # contain cardinality information
         # (otherwise the innermost won't be shown)
         normal = True
 
-    agg = '{"aggs" : {"q_statistics": {%s, %s}}}' \
-          % (q, to_add) if q else '{%s}' % to_add
-    return agg, more
+    agg = {"aggs": to_add}
+
+    if q:
+        agg = {"q_statistics": {"aggs": to_add}}
+    else:
+        agg = to_add
+
+    for key, val in q.items():
+        agg["q_statistics"][key] = val
+
+    return {"aggs": agg}, more
 
 
 def adapt_query(size, _from, es, query, kwargs):
