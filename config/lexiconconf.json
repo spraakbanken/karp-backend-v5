@@ -1,10 +1,51 @@
 {
-  "panacea": {
-    "path": "data/panacea/",
+  "default": {
+    "path": "data/karplex/",
     "no_escape": false,
     "format": "json",
-    "usedtags": [],
-    "mode": "panacea",
-    "order": 0
-  }
+    "usedtags": []
+  },
+  "saldomp": {
+    "mode": "external",
+    "order": 1},
+  "saldompparadigms": {
+    "mode": "saldompparadigms",
+    "order": 2,
+    "path": "data/paradigms/"},
+  "saldompcandidates": {
+    "mode": "saldompcandidates",
+    "order": 3,
+    "path": "data/paradigms/"},
+  "saolp": {
+    "mode": "saolp",
+    "path": "data/saol/",
+    "order": 4},
+  "saolpparadigms": {
+    "mode": "saolpparadigms",
+    "order": 5,
+    "path": "data/paradigms/"},
+  "saolpcandidates": {
+    "mode": "saolpcandidates",
+    "order": 6,
+    "path": "data/paradigms/"},
+  "votiska": {
+    "mode": "votiska",
+    "path": "data/votiska",
+    "order": 7},
+  "votiskaparadigms": {
+    "mode": "votiskaparadigms",
+    "order": 8,
+    "path": "data/paradigms/"},
+  "votiskacandidates": {
+    "mode": "votiskacandidates",
+    "order": 9,
+    "path": "data/paradigms/"},
+  "fgnp_eng": {
+    "mode": "fgnp_eng",
+    "order": 28,
+    "path": "data/kast/"},
+  "skbl": {
+    "mode": "skbl",
+    "order": 37,
+    "path": "data/skbl/"}
 }

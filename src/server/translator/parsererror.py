@@ -8,10 +8,10 @@ class QueryError(KarpException):
     def __init__(self, message, debug_msg='', status_code=None, payload=None):
         Exception.__init__(self)
         self.message = message
-        self.debug_msg = debug_msg
+        self.debug_msg = debug_msg or message
         if status_code is None:
             self.status_code = 400
-        KarpException.__init__(self, "Query Exception: " + message,
+        KarpException.__init__(self, "malformed query: " + message,
                                status_code=status_code, payload=payload,
                                debug_msg=debug_msg)
 

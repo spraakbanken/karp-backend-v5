@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" The backend, redirects url calls to the appropriate modules.
+    Is also responsible for which ES node to query.
+"""
 
 from flask import jsonify, request, session
 from src.server.helper.flaskhelper import app
@@ -9,13 +12,6 @@ import src.server.suggestions as suggestions
 import src.server.update as update
 import src.server.helper.configmanager as configM
 import logging
-
-
-""" The backend, redirects url calls to the appropriate modules.
-    Is also responsible for which ES node to query.
-"""
-
-
 def init(route):
 
     @route()
@@ -94,7 +90,7 @@ def init(route):
     # For adding a document which already has an id (one that has been deleted)
     @route('<lexicon>/<_id>', methods=['POST'])
     def readd(lexicon, _id):
-            return update.add_doc(lexicon, _id=_id)
+        return update.add_doc(lexicon, _id=_id)
 
     # For adding many document
     @route('<lexicon>', methods=['POST'])
@@ -284,7 +280,6 @@ def init(route):
                 """ % (KARP_VERSION, STYLES_CSS, KARP_VERSION, md.toc), md_html, "</div></body></html>"]
 
         return "\n".join(html)
-
 
     @route('/logout')
     def logout():

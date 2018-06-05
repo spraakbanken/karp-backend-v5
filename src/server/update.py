@@ -1,20 +1,19 @@
+""" Methods for updating the database,
+    including deletion and creation of indices
+"""
 import datetime
+import logging
 from elasticsearch import helpers as eshelpers
 from elasticsearch import exceptions as esExceptions
-import errorhandler as eh
 from flask import request, jsonify
 from json import dumps
-import logging
-from src.server.autoupdates import auto_update_document, autoupdate_child
+import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.auth as auth
 import src.server.helper.helpers as helpers
 import src.server.translator.validatejson as validate
-from urlparse import parse_qs
+from src.server.autoupdates import auto_update_document, autoupdate_child
 
-""" Methods for updating the database,
-    including deletion and creation of indices
-"""
 
 
 def checkuser():
@@ -43,12 +42,12 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         db_loaded, db_error = 0, ''
         if sql:
             # logging.debug("Delete " + msg)
-            logging.debug('delete from sql.\nmsg %s\nans_entry %s'
-                          % (msg, ans_entry))
+            logging.debug('delete from sql.\nmsg %s\nans_entry %s',
+                          msg, ans_entry)
             db_loaded, db_error = update_db(_id, ans_entry['_source'],
                                             helpers.get_user(), msg,
                                             lexiconName, status='removed')
-            logging.debug('updated db %s %s' % (db_loaded, db_error))
+            logging.debug('updated db %s %s', db_loaded, db_error)
 
         if db_error:
             raise eh.KarpDbError(db_error)
@@ -68,14 +67,6 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         err = [e.error]
         raise eh.KarpElasticSearchError('Error during deletion. '
                                         'Message: %s.\n'
-                                        % '\n'.join(err))
-
-    except esExceptions.TransportError as e:
-        # elasticsearch-py throws errors (TransportError) for objects not found
-        handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
-        err = [e.error]
-        raise eh.KarpElasticSearchError('Error during deletion. Object not '
-                                        'found. Message: %s.\n'
                                         % '\n'.join(err))
 
     except Exception as e:
@@ -136,7 +127,6 @@ def update_doc(lexicon, _id, data=None, live=True):
                                          % (lexicon, permitted),
                                          status_code=403)
 
-    # TODO validate data_doc, but this is so far sb specific!
     validate.validate_json(data_doc, lexicon)
     date = datetime.datetime.now()
     user = helpers.get_user()
@@ -152,7 +142,7 @@ def update_doc(lexicon, _id, data=None, live=True):
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         # Transport error might be version conflict
         logging.exception(e)
-        logging.debug('index: %s, type: %s, id: %s' % (index, typ, _id))
+        logging.debug('index: %s, type: %s, id: %s', index, typ, _id)
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise eh.KarpElasticSearchError("Error during update. Message: %s.\n"
                                         % str(e))
@@ -194,7 +184,7 @@ def modify_db(_id, lexicon, msg, status, origid=''):
         any.
     """
     from src.dbhandler.dbhandler import modifysuggestion
-    return modifysuggestion(_id, lexicon, msg=msg, status=status, origid='')
+    return modifysuggestion(_id, lexicon, msg=msg, status=status, origid=origid)
 
 
 def add_multi_doc(lexicon, index=''):
@@ -222,9 +212,9 @@ def add_multi_doc(lexicon, index=''):
             auto_update_document(doc, lexicon, 'add', user, date)
             bulk.append({'_index': index, '_type': typ, '_source': doc})
 
-        for index, res in enumerate(eshelpers.streaming_bulk(es, bulk)):
+        for ix, res in enumerate(eshelpers.streaming_bulk(es, bulk)):
             _id = res[1].get('index').get('_id')
-            source = bulk[index].get('_source')
+            source = bulk[ix].get('_source')
             if isinstance(source, dict):
                 source = dumps(source)
             sql_bulk.append((_id, source, user, 'multi add - %s' % message,
@@ -285,8 +275,6 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
         user = helpers.get_user()
         status = 'added'
     try:
-        # TODO validate data_doc, but this is so far sb specific!
-
         validate.validate_json(data_doc, lexicon)
 
         date = datetime.datetime.now()
