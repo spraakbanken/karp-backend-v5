@@ -49,10 +49,14 @@ def parse(settings=None, isfilter=False):
         filters = []  # filters will be put here
         fields = []
         p_ex = [p_extra]
-        for e in query.split('||'):
+        for e in split_query(query):
             logging.debug('parsing %s', e)
-            fields.append(parse_ext(e, p_ex, filters, mode,
-                                    isfilter=isfilter))
+            if '|||' in e:
+                fields.append(parse_nested(e, p_ex, filters, mode,
+                                           isfilter=isfilter))
+            else:
+                fields.append(parse_ext(e, p_ex, filters, mode,
+                                        isfilter=isfilter))
             logging.debug('fields %s, p_ex %s', fields, p_ex)
         # unless the user wants to sort by _score, use a filter rather
         # than a query. will improve ES speed, since no scoring is done.
@@ -194,6 +198,62 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         field_info['highlight_query'] = q
     return field_info
 
+def parse_nested(exp, exps, filters, mode, isfilter=False):
+    from collections import defaultdict
+    qs = exp.split('|||')
+    fields = []
+    first = True
+    todo = {}
+    for q in qs:
+        newexps, newfilters = [], []
+        if not first:
+            q = 'and|'+q
+        info = parse_ext(q, newexps, newfilters, mode, isfilter)
+        # TODO should be only one path per field
+        fields.extend(info.get("fields"))
+        todo[info.get("fields")[0]] = newexps  # TODO only one path per field
+        first = False
+    done = defaultdict(list)
+    for commonpath, paths in common_path2(fields).items():
+        q = sum([todo[path] for path in paths], [])
+        logging.debug('q %s', q)
+        for inner in done[commonpath]:
+            q.extend(inner)
+            logging.debug('extended q %s', q)
+            del done[commonpath]
+        for part in commonpath.split('.'):
+            done[part].append({"nested": {"path": commonpath, "query": {"bool": {"must": q}}}})
+
+        logging.debug('use q %s', q)
+        exps.append({"nested": {"path": commonpath, "query": {"bool": {"must": q}}}})
+    # TODO what to do with filters?? most likely always empty
+    return info
+
+
+def common_path2(fields):
+    import itertools as i
+    grouped = i.groupby(sorted(fields, key=lambda x: (len(x.split('.')), ''.join(x))),
+                        key=lambda x: x.split('.')[:-1])
+    groups ={}
+    for key, group in grouped:
+        groups['.'.join(key)] = list(group)
+    return groups
+
+
+def common_path(fields):
+    if not fields:
+        return ''
+    longest = list(fields)[0].split('.')
+    for field in fields:
+        parts = field.split('.')
+        for ix in range(1, len(parts)+1):
+            if longest[:ix] == parts[:ix]:
+                ok = ix
+            else:
+                ok = ix-1
+                break
+        longest = longest[:ok]
+    return '.'.join(longest)
 
 def get_field(field, mode):
     """ Parses a field and extract it's special needs
@@ -553,6 +613,17 @@ def adapt_query(size, _from, es, query, kwargs):
         logging.debug("Finished scrolling")
         esans['hits']['hits'] = hits
         return esans
+
+def split_query(query):
+    expressions = []
+    start = 0
+    for match in re.finditer('(?<!\|)\|\|(?!\|)', query):
+        newstart, stop = match.span()
+        e = query[start:newstart]
+        start = stop
+        expressions.append(e)
+    expressions.append(query[start:])
+    return expressions
 
 
 # Query -> SimpleQuery
