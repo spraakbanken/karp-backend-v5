@@ -138,17 +138,12 @@ def handle_invalid_usage(error):
             if error.debug_msg:
                 logging.debug(error.debug_msg)
 
-            # KarpGeneralError is handled differently
-            if isinstance(error, eh.KarpGeneralError):
-                if error.user_msg:
-                    return str(error.user_msg), 400
-                else:
-                    return error.message, 400
-
+            status_code = error.status_code
+            if error.user_msg:
+                return str(error.user_msg), status_code
             else:
-                response = jsonify(error.to_dict())
-                response.status_code = error.status_code
-                return response
+                return error.message, status_code
+
         else:
             logging.exception(error.message)
             return "Oops, something went wrong\n", 500

@@ -98,7 +98,7 @@ class KarpGeneralError(KarpException):
             message = "Unknown error."
         if query:
             KarpException.__init__(self, "Error: %s. Query was: %s" % (message, query),
-                                   debug_msg, status_code, payload)
+                                   debug_msg, status_code, user_msg, payload)
         else:
             KarpException.__init__(self, "Error: %s" % message,
-                                   debug_msg, status_code, payload)
+                                   debug_msg, status_code, user_msg, payload)

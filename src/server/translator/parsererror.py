@@ -13,7 +13,7 @@ class QueryError(KarpException):
             self.status_code = 400
         KarpException.__init__(self, "malformed query: " + message,
                                status_code=status_code, payload=payload,
-                               debug_msg=debug_msg)
+                               debug_msg=debug_msg, user_msg=message)
 
     def to_dict(self):
         rv = dict(self.payload or ())

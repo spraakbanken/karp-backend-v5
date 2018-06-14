@@ -2,6 +2,7 @@
 """ Responsible for the translation from the query api to elastic queries """
 import logging
 import re
+from collections import defaultdict
 from elasticsearch import helpers as EShelpers
 from flask import request
 import src.server.translator.elasticObjects as elasticObjects
@@ -171,10 +172,14 @@ def parse_extra(settings):
 
 def parse_ext(exp, exps, filters, mode, isfilter=False):
     """ Parses one expression from a extended query
-        Returns a string, representing an unfinished elasticsearch object
+        Returns a dictionary of information about the search field used
+        Appends the search equry to exps
+
         exp     is the expression to parse
         exps    is a list of already parsed expressions
-        filters is a list of already parsed filters """
+        filters is a list of already parsed filters
+        mode    is the current mode
+    """
     xs = re.split('(?<!\\\)\|', exp)  # split only on | not preceded by \
     # xs = exp.split('|')
     etype, field, op = xs[:3]
@@ -198,8 +203,21 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         field_info['highlight_query'] = q
     return field_info
 
+
 def parse_nested(exp, exps, filters, mode, isfilter=False):
-    from collections import defaultdict
+    """
+    Parses a nested expression
+        (eg 'and||wf|equals|katt|||msd|equals|sg+def+nom')
+        and construct a ES query.
+        Appends the resulting search equry to exps.
+
+        Returns a dictionary of information about the search field used
+
+        exp     is the expression to parse
+        exps    is a list of already parsed expressions
+        filters is a list of already parsed filters
+        mode    is the current mode
+    """
     qs = exp.split('|||')
     fields = []
     first = True
@@ -209,51 +227,52 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
         if not first:
             q = 'and|'+q
         info = parse_ext(q, newexps, newfilters, mode, isfilter)
-        # TODO should be only one path per field
         fields.extend(info.get("fields"))
-        todo[info.get("fields")[0]] = newexps  # TODO only one path per field
+        if len(info.get("fields")) > 1:
+            raise PErr.QueryError("Cannot construct nested query from multiple fields.\
+                                   You attempt to search all of %s."
+                                  % (','.join(info.get("fields"))))
+        todo[info.get("fields")[0]] = newexps
         first = False
-    done = defaultdict(list)
-    for commonpath, paths in common_path2(fields).items():
-        q = sum([todo[path] for path in paths], [])
+    tmp = defaultdict(list)
+    nesteds = {}
+    ixx = 0
+    for commonpath, paths in common_path(fields).items():
+        q = [todo[path] for path in paths]
         logging.debug('q %s', q)
-        for inner in done[commonpath]:
-            q.extend(inner)
-            logging.debug('extended q %s', q)
-            del done[commonpath]
-        for part in commonpath.split('.'):
-            done[part].append({"nested": {"path": commonpath, "query": {"bool": {"must": q}}}})
+        for inner in tmp[commonpath]:
+            q.append(nesteds[inner])
+            nesteds[inner] = ''
 
-        logging.debug('use q %s', q)
-        exps.append({"nested": {"path": commonpath, "query": {"bool": {"must": q}}}})
+
+        exp = {"nested": {"path": commonpath, "query": {"bool": {"must": q}}}}
+        nesteds[ixx] = exp
+
+        for ix in range(len(commonpath.split('.'))):
+            part = commonpath.split('.', ix)[0]
+            tmp[part].append(ixx)
+        ixx += 1
+
+    logging.debug('tmp %s\n nesteds %s', tmp, nesteds)
+    for ix in set(sum(tmp.values(), [])):
+        if nesteds[ix]:
+            logging.debug('add nested %s: %s', ix, nesteds[ix])
+            exps.append(nesteds[ix])
+
     # TODO what to do with filters?? most likely always empty
+    # (filters should be removed from the code)
     return info
 
 
-def common_path2(fields):
+def common_path(fields):
     import itertools as i
     grouped = i.groupby(sorted(fields, key=lambda x: (len(x.split('.')), ''.join(x))),
                         key=lambda x: x.split('.')[:-1])
-    groups ={}
+    groups = {}
     for key, group in grouped:
         groups['.'.join(key)] = list(group)
     return groups
 
-
-def common_path(fields):
-    if not fields:
-        return ''
-    longest = list(fields)[0].split('.')
-    for field in fields:
-        parts = field.split('.')
-        for ix in range(1, len(parts)+1):
-            if longest[:ix] == parts[:ix]:
-                ok = ix
-            else:
-                ok = ix-1
-                break
-        longest = longest[:ok]
-    return '.'.join(longest)
 
 def get_field(field, mode):
     """ Parses a field and extract it's special needs
