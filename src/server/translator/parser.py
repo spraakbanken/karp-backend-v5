@@ -2,9 +2,11 @@
 """ Responsible for the translation from the query api to elastic queries """
 import logging
 import re
+
 from collections import defaultdict
 from elasticsearch import helpers as EShelpers
 from flask import request
+
 import src.server.translator.elasticObjects as elasticObjects
 import src.server.translator.fieldmapping as F
 import src.server.translator.parsererror as PErr
@@ -219,31 +221,40 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
         mode    is the current mode
     """
     qs = exp.split('|||')
-    fields = []
-    first = True
-    todo = {}
-    for q in qs:
+    allpaths = []  # will contain all search all queried paths
+    todo = {}  # will contain all expressions to construct for every path
+    for n, q in enumerate(qs):
         newexps, newfilters = [], []
-        if not first:
+        # hax, construct complete expression for parsing.
+        if n:
             q = 'and|'+q
         info = parse_ext(q, newexps, newfilters, mode, isfilter)
-        fields.extend(info.get("fields"))
+        allpaths.extend(info.get("fields"))
         if len(info.get("fields")) > 1:
+            # a field may correspond to several paths, not ok for nested queries
             raise PErr.QueryError("Cannot construct nested query from multiple fields.\
                                    You attempt to search all of %s."
                                   % (','.join(info.get("fields"))))
         todo[info.get("fields")[0]] = newexps
-        first = False
+
+    # A complicated way to construct the nested query.
+    # First, find all fields that are sieblings (grouped together by common_path())
+    # and construct queries. Then see if there are higher levels
+    # of this nesting. If so, include the deeper nestings inside higher.
+    # Start with the longest path, ie the deepest nesting.
+    # The fields "a.e", "a.b.c", "a.b.d" should result in the query
+    # {"nested": {"path": "a",
+    #   "query": {"bool": {"must": {"nested": {"path": "a.b", ...}}}}}}
     tmp = defaultdict(list)
     nesteds = {}
-    ixx = 0
-    for commonpath, paths in common_path(fields).items():
+    for ixx, (commonpath, paths) in enumerate(common_path(allpaths).items()):
         q = [todo[path] for path in paths]
-        logging.debug('q %s', q)
+        # have we alreay constructed a query for an inner nesting?
         for inner in tmp[commonpath]:
-            q.append(nesteds[inner])
-            nesteds[inner] = ''
-
+            # if so, merge with this and remove the previous
+            if nesteds.get(inner, ''):
+                q.append(nesteds[inner])
+                nesteds[inner] = ''
 
         exp = {"nested": {"path": commonpath, "query": {"bool": {"must": q}}}}
         nesteds[ixx] = exp
@@ -251,9 +262,9 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
         for ix in range(len(commonpath.split('.'))):
             part = commonpath.split('.', ix)[0]
             tmp[part].append(ixx)
-        ixx += 1
 
-    logging.debug('tmp %s\n nesteds %s', tmp, nesteds)
+    # Finally, append all nested queries.
+    # Exclude queries already used inside others
     for ix in set(sum(tmp.values(), [])):
         if nesteds[ix]:
             logging.debug('add nested %s: %s', ix, nesteds[ix])
@@ -265,6 +276,14 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
 
 
 def common_path(fields):
+    """ Group a list of fields into a dictionary of common parents
+        ["a.b.d", "a.b.c", "a.e", "a.b.d.f"]
+        =>
+        {"a": ["a.e"],
+         "a.b": ["a.b.d", "a.b.c"],
+         "a.b.d": ["a.b.d.f"]
+         }"
+    """
     import itertools as i
     grouped = i.groupby(sorted(fields, key=lambda x: (len(x.split('.')), ''.join(x))),
                         key=lambda x: x.split('.')[:-1])
