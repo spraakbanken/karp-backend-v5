@@ -53,6 +53,8 @@ def get_id_sequence(index_name, size):
     for item in result['items']:
         yield item["index"]["_version"]
 
+def create_saolp():
+    create_sequence_index('saolp', 10000000)
 
 # if __name__ == '__main__':
 #     #create_sequence_index('saol', 508133)

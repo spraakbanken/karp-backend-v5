@@ -51,7 +51,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         # stream entries one by one to elastic, then update sql db
         # streaming_bulk will notify us at once when an entry fails
         sql_bulk = []
-        for res in helpers.streaming_bulk(elastic, data):
+        for res in helpers.streaming_bulk(elastic, data, request_timeout=60):
             # res is a tuple, res[0]==True
             ansname = 'index' # if with_id else 'create' -- changed from ES2
             _id = res[1].get(ansname).get('_id')
@@ -68,7 +68,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         ok += db_loaded
     else:
         # upload all at once to elastic
-        ok, err = helpers.bulk(elastic, data)
+        ok, err = helpers.bulk(elastic, data, request_timeout=60)
         if err:
             msg = "Error during upload. %s documents successfully uploaded. \
                    Message: %s.\n"
@@ -113,7 +113,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = configM.elastic(alias)
     if create_new:
         # Create the index
-        ans = es.indices.create(index=index, body=mapping)
+        ans = es.indices.create(index=index, body=mapping, request_timeout=30)
         print ans
 
     for lex in lexicon:
@@ -130,7 +130,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     print len(to_keep), 'entries to keep'
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index, 'type': typ})
     try:
-        ok, err = helpers.bulk(es, data)
+        ok, err = helpers.bulk(es, data, request_timeout=30)
     except:
         print data
     if err:
@@ -165,7 +165,7 @@ def recover_add(index, suffix, lexicon):
 
     print len(to_keep), 'entries to keep'
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index})
-    ok, err = helpers.bulk(es, data)
+    ok, err = helpers.bulk(es, data, request_timeout=30)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
                Message: %s.\n"
@@ -245,11 +245,11 @@ def publish_group(group, suffix):
         print 'add', add_actions
         try:
             print 'remove old aliases'
-            es.indices.update_aliases('{"actions" : [%s]}' % ','.join(rem_actions))
+            es.indices.update_aliases('{"actions" : [%s]}' % ','.join(rem_actions), request_timeout=30)
         except Exception:
             print 'No previous aliased indices, could not do remove any'
             print rem_actions
-        return es.indices.update_aliases('{"actions" : [%s]}' % ','.join(add_actions))
+        return es.indices.update_aliases('{"actions" : [%s]}' % ','.join(add_actions), request_timeout=30)
 
 
 def create_empty_index(name, suffix, with_id=False):
@@ -257,10 +257,10 @@ def create_empty_index(name, suffix, with_id=False):
     data = get_mapping(name)
     newname = make_indexname(name, suffix)
     try:
-        ans = es.indices.create(index=newname, body=data)
+        ans = es.indices.create(index=newname, body=data, request_timeout=30)
     except esExceptions.TransportError as e:
         print e
-        raise Exception('Index already exists')
+        raise Exception('Could not crete index')
     print ans
 
 
@@ -276,10 +276,10 @@ def create_mode(alias, suffix, with_id=False):
         data = get_mapping(index)
         newname = make_indexname(index, suffix)
         try:
-            ans = es.indices.create(index=newname, body=data)
+            ans = es.indices.create(index=newname, body=data, request_timeout=30)
         except esExceptions.TransportError as e:
             print e
-            raise Exception('Index already exists')
+            raise Exception('Could not crete index')
         print ans
         try:
             lexicons = configM.get_lexiconlist(index)
@@ -299,7 +299,7 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
     indexname = make_indexname(alias, suffix)
     typ = configM.searchconfig[alias]['type']
     try:
-        ans = es.indices.create(index=indexname, body=data)
+        ans = es.indices.create(index=indexname, body=data, request_timeout=30)
         print ans
     except Exception:
         print 'Could not create index. Check if it needs manual removal'
@@ -336,7 +336,7 @@ def internalize_lexicon(mode, to_add):
         query = {"query": {"term": {"lexiconName": lex}}}
         # scan and scroll
         ans = helpers.scan(es, query=query, scroll=u'3m', raise_on_error=True,
-                           preserve_order=False, index=mode)
+                           preserve_order=False, index=mode, request_timeout=30)
         sql_bulk = []
         for hit in ans:  # ans is an iterator of objects from in hits.hits
             _id = hit.get('_id')
@@ -352,6 +352,7 @@ def internalize_lexicon(mode, to_add):
             raise Exception(db_error)
         ok += db_loaded
 
+    print 'will load %s entries, starting with %s' % (len(sql_bulk), sql_bulk[0])
     if not ok:
         raise Exception("No data")
         print >> sys.stderr, "Warning. 0 documents uploaded\n"
@@ -393,7 +394,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     if create_index:
         print 'create %s' % target_index
         data = get_mapping(alias)
-        ans = es.indices.create(index=target_index, body=data)
+        ans = es.indices.create(index=target_index, body=data, request_timeout=30)
         print 'Created index', ans
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     ans = helpers.reindex(es, source_index, target_index)
@@ -423,7 +424,7 @@ def make_structure():
                                % (group, alias))
 
     return es.indices.update_aliases('{"actions" : [%s]}'
-                                     % ','.join(add_actions))
+                                     % ','.join(add_actions), request_timeout=30)
 
 def delete_all():
     # delete all indices

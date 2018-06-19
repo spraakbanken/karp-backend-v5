@@ -38,6 +38,21 @@ elif sys.argv[1] == '--reindex_alias':
     target_suffix = sys.argv[3]
     upload.reindex_alias(index, target_suffix)
 
+elif sys.argv[1] == '--getmapping':
+    import src.offline.getmapping as gm
+    alias = sys.argv[2]
+    outfile = sys.argv[3]
+    gm.getmapping(alias, outfile)
+
+elif sys.argv[1] == '--internalize_lexicon':
+        # adds a lexicon to sql from es
+        # can be done at any time, not noticable
+        # to the end user
+        mode = sys.argv[2]
+        to_upload = sys.argv[3:]
+        upload.internalize_lexicon(mode, to_upload)
+        print 'Upload successful'
+
 # Commented since dangerous!
 # if sys.argv[1] == '--delete_all':
 #    upload.delete_all()
