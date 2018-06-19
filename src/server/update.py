@@ -115,7 +115,10 @@ def update_doc(lexicon, _id, data=None, live=True):
         msg = "The entry %s in lexicon %s was not found" % (_id, lexicon)
         raise eh.KarpElasticSearchError(msg, debug_msg=msg+" in lexicon "+lexicon)
 
-    lexiconName = origin['_source']['lexiconName']
+    if 'lexiconName' in origin['_source']:
+        lexiconName = origin['_source']['lexiconName']
+    else:
+        lexiconName = origin['_source']['_lexiconName']
     helpers.check_lexiconName(lexicon, lexiconName, _id, 'update')
     data_doc = data.get('doc') or data.get('_source')
     version = data.get('version')
