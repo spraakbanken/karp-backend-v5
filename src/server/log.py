@@ -3,7 +3,7 @@ import sys
 import os.path
 import time
 import stat
-import helper.configpaths as C
+import src.server.helper.configpaths as C
 
 debugmode = C.config['DEBUG']
 

@@ -686,6 +686,8 @@ def control_escape(s):
     '\\x01', which do not work for json. Hence the .replace('\\x', '\u00').
     """
     # the set of characters migth need to be extended
+    if type(s) is not str and type(s) is not unicode:
+        s = str(s)
     control_chars = [unichr(c) for c in range(0x20)]
     return u''.join([c.encode('unicode_escape').replace('\\x', '\u00')
                      if c in control_chars else c for c in s])

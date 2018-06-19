@@ -1,9 +1,17 @@
-Options +ExecCGI
-AddHandler wsgi-script .wsgi
-WSGIPassAuthorization On
+# Options +ExecCGI
+# AddHandler wsgi-script .wsgi
+# WSGIPassAuthorization On
+# 
+# <IfModule mod_rewrite.c>
+# RewriteEngine On
+# 
+# RewriteRule ^(.*)$ backend.wsgi/$1 [END]
+# </IfModule>
 
-<IfModule mod_rewrite.c>
+DirectoryIndex disabled
+Options -Indexes
 RewriteEngine On
 
-RewriteRule ^(.*)$ backend.wsgi/$1 [END]
-</IfModule>
+
+RewriteRule ^(.*)$ http://localhost:8087/$1 [P]
+Header edit* Location "http://localhost:8087/" "https://ws.spraakbanken.gu.se/ws/karp/v5"
