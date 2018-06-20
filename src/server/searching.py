@@ -17,6 +17,11 @@ import src.server.translator.fieldmapping as F
 from src.server.translator import parser
 from src.server.translator import parsererror as PErr
 
+from gevent.threadpool import ThreadPool
+from gevent.queue import Queue, Empty
+import functools
+import sys
+import time
 
 
 def query(page=0):
@@ -726,9 +731,7 @@ def export(lexicon):
             to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
-    size = settings['size']
-    if type(size) is int:
-        ans = ans[:size]
+    ans = ans[size]
 
     logging.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):
