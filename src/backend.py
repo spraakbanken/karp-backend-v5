@@ -75,7 +75,7 @@ def init(route):
     # For deleting a lexical entry from elastic and sql
     @route('<lexicon>/<_id>')
     def delete(lexicon, _id):
-        return update.delete_entry(lexicon, _id)
+        return update.delete_entry(lexicon, _id, sql=True)
 
     # For updating a document
     @route('<lexicon>/<_id>', methods=['POST'])

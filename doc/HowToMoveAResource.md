@@ -13,6 +13,7 @@
 
     `python upload_offline.py --exportlatestversion lexiconname > out.json`
 - Put the lexicon data file to `data/karplex` (or other suitable directory).
+- Remember to switch virtualenvironment when you move between v4 and v5!
 - Import the lexicon into your new Karp:
 
     For v5:

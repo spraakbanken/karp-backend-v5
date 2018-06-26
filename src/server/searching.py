@@ -641,7 +641,7 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
           'pre': {'op': 'lte', 'sort': 'desc'}}
     parser.parse_ext('and|%s|%s|%s' % (sortfieldname, op[place]['op'], sortvalue),
                      exps, [], mode)
-    elasticq_q = parser.search(exps, [], [], usefilter=True, constant_score=True)
+    elasticq_q = parser.search(exps, [], [], usefilter=False, constant_score=True)
 
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
@@ -723,7 +723,9 @@ def export(lexicon):
             to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
-    ans = ans[:settings['size']]
+    size = settings['size']
+    if type(size) is int:
+        ans = ans[:size]
 
     logging.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):

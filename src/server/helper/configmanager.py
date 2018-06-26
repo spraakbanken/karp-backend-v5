@@ -41,7 +41,9 @@ def extra_src(mode, funcname, default):
         logging.debug('\n\ngo look in %s\n\n' % classmodule)
         func = getattr(classmodule, funcname)
         return func
-    except:
+    except Exception as e:
+        logging.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
+        logging.debug(e)
         return default
 
 
