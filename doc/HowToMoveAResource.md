@@ -43,4 +43,3 @@
     For v5:
 
     `supervisorctl -c /etc/supervisord.d/fkkarp.conf restart karpv5`
-

@@ -731,7 +731,9 @@ def export(lexicon):
             to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
-    ans = ans[size]
+    size = settings['size']
+    if type(size) is int:
+        ans = ans[:size]
 
     logging.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):
