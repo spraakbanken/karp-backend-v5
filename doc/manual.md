@@ -109,7 +109,7 @@ have to specify the order of your lexicons later in the configuration part
 
 
 ## Prerequisites
-* [ElasticSearch2](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2)
+* [ElasticSearch6](https://www.elastic.co/downloads/past-releases/elasticsearch-6-3-0)
 * SQL, preferrably [MariaDB](https://mariadb.org/)
 * a WSGI server
   for example [mod_wsgi](http://modwsgi.readthedocs.io/en/develop/) with [Apache](http://httpd.apache.org/), Waitress, Gunicorn, uWSGI. . .

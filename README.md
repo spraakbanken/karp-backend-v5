@@ -17,7 +17,7 @@ If you want to use Karp without Docker, keep on reading.
 Prerequisites
 =============
 
-* [ElasticSearch2](https://www.elastic.co/downloads/past-releases/elasticsearch-2-4-2)
+* [ElasticSearch6](https://www.elastic.co/downloads/past-releases/elasticsearch-6-3-0)
 * SQL, preferrably [MariaDB](https://mariadb.org/)
 * a WSGI server
   for example [mod_wsgi](http://modwsgi.readthedocs.io/en/develop/) with [Apache](http://httpd.apache.org/), Waitress, Gunicorn, uWSGI. . .
