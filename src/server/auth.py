@@ -56,8 +56,6 @@ def check_user(force_lookup=False):
     session['lexicon_list'] = lexitems.get("lexica", {})
     session['username'] = user
     session['authenticated'] = auth_response['authenticated']
-    logging.debug('lexicons: %s' % lexitems)
-
     return {"auth_response": auth_response, "username": user,
             "lexicon_list": lexitems.get("lexica", {}),
             "authenticated": auth_response['authenticated']}
