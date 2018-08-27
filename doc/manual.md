@@ -42,7 +42,7 @@ The backend is a WSGI application written in Python. The main components of the
 system are ElasticSearch and SQL. ElasticSearch (ES) provides fast searching and an
 easy way of indexing and analyzing your data. The SQL database is used only as a
 back-up and for keeping the revision history of edited resources.
-The code base for Karp’s backend contains one example resource, the Bilingual 
+The code base for Karp’s backend contains one example resource, the Bilingual
 Glossary German-English with Probabilities (PANACEA) created by Linguatec GmbH,
 which can be used for testing your Karp installation.
 
@@ -173,11 +173,11 @@ This is all configurations you need to the get the (empty) Karp system up and ru
 
 ### Lexical configuration
 In order to be able to search and upload data, you will also need to
-configurate how your data is structured. There are lexicon-related
+configure how your data is structured. There are lexicon-related
 configuration files in the Karp package that will work with the PANACEA lexicon
 mentioned in Section 1. This was done in order to provide a working example. If
-you want to these, copy `modes.json.panace` to `modes.json` and `lexiconconf.json.panacea`
-to `lexiconconf.json`. Then skip to section [X](TODO).
+you want to use these, copy `modes.json.panacea` to `modes.json` and
+`lexiconconf.json.panacea` to `lexiconconf.json`. Then skip to section [X](TODO).
 
 If you want to use your own lexicon, keep on reading.
 
@@ -185,14 +185,14 @@ An entry in `lexiconconf.json` looks as follows.
 ```json
   "testlex": {
     "mode": "testlex",
-    "order": 0
+    "order": 0,
     "path": "data/karplex/",
     "no_escape": false,
     "format": "json",
     "usedtags": []
   }
 ```
-You must define one such object for each lexicon. If many lexicons have similar setup,
+You must define one such object for each lexicon. If many lexicons have a similar setup,
 you can use the `default` object.
 ```
 {
@@ -244,8 +244,16 @@ The example mode (`mode.json.example`) contains empty fields for all non-necessa
 `testindex1` in the same file contains all necessary settings for the most simple
 mode type.
 
-In `config.json` you gave the name of your standard mode. This mode must be implemented here.
+In `config.json` you provided the name of your standard mode. This mode must be implemented here.
 In the example files, the mode is called *karp*.
+
+0 = All users, including Dockers user, must set this option
+
+1 = All non-Docker users must set this option
+
+2 = Easy but not necessary
+
+3 = For advanced users
 
 
 * `indexalias` 0: the name of this mode/group
