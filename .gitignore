@@ -3,7 +3,7 @@ venv
 
 config/config.json
 config/dbpassword.py
-config/fieldmappings.py
+config/fieldmappings.json
 **/*.sw[abcdefghijklmnop]
 
 # Compiled source #
