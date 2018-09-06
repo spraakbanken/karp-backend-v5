@@ -2,6 +2,7 @@ netrc
 venv
 
 config/config.json
+config/lexiconconf.json
 config/dbpassword.py
 config/fieldmappings.json
 **/*.sw[abcdefghijklmnop]
