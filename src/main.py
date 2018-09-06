@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import server.helper.flaskhelper as flaskhelper
-import sbkarp.sb.server.sb_autoupdates
+# TODO: Is this needed?
+# import sbkarp.sb.server.sb_autoupdates
 import backend
 
 
