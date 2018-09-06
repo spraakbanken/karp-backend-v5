@@ -22,7 +22,7 @@ mock==2.0.0
 pbr==0.11.0
 ply==3.10
 pycountry==17.5.14
-pyelasticsearch==1.2.3
+pyelasticsearch==1.4.1
 PyMySQL==0.6.6
 python-dateutil==2.6.0
 python-mimeparse==1.5.2
