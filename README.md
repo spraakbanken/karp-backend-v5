@@ -24,7 +24,7 @@ Prerequisites
 http://modwsgi.readthedocs.io/en/develop/
 http://httpd.apache.org/
 * an authentication server. Read more about this [here](https://github.com/spraakbanken/karp-docker/blob/master/dummyauth/README.md)
-* [Python >= 2.7](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
+* [Python 2.7 - 3.6](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
 
 
 Installation
