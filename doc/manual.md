@@ -155,7 +155,7 @@ the necessary changes as below.
     * `sender_email` 2: the error emails will appear to be sent from this address
     * `dpass` 1: the value of this string should be .dbuser:dbpassword@dbserver`
 * "DEBUG": 2
-    * `debug_level` 2: set this to one of (debug, warning, error, TODO)
+    * `debug_level` 2: set this to one of (DEBUG, INFO, WARNING, ERROR, CRITICAL) **Note** case-insensitive
     * `debug_to_stderr` 2: if you want the logs to be written to a file, set this to `false`
     * configure the other parameters as you wish
 * "SETUP": 0-3
