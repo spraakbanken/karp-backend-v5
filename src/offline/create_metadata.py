@@ -3,6 +3,7 @@ import json
 
 import src.server.helper.configmanager as configM
 
+# TODO check if file 'config/fieldmappings.json' exist, if not create it.
 
 def read_fieldmappings(mode):
     " Open a mode's config file and combine them "
