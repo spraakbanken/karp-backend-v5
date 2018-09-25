@@ -53,6 +53,14 @@ elif sys.argv[1] == '--internalize_lexicon':
         upload.internalize_lexicon(mode, to_upload)
         print 'Upload successful'
 
+elif sys.argv[1] == '--printlatestversion':
+    lexicon = sys.argv[2]
+    upload.printlatestversion(lexicon)
+
+elif sys.argv[1] == '--exportlatestversion':
+    lexicon = sys.argv[2]
+    upload.printlatestversion(lexicon, debug=False, with_id=True)
+
 # Commented since dangerous!
 # if sys.argv[1] == '--delete_all':
 #    upload.delete_all()

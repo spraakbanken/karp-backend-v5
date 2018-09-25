@@ -1,10 +1,37 @@
 netrc
 venv
+venv3
+data
+!data/panacea
 
+# Config files #
+################
 config/config.json
 config/dbpassword.py
 config/fieldmappings.json
+config/modes.json
+config/lexiconconf.json
 **/*.sw[abcdefghijklmnop]
+
+# Mappings #
+############
+config/mappings/*
+K2README.md
+!README
+!fieldmappings_default.json
+!fieldmappings_panacea.json.panacea
+!mappingconf_panacea.json.panacea
+
+# Things belonging to karp-backend-sb #
+#######################################
+src/main_sb.py
+sb
+saol
+skbl
+bulkupdate.py
+checktouch.sh
+idgenrun.py
+
 
 # Compiled source #
 ###################
@@ -31,6 +58,7 @@ config/fieldmappings.json
 
 # Logs and databases #
 ######################
+log
 *.log
 *.sql
 *.sqlite

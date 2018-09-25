@@ -260,7 +260,7 @@ def create_empty_index(name, suffix, with_id=False):
         ans = es.indices.create(index=newname, body=data, request_timeout=30)
     except esExceptions.TransportError as e:
         print e
-        raise Exception('Could not crete index')
+        raise Exception('Could not create index')
     print ans
 
 
@@ -279,7 +279,7 @@ def create_mode(alias, suffix, with_id=False):
             ans = es.indices.create(index=newname, body=data, request_timeout=30)
         except esExceptions.TransportError as e:
             print e
-            raise Exception('Could not crete index')
+            raise Exception('Could not create index')
         print ans
         try:
             lexicons = configM.get_lexiconlist(index)

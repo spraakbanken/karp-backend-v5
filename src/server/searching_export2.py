@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+ -*- coding: utf-8 -*-
 """ Methods for querying the data base """
 import copy
 import elasticsearch
 import logging
 import re
-from flask import request, jsonify, Response
+from flask import request, jsonify, Response, stream_with_context, copy_current_request_context
 from itertools import chain
 from json import loads, dumps
 
@@ -17,6 +17,13 @@ import src.server.translator.fieldmapping as F
 from src.server.translator import parser
 from src.server.translator import parsererror as PErr
 
+from gevent.threadpool import ThreadPool
+from gevent.queue import Queue, Empty
+import functools
+import sys
+import time
+
+""" Methods for querying the data base """
 
 
 def query(page=0):
@@ -131,7 +138,6 @@ def querycount(page=0):
                               # raise the size for the statistics call
                               size=0  # stat_size
                              )
-        logging.debug('ANNE: count_ans: %s\n', count_ans)
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except eh.KarpException as e:  # pass on karp exceptions
         logging.exception(e)
@@ -642,7 +648,7 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
           'pre': {'op': 'lte', 'sort': 'desc'}}
     parser.parse_ext('and|%s|%s|%s' % (sortfieldname, op[place]['op'], sortvalue),
                      exps, [], mode)
-    elasticq_q = parser.search(exps, [], [], usefilter=False, constant_score=True)
+    elasticq_q = parser.search(exps, [], [], usefilter=True, constant_score=False)
 
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
@@ -712,7 +718,8 @@ def export(lexicon):
 
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
-    logging.debug('exporting entries from %s ', lexicon)
+    size = settings['size']
+    logging.debug('exporting %s entries from %s ' % (size, lexicon))
     for entry in db.dbselect(lexicon, engine=engine, db_entry=db_entry,
                              max_hits=-1, to_date=date):
         _id = entry['id']
@@ -724,9 +731,7 @@ def export(lexicon):
             to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
-    size = settings['size']
-    if type(size) is int:
-        ans = ans[:size]
+    ans = ans[:size]
 
     logging.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):
@@ -742,7 +747,7 @@ def export(lexicon):
             logging.debug('simply sending entries')
             return jsonify({lexicon: ans})
         def gen():
-            start, stop = 0, divsize
+            start, stop = 0, divsize 
             yield '{"%s": [' % lexicon
             while start < len(ans):
                 logging.debug('chunk %s - %s' % (start, stop))
@@ -755,6 +760,7 @@ def export(lexicon):
             yield ']}'
         logging.debug('streaming entries')
         return Response(stream_with_context(gen()))
+
 
 
 # from korp
@@ -802,11 +808,11 @@ def main_handler(generator):
     @functools.wraps(generator)  # Copy original function's information, needed by Flask
     def decorated(args=None, *pargs, **kwargs):
         # Function is called externally
-
+    
         def incremental_json(ff):
             """Incrementally yield result as JSON."""
             yield "{\n"
-
+    
             try:
                 for response in ff:
                     if not response:
@@ -822,11 +828,11 @@ def main_handler(generator):
                 raise
             # print 'main done'
             yield "\n"
-
+    
         def full_json(ff):
             """Yield full JSON at end, but keep returning newlines to prevent timeout."""
             result = {}
-
+    
             try:
                 for response in ff:
                     if not response:
@@ -841,13 +847,13 @@ def main_handler(generator):
             except:
                 raise
 
-
-
+    
+    
             # result = dumps(result)
             # print 'last yield'
             yield result
             # print 'main done'
-
+    
         # Incremental response
         return Response(stream_with_context(incremental_json(generator(args, *pargs, **kwargs))),
                         mimetype="application/json")
@@ -898,7 +904,7 @@ def export2(lexicon, divsize=5000):
         ans = ans[:settings['size']]
     #inp['out'] = ans
     # print 'I am done!'
-    #return
+    #return 
 
     if settings.get('format', ''):
         #ans = {}
@@ -932,7 +938,7 @@ def export2(lexicon, divsize=5000):
         #print 'thread finished %s' % t.is_alive()
         #ans = ans['out']
         # print 'exporting %s entries' % len(ans)
-        start, stop = 0, divsize
+        start, stop = 0, divsize 
         # print 'streaming entries'
         while start < len(ans):
             # print 'chunk %s - %s' % (start, stop)
@@ -952,4 +958,3 @@ def export2(lexicon, divsize=5000):
             stop += divsize
         # print 'done'
         yield ']}\n'
-        # return Response(stream_with_context(gen()))
