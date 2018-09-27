@@ -2,6 +2,7 @@
 import server.helper.flaskhelper as flaskhelper
 # TODO: Is this needed?
 # import sbkarp.sb.server.sb_autoupdates
+import server.panacea_autoupdates
 import backend
 
 
