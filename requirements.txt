@@ -6,7 +6,7 @@ elasticsearch==6.1.1
 elasticsearch-dsl==2.2.0
 extras==1.0.0
 fixtures==3.0.0
-Flask==0.10.1
+Flask==1.0.2
 funcsigs==1.0.2
 fuzzywuzzy==0.10.0
 gevent==1.2.2
