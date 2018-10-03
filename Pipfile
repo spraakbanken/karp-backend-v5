@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+elasticsearch = ">=6.0.0"
+elasticsearch-dsl = ">=6.0.0"
+sqlalchemy = "*"
+"urllib3" = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "2.7"

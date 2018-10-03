@@ -1,4 +1,5 @@
 netrc
+.venv
 venv
 venv3
 data
