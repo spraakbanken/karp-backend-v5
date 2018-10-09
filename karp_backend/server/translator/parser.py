@@ -652,6 +652,7 @@ def adapt_query(size, _from, es, query, kwargs):
         esans['hits']['hits'] = hits
         return esans
 
+
 def split_query(query):
     expressions = []
     start = 0

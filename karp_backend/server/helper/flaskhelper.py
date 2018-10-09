@@ -6,9 +6,11 @@ import logging
 import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.update as update
+from karp_backend import create_app
 
-app = Flask(__name__.split('.')[0])
-
+# app = Flask(__name__.split('.')[0])
+app = create_app('/home/kristoffer/Dokument/projekt/karp-backend/config/config.json')
+print "secret_key={}"
 # set the secret key
 app.secret_key = configM.setupconfig['SECRET_KEY']
 

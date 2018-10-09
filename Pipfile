@@ -9,8 +9,11 @@ elasticsearch = ">=6.0.0"
 elasticsearch-dsl = ">=6.0.0"
 sqlalchemy = "*"
 "urllib3" = "*"
+karp-backend = {editable = true, path = "."}
 
 [dev-packages]
+pytest = "*"
+coverage = "*"
 
 [requires]
 python_version = "2.7"
