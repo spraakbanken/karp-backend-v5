@@ -652,6 +652,10 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
     show = configM.searchfield(mode, 'minientry_fields')
+    for _i, _v in enumerate(show):
+	if _v == "Corpus_unit_id.raw":
+	    show[_i] = "Corpus_unit_id"
+    logging.debug("searching.py:get_pre_post show = {0}".format(show))
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
     ans = parser.adapt_query(size*3, 0, es, elasticq_q,
