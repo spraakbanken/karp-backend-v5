@@ -43,7 +43,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         data = parse_upload(informat, name, order, data, index, typ,
                             with_id=with_id)
     except Exception:
-        print 'Error while reading data from %s' % name
+        print('Error while reading data from %s' % name)
         raise
 
     ok = 0
@@ -77,7 +77,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         raise Exception("No data")
         print >> sys.stderr, "Warning. 0 documents uploaded\n"
     if verbose:
-        print "Ok. %s documents uploaded\n" % ok
+        print("Ok. %s documents uploaded\n" % ok)
 
 
 def parse_upload(informat, lexname, lexorder, data, index, typ, with_id=False):
@@ -108,7 +108,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     mapping = get_mapping(alias)
     index = make_indexname(alias, suffix)
     typ = configM.get_mode_type(alias)
-    print 'Save %s to %s' % (lexicon or 'all', index)
+    print('Save %s to %s' % (lexicon or 'all', index))
 
     es = configM.elastic(alias)
     if create_new:
