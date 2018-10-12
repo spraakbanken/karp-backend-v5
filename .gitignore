@@ -1,5 +1,6 @@
 netrc
 venv
+.venv
 venv3
 data
 !data/panacea
@@ -58,6 +59,7 @@ idgenrun.py
 *.rar
 *.tar
 *.zip
+*.egg-info/
 
 # Logs and databases #
 ######################
