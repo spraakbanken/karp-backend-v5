@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Methods for querying the data base """
+import functools
 import copy
 import elasticsearch
 import logging
