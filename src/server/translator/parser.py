@@ -468,10 +468,16 @@ def random(settings):
     return elasticq
 
 
-def statistics(settings, exclude=[], order={}, prefix='',
-               show_missing=True, force_size=-1):
-    """ Constructs a ES query for an statistics view (aggregated information)
-        Contains the number of hits in each lexicon, grouped by POS
+def statistics(
+        settings,
+        exclude=[],
+        order={},
+        prefix='',
+        show_missing=True,
+        force_size=-1):
+    """ Construct a ES query for an statistics view (aggregated information).
+
+        Contains the number of hits in each lexicon, grouped by POS.
     """
     q = request.args.get('q', '')
     resource = parse_extra(settings)
@@ -479,7 +485,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     if q:
         q = parse(isfilter=True, settings=settings)
     else:  # always filter to show only the permitted resources
-        q = {"filter" : resource}
+        q = {"filter": resource}
 
     buckets = settings.get('buckets')
     logging.debug('buckets %s', buckets)
