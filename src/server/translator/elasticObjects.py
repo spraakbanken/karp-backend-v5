@@ -237,12 +237,18 @@ class Operator:
             self.operator = "startswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : "QUERY.*"}' % op
-            #self.query = lambda x,y,z: {op : {x : y+".*"}}
+            # self.query = lambda x,y,z: {op : {x : y+".*"}}
         elif op == "endswith":
             self.operator = "endswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : ".*QUERY"}' % op
-            #self.query = lambda x,y,z: {op : {x : ".*"+y}}
+            # self.query = lambda x,y,z: {op : {x : ".*"+y}}
+        elif op == "_npegl_lemma_contains":
+            pass
+        elif op == "_npegl_lemma_exists":
+            pass
+        elif op == "_npegl_lemma_missing":
+            pass
         elif op == "lte":
             self.operator = "lte"
             op = 'range'
