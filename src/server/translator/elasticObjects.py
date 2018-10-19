@@ -281,14 +281,17 @@ class Operator:
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
         elif op == "npegl_lemma_contains":
-            pass
+            self.operator = "npegl_lemma_contains"
+            self.query = '"regexp": {"FIELD": ".*e.*name=\\\"QUERY\\\".*"}'
         elif op == "npegl_lemma_exists":
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
+            self.operator = "npegl_lemma_exists"
+            self.query = '"regexp": {"FIELD": ".*e.*name=\\\"[^#\\?]\\\".*"}'
             pass
         elif op == "npegl_lemma_missing":
             self.operator = "npegl_lemma_missing"
-            self.query = '"regexp": {"FIELD": ".*<e.*name=\\"?\\".*"}'
+            self.query = '"regexp": {"FIELD": ".*e.*name=\\\"\\?\\\".*"}'
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
         else:
