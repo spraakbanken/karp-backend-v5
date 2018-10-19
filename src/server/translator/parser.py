@@ -195,7 +195,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
     logging.debug('construct from %s', operands)
-    logging.debug('f_query %s', f_query)
+    logging.debug('f_query %s', repr(f_query))
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         logging.debug('filter %s, %s', q, filters)
