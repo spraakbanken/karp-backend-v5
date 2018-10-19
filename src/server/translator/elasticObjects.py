@@ -188,7 +188,8 @@ class Operator:
             "startswith",
             "endswith",
             "lte",
-            "gte"]
+            "gte",
+            "npegl_lemma_missing"]
 
         if op == "equals":
             # Always use match_phrase, works better with tokenization.
@@ -268,6 +269,8 @@ class Operator:
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
+        elif op == "npegl_lemma_missing":
+            pass
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'
