@@ -189,6 +189,7 @@ class Operator:
             "endswith",
             "lte",
             "gte",
+            "npegl_lemma_contains",
             "npegl_lemma_missing"]
 
         if op == "equals":
@@ -269,6 +270,8 @@ class Operator:
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
+        elif op == "npegl_lemma_contains":
+            pass
         elif op == "npegl_lemma_missing":
             pass
         else:
