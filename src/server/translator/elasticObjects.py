@@ -281,10 +281,14 @@ class Operator:
         elif op == "npegl_lemma_contains":
             pass
         elif op == "npegl_lemma_exists":
+            self.max_operands = 0  # allows no operands
+            self.min_operands = 0
             pass
         elif op == "npegl_lemma_missing":
             self.operator = "npegl_lemma_missing"
             self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
+            self.max_operands = 0  # allows no operands
+            self.min_operands = 0
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'
