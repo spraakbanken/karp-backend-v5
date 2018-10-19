@@ -155,7 +155,9 @@ class Operator:
             # No operand (missing, exists) means we're done
             if not operands:
                 # return self.string()
-                return json.loads('{%s}' % self.make_string(self.query))
+                query_string = self.make_string(self.query)
+                logging.debug('made {0}'.format(query_string))
+                return json.loads('{%s}' % query_string)
             # Just one operand => no disjunction
             if len(operands) == 1:
                 # don't use ops, they contain to many curly brackets
