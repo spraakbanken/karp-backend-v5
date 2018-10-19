@@ -30,6 +30,9 @@ class Operator:
         self.set_etype(etype, op)
         self.set_op(op, isfilter)
 
+    def __repr__(self):
+        return 'Operator(operator={0},query={1})'.format(self.operator, self.query)
+
     def make_object(self):
         return json.loads(self)
 
