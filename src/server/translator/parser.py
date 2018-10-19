@@ -173,7 +173,8 @@ def parse_extra(settings):
 
 
 def parse_ext(exp, exps, filters, mode, isfilter=False):
-    """ Parses one expression from a extended query
+    """ Parse one expression from a extended query.
+
         Returns a dictionary of information about the search field used
         Appends the search equry to exps
 
