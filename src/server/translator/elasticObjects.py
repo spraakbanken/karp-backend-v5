@@ -280,7 +280,7 @@ class Operator:
         elif op == "npegl_lemma_exists":
             pass
         elif op == "npegl_lemma_missing":
-            self.operator = "regexp"
+            self.operator = "npegl_lemma_missing"
             self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
