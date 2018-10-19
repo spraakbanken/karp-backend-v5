@@ -288,7 +288,7 @@ class Operator:
             pass
         elif op == "npegl_lemma_missing":
             self.operator = "npegl_lemma_missing"
-            self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
+            self.query = '"regexp": {"FIELD": ".*<e.*name=\\"\?\\\\".*"}'
             self.max_operands = 0  # allows no operands
             self.min_operands = 0
         else:
