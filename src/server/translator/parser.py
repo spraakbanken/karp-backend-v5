@@ -188,6 +188,8 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     etype, field, op = xs[:3]
     field_info = get_field(field, mode)
     operands = [re.sub('\\\\\|', '|', x) for x in xs[3:]]  # replace \| by |
+    logging.debug('operands:')
+    logging.debug(repr(operands))
     operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
     format_query = configM.extra_src(mode, 'format_query', None)
@@ -196,6 +198,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         operands = [format_query(field, o) for o in operands]
     logging.debug('construct from %s', operands)
     logging.debug('f_query %s', repr(f_query))
+    logging.debug(repr(f_query))
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         logging.debug('filter %s, %s', q, filters)
