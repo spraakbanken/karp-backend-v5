@@ -179,8 +179,16 @@ class Operator:
         self.max_operands = 100  # could be infinite...
         self.min_operands = 1
         self.ok_in_filter = True
-        operators = ["equals", "contains", "missing", "exists", "regexp",
-                     "startswith", "endswith", "lte", "gte"]
+        operators = [
+            "equals",
+            "contains",
+            "missing",
+            "exists",
+            "regexp",
+            "startswith",
+            "endswith",
+            "lte",
+            "gte"]
 
         if op == "equals":
             # Always use match_phrase, works better with tokenization.
