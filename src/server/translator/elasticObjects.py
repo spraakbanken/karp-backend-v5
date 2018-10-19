@@ -111,9 +111,13 @@ class Operator:
         self.etype = etype
 
     def construct_query(self, operands):
-        """ Constructs a query corresponding to the information given so far
-            operands is a list of strings, the query
-            returns a string
+        """
+        Construct a query from operands.
+
+        Constructs a query corresponding to the information given so far
+        operands is a list of strings, the query
+
+        returns a string
         """
         ops = []
         no_opers = len(operands)
