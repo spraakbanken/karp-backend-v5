@@ -276,7 +276,8 @@ class Operator:
         elif op == "npegl_lemma_exists":
             pass
         elif op == "npegl_lemma_missing":
-            pass
+            self.operator = "regexp"
+            self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'
