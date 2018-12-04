@@ -72,6 +72,11 @@ def init(route):
     def export(lexicon):
         return searching.export(lexicon)
 
+    # TODO remove For seeing the posted data formated
+    @route('<lexicon>/<divsize>')
+    def export2(lexicon, divsize=5000):
+        return searching.export2(lexicon, divsize)
+
     # For deleting a lexical entry from elastic and sql
     @route('<lexicon>/<_id>')
     def delete(lexicon, _id):
@@ -223,17 +228,18 @@ def init(route):
     @route(name='/index')
     def helppage():
         """Render API documentation."""
+        logging.debug('ok')
         import os
         import markdown
 
         logging.debug('index page')
 
-        SB_API_URL = "https://ws.spraakbanken.gu.se/ws/karp/v6"
-        KARP_VERSION = "6"
+        SB_API_URL = "https://ws.spraakbanken.gu.se/ws/karp/v5"
+        KARP_VERSION = "5"
         STYLES_CSS = 'static/api.css'
         logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
 
-        doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'html')
+        doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
         doc_file = 'api.md'
 
         with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:

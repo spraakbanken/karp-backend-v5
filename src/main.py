@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import server.helper.flaskhelper as flaskhelper
-# TODO: Is this needed?
-# import sbkarp.sb.server.sb_autoupdates
-import backend
+import src.server.helper.flaskhelper as flaskhelper
+import src.backend as backend
 
 
 def load_urls():

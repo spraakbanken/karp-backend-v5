@@ -179,8 +179,19 @@ class Operator:
         self.max_operands = 100  # could be infinite...
         self.min_operands = 1
         self.ok_in_filter = True
-        operators = ["equals", "contains", "missing", "exists", "regexp",
-                     "startswith", "endswith", "lte", "gte"]
+        operators = [
+            "equals",
+            "contains",
+            "missing",
+            "exists",
+            "regexp",
+            "startswith",
+            "endswith",
+            "lte",
+            "gte",
+            "npegl_lemma_contains",
+            "npegl_lemma_exists",
+            "npegl_lemma_missing"]
 
         if op == "equals":
             # Always use match_phrase, works better with tokenization.
@@ -260,6 +271,13 @@ class Operator:
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
+        elif op == "npegl_lemma_contains":
+            pass
+        elif op == "npegl_lemma_exists":
+            pass
+        elif op == "npegl_lemma_missing":
+            self.operator = "regexp"
+            self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'

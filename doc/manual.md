@@ -424,7 +424,25 @@ If you don’t know yet what field names you want to put here, simply put
 
 
 ## Inputting data to the system
-TODO create_mode, publish_mode, create_metadata, touch
+### Creating metadata
+To generate metadata for the backend, first you must create `config/mappings/fieldmappings_<RESOURCE>.json` (see [config/mappings/fieldmappings_default.json](/config/mappings/fieldmappings_default.json) and [config/mappings/fieldmappings_panacea.json.panacea](../blob/master/config/mappings/fieldmappings_panacea.json.panacea) for examples) as describe in [here](#Field-mappings).
+Then run in a virtual environment `python offline.py --create_metadata` to create `config/fieldmappings.json` with all fieldmappings that a user can use.
+
+### create_mode & publish_mode
+1. Your lexical resource must be in json-format as [above](#Input-Format).
+2. Verify that `lexiconName` and `lexiconOrder` is present and correct in every lexical entry.
+3. Place your data file `RESOURCE.json` in the directory specified in `lexiconconf.json`. 
+  * **example:** ```json "testlex": { ... "path": data/testlex/` ... }```
+4. Run `source venv/bin/activate`
+5. Run `python offline.py --create_mode RESOURCE SUFFIX`. This will import all lexical entries from `<path-in-lexiconf.json-for RESOURCE>/RESOURCE.json` to the backend.
+  * **example:** `python offline.py --create_mode testlex 20181003` imports from `data/testlex/testlex.json`.
+6. Run `python offline.py --publish_mode RESOURCE SUFFIX`. This will point the alias `RESOURCE` to `RESOURCE_SUFFIX` so that searches with `mode=RESOURCE` will be directed to `RESOURCE_SUFFIX`.
+  * **example:** `python offline.py --publish_mode testlex 20181003`
+7. Restart the server.
+
+
+
+### TODO touch
 
 
 

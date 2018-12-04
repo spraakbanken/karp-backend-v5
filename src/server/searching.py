@@ -17,6 +17,11 @@ import src.server.translator.fieldmapping as F
 from src.server.translator import parser
 from src.server.translator import parsererror as PErr
 
+from gevent.threadpool import ThreadPool
+from gevent.queue import Queue, Empty
+import functools
+import sys
+import time
 
 
 def query(page=0):
@@ -647,6 +652,10 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
     # +1 to compensate for the word itself being in the context
     size = settings['size']+1
     show = configM.searchfield(mode, 'minientry_fields')
+    for _i, _v in enumerate(show):
+	if _v == "Corpus_unit_id.raw":
+	    show[_i] = "Corpus_unit_id"
+    logging.debug("searching.py:get_pre_post show = {0}".format(show))
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
     ans = parser.adapt_query(size*3, 0, es, elasticq_q,
@@ -686,6 +695,8 @@ def control_escape(s):
     '\\x01', which do not work for json. Hence the .replace('\\x', '\u00').
     """
     # the set of characters migth need to be extended
+    if type(s) is not str and type(s) is not unicode:
+        s = str(s)
     control_chars = [unichr(c) for c in range(0x20)]
     return u''.join([c.encode('unicode_escape').replace('\\x', '\u00')
                      if c in control_chars else c for c in s])
