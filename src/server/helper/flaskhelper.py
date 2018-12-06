@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+import six
 from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
 from functools import update_wrapper
@@ -25,9 +26,9 @@ def crossdomain(origin=None, methods=None, headers=None,
         # Set standard headers here
         # TODO figure out which ones that are meaningful (when)
         headers = ['Content-Type', 'Authorization']
-    if headers is not None and not isinstance(headers, basestring):
+    if headers is not None and not isinstance(headers, six.string_types):
         headers = ', '.join(x.upper() for x in headers)
-    if not isinstance(origin, basestring):
+    if not isinstance(origin, six.string_types):
         origin = ', '.join(origin)
     if isinstance(max_age, timedelta):
         max_age = max_age.total_seconds()
