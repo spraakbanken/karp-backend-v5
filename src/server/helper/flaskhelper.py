@@ -2,14 +2,16 @@ from datetime import timedelta
 import logging
 import six
 from elasticsearch import ConnectionError
-from flask import Flask, jsonify, make_response, request, current_app
+from flask import make_response, request, current_app
 from functools import update_wrapper
 
 import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.update as update
+from src import create_app
 
-app = Flask(__name__.split('.')[0])
+
+app = create_app('karp-backend')
 
 # set the secret key
 app.secret_key = configM.setupconfig['SECRET_KEY']
@@ -66,6 +68,7 @@ def crossdomain(origin=None, methods=None, headers=None,
 
 def register(initiator):
     urls = []
+
     def route(url='', methods=None, crossdomain=True, name=None):
         ''' Decorator function @route
             Adds the function to a list of urls, which should later be processed
@@ -102,11 +105,6 @@ def register(initiator):
             # add the crossdomain decorator to the view function
             func = crossdomain(origin='*', methods=methods)(func)
         app.add_url_rule(url, endpoint=url, view_func=func, methods=methods)
-
-
-
-
-
 
 
 # TODO test if error handling works. If not: move the decorator to top level

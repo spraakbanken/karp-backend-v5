@@ -6,7 +6,7 @@ from instance_info import get_instance_path
 from flask import Flask
 
 
-def create_app(name, instance_path):
+def create_app(name):
     app = Flask(name, instance_path=get_instance_path())
 
     return app
