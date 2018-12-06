@@ -1,8 +1,9 @@
 from datetime import timedelta
+import logging
 from elasticsearch import ConnectionError
 from flask import Flask, jsonify, make_response, request, current_app
 from functools import update_wrapper
-import logging
+
 import src.server.errorhandler as eh
 import src.server.helper.configmanager as configM
 import src.server.update as update
