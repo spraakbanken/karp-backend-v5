@@ -1,6 +1,6 @@
-from src.server.helper.configmanager import elastic
-import src.server.helper.configmanager as configM
-import src.offline.upload_offline as upload
+from karp_backend.server.helper.configmanager import elastic
+import karp_backend.server.helper.configmanager as configM
+import karp_backend.offline.upload_offline as upload
 import json
 import logging
 import upload_offline as upload_offline

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-import src.server.translator.parsererror as PErr
+import karp_backend.server.translator.parsererror as PErr
 
 # TODO isfilter is (probably) not used anymore, delete from code
 

@@ -3,8 +3,8 @@ from elasticsearch import helpers
 from elasticsearch import exceptions as esExceptions
 import json
 import sys
-import src.dbhandler.dbhandler as db
-import src.server.helper.configmanager as configM
+import karp_backend.dbhandler.dbhandler as db
+import karp_backend.server.helper.configmanager as configM
 import os
 
 
@@ -83,7 +83,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
 def parse_upload(informat, lexname, lexorder, data, index, typ, with_id=False):
     """ Parse the query and the post and put it into the desired json format
     """
-    import src.server.translator.bulkify as b
+    import karp_backend.server.translator.bulkify as b
 
     bulk_info = {'index': index, 'type': typ}
     out_data = 0, [], []
@@ -101,7 +101,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
-    import src.server.translator.bulkify as bulk
+    import karp_backend.server.translator.bulkify as bulk
     to_keep = {}
     # if not lexicon:
     #     lexicon = conf.keys()
@@ -146,7 +146,7 @@ def recover_add(index, suffix, lexicon):
         Find the last version of every SQL entry and send this to ES.
         Adds the specified lexicons to an existing index
     """
-    import src.server.translator.bulkify as bulk
+    import karp_backend.server.translator.bulkify as bulk
     es = configM.elastic(index)
     print 'Save %s to %s' % (lexicon, index)
     to_keep = {}

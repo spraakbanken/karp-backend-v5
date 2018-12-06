@@ -7,12 +7,12 @@ from elasticsearch import helpers as eshelpers
 from elasticsearch import exceptions as esExceptions
 from flask import request, jsonify
 from json import dumps
-import src.server.errorhandler as eh
-import src.server.helper.configmanager as configM
-import src.server.auth as auth
-import src.server.helper.helpers as helpers
-import src.server.translator.validatejson as validate
-from src.server.autoupdates import auto_update_document, autoupdate_child
+import karp_backend.server.errorhandler as eh
+import karp_backend.server.helper.configmanager as configM
+import karp_backend.server.auth as auth
+import karp_backend.server.helper.helpers as helpers
+import karp_backend.server.translator.validatejson as validate
+from karp_backend.server.autoupdates import auto_update_document, autoupdate_child
 
 
 
@@ -175,7 +175,7 @@ def update_db(_id, doc, user, msg, lex, status='', version='', suggestion='',
         succeeded and 0 otherwise and 'error' is the error message given, if
         any.
     """
-    from src.dbhandler.dbhandler import update
+    from karp_backend.dbhandler.dbhandler import update
     return update(_id, dumps(doc), user, msg, lex, status=status,
                   version=version, suggestion_id=suggestion, date=date)
 
@@ -186,12 +186,12 @@ def modify_db(_id, lexicon, msg, status, origid=''):
         succeeded and 0 otherwise and 'error' is the error message given, if
         any.
     """
-    from src.dbhandler.dbhandler import modifysuggestion
+    from karp_backend.dbhandler.dbhandler import modifysuggestion
     return modifysuggestion(_id, lexicon, msg=msg, status=status, origid=origid)
 
 
 def add_multi_doc(lexicon, index=''):
-    import src.dbhandler.dbhandler as db
+    import karp_backend.dbhandler.dbhandler as db
 
     data = helpers.read_data()
     documents = data.get('doc', '') or data.get('_source')
@@ -331,14 +331,14 @@ def add_child(lexicon, parentid, suggestion=False):
 def handle_update_error(error, data, user, action):
     """ Sends emails to admins about updates that failed
     """
-    from src.dbhandler.dbhandler import handle_error
+    from karp_backend.dbhandler.dbhandler import handle_error
     return handle_error(error, user, "Action: " + action, data)
 
 
 def send_notification(user, message, _id, status):
     import re
     if re.match('^[^@]+@[^@]+\.[^@]+$', user):
-        import src.dbhandler.emailsender as sender
+        import karp_backend.dbhandler.emailsender as sender
         msg = 'Your suggestion with id %s has been %s with the message:\n"%s"'\
               % (_id, status, message)
         subject = 'Karp: The status of your suggestion has been changed'

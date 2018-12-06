@@ -8,7 +8,7 @@ import json
 import logging
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
-import src.server.helper.configmanager as configM
+import karp_backend.server.helper.configmanager as configM
 
 
 DBCONF = configM.config['DB']
@@ -267,7 +267,7 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
 def handle_error(e, user, msg, doc):
     mail_sent = 'No warnings sent by email'
     if DBCONF['ADMIN_EMAILS']:
-        import src.dbhandler.emailsender as sender
+        import karp_backend.dbhandler.emailsender as sender
         report = 'User: %s, msg: %s. \nDoc:\n%s' % (user, msg, doc)
         msg = 'Karp-b failure, %s.\n%s\n%s'\
               % (datetime.datetime.now(), e, report)

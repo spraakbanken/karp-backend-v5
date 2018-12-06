@@ -1,6 +1,6 @@
 import smtplib
 from email.mime.text import MIMEText
-import src.server.helper.configmanager as configM
+import karp_backend.server.helper.configmanager as configM
 # Sends emails from the adress specified in dbconf.py
 
 

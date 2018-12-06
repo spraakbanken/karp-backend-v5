@@ -1,7 +1,7 @@
 import copy
 import json
 
-import src.server.helper.configmanager as configM
+import karp_backend.server.helper.configmanager as configM
 
 # TODO check if file 'config/fieldmappings.json' exist, if not create it.
 

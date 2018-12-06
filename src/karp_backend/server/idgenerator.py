@@ -1,7 +1,7 @@
 import elasticsearch
 from elasticsearch_dsl import Index, Mapping
 import logging
-import src.server.helper.configmanager as configM
+import karp_backend.server.helper.configmanager as configM
 
 
 # SAOL stopped at 508133 when imported to Karp (set start to that number)

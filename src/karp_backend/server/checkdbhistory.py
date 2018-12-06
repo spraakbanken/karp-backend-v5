@@ -1,14 +1,14 @@
 from flask import jsonify
 import logging
-import src.server.errorhandler as eh
-import src.server.helper.configmanager as configM
-import src.server.helper.helpers as helpers
-from src.server.auth import validate_user
+import karp_backend.server.errorhandler as eh
+import karp_backend.server.helper.configmanager as configM
+import karp_backend.server.helper.helpers as helpers
+from karp_backend.server.auth import validate_user
 
 
 def checkhistory(lexicon, lid):
     """ Shows the update log of an entry """
-    from src.dbhandler.dbhandler import dbselect
+    from karp_backend.dbhandler.dbhandler import dbselect
     auth, permitted = validate_user(mode="read")
     settings = {'allowed': permitted}
     size = helpers.get_size(default=10, settings=settings)
@@ -24,7 +24,7 @@ def checkuserhistory():
         raise eh.KarpGeneralError('No user name provided', 'checkuserhistory')
     try:
         size = helpers.get_size(default=10, settings={'allowed': permitted})
-        from src.dbhandler.dbhandler import dbselect
+        from karp_backend.dbhandler.dbhandler import dbselect
         updates = []
         for lexicon in permitted:
             # add updates from lexicons that are kept in sql
@@ -49,7 +49,7 @@ def checklexiconhistory(lexicon, date):
         size = settings.get('size', 10)
         status = settings.get('status', ['added', 'changed', 'removed'])
 
-        from src.dbhandler.dbhandler import dbselect
+        from karp_backend.dbhandler.dbhandler import dbselect
         return jsonify({'resource': lexicon,
                         'updates': dbselect(lexicon, status=status,
                                             from_date=date, max_hits=size)})
@@ -58,8 +58,8 @@ def checklexiconhistory(lexicon, date):
 
 
 def comparejson(lexicon, _id, fromdate='', todate=''):
-    from src.dbhandler.dbhandler import dbselect
-    import src.server.translator.jsondiff as jsondiff
+    from karp_backend.dbhandler.dbhandler import dbselect
+    import karp_backend.server.translator.jsondiff as jsondiff
     auth, permitted = validate_user()
     if lexicon not in permitted:
         raise eh.KarpAuthenticationError('You are not allowed to update')

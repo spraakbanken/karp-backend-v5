@@ -6,14 +6,14 @@ from itertools import chain
 from json import loads, dumps
 import re
 
-import src.dbhandler.dbhandler as db
-import src.server.errorhandler as eh
-from src.server.auth import validate_user
-import src.server.helper.configmanager as configM
-import src.server.helper.helpers as helpers
-import src.server.translator.fieldmapping as F
-from src.server.translator import parser
-from src.server.translator import parsererror as PErr
+import karp_backend.dbhandler.dbhandler as db
+import karp_backend.server.errorhandler as eh
+from karp_backend.server.auth import validate_user
+import karp_backend.server.helper.configmanager as configM
+import karp_backend.server.helper.helpers as helpers
+import karp_backend.server.translator.fieldmapping as F
+from karp_backend.server.translator import parser
+from karp_backend.server.translator import parsererror as PErr
 
 from gevent.threadpool import ThreadPool
 from gevent.queue import Queue, Empty

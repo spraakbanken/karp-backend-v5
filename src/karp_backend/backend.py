@@ -4,13 +4,13 @@
 """
 
 from flask import jsonify, request, session
-from src.server.helper.flaskhelper import app
-import src.server.checkdbhistory as checkdbhistory
-import src.server.idgenerator as idgenerator
-import src.server.searching as searching
-import src.server.suggestions as suggestions
-import src.server.update as update
-import src.server.helper.configmanager as configM
+from karp_backend.server.helper.flaskhelper import app
+import karp_backend.server.checkdbhistory as checkdbhistory
+import karp_backend.server.idgenerator as idgenerator
+import karp_backend.server.searching as searching
+import karp_backend.server.suggestions as suggestions
+import karp_backend.server.update as update
+import karp_backend.server.helper.configmanager as configM
 import logging
 def init(route):
 

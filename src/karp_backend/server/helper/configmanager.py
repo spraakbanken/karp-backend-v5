@@ -1,8 +1,8 @@
 from elasticsearch import Elasticsearch
 import logging
-import src.server.helper.configpaths as C
-import src.server.errorhandler as eh
-from src.server.translator import fieldmapping as F
+import karp_backend.server.helper.configpaths as C
+import karp_backend.server.errorhandler as eh
+from karp_backend.server.translator import fieldmapping as F
 
 
 searchconfig = C.searchconfig

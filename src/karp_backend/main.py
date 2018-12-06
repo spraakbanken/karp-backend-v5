@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import src.server.helper.flaskhelper as flaskhelper
-import src.backend as backend
+import server.helper.flaskhelper as flaskhelper
+import karp_backend.backend as backend
 
 
 def load_urls():

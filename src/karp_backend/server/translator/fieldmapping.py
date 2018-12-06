@@ -1,8 +1,8 @@
 import json
 import logging
 import re
-import src.server.errorhandler as eh
-import src.server.helper.configpaths as C
+import karp_backend.server.errorhandler as eh
+import karp_backend.server.helper.configpaths as C
 
 
 absolute_path = C.config['SETUP']['ABSOLUTE_PATH']

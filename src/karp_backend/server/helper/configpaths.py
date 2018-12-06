@@ -1,7 +1,7 @@
 import json
 import os
 
-from src.instance_info import get_instance_path
+from karp_backend.instance_info import get_instance_path
 
 
 # configdir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'config')

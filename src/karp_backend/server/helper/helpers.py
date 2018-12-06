@@ -1,8 +1,8 @@
 from flask import request
 from json import loads
 import logging
-import src.server.errorhandler as eh
-import src.server.helper.configmanager as configM
+import karp_backend.server.errorhandler as eh
+import karp_backend.server.helper.configmanager as configM
 
 
 def get_user():
@@ -13,13 +13,13 @@ def get_user():
 
 
 def get_size(default=10, settings={}):
-    from src.server.translator.parser import parse_extra
+    from karp_backend.server.translator.parser import parse_extra
     parse_extra(settings)
     return settings.get('size', default)
 
 
 def get_querysettings(settings):
-    from src.server.translator.parser import parse_extra
+    from karp_backend.server.translator.parser import parse_extra
     parse_extra(settings)
 
 

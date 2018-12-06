@@ -7,10 +7,10 @@ from collections import defaultdict
 from elasticsearch import helpers as EShelpers
 from flask import request
 
-import src.server.translator.elasticObjects as elasticObjects
-import src.server.translator.fieldmapping as F
-import src.server.translator.parsererror as PErr
-import src.server.helper.configmanager as configM
+import karp_backend.server.translator.elasticObjects as elasticObjects
+import karp_backend.server.translator.fieldmapping as F
+import karp_backend.server.translator.parsererror as PErr
+import karp_backend.server.helper.configmanager as configM
 
 
 

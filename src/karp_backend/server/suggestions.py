@@ -1,13 +1,13 @@
 from elasticsearch import exceptions as esExceptions
-import src.server.errorhandler as eh
-from src.dbhandler.dbhandler import dbselect
+import karp_backend.server.errorhandler as eh
+from karp_backend.dbhandler.dbhandler import dbselect
 from flask import request, jsonify
 from json import loads
 import logging
-from src.server.auth import validate_user
-import src.server.helper.helpers as helpers
-import src.server.helper.configmanager as configM
-import src.server.update as update
+from karp_backend.server.auth import validate_user
+import karp_backend.server.helper.helpers as helpers
+import karp_backend.server.helper.configmanager as configM
+import karp_backend.server.update as update
 
 
 def suggest(lexicon, _id):

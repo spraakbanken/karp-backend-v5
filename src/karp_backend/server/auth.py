@@ -2,8 +2,8 @@ from flask import request, session
 from json import loads
 import md5
 import logging
-import src.server.errorhandler as eh
-import src.server.helper.configmanager as configM
+import karp_backend.server.errorhandler as eh
+import karp_backend.server.helper.configmanager as configM
 import urllib
 from urllib2 import urlopen, HTTPError
 
