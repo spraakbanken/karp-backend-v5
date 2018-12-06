@@ -1,19 +1,20 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-name = "pypi"
-
-[packages]
-flask = "*"
-elasticsearch = ">=6.0.0"
-elasticsearch-dsl = ">=6.0.0"
-sqlalchemy = "*"
-"urllib3" = "*"
-karp-backend = {editable = true, path = "."}
 
 [dev-packages]
 pytest = "*"
 coverage = "*"
+
+[packages]
+flask = {version = ">=0.12,<1.0"}
+elasticsearch = {version = ">=6.1,<6.2"}
+elasticsearch-dsl = {version = ">=6.0,<7.0"}
+flask-sqlalchemy = "*"
+gevent = "==1.2.2"
+six = "*"
+karp-backend = {editable = true, path = "."}
 
 [requires]
 python_version = "2.7"

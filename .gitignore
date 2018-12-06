@@ -8,10 +8,13 @@ data
 # Config files #
 ################
 config/config.json
+config/lexiconconf.json
 config/dbpassword.py
 config/fieldmappings.json
 config/modes.json
 config/lexiconconf.json
+config/mappings/fieldmappings_panacea.json
+config/mappings/mappingconf_panacea.json
 **/*.sw[abcdefghijklmnop]
 
 # Mappings #
@@ -56,7 +59,7 @@ idgenrun.py
 *.rar
 *.tar
 *.zip
-*.egg-info
+*.egg-info/
 
 # Logs and databases #
 ######################

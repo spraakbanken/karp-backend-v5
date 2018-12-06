@@ -29,7 +29,7 @@ def name_new_index():
 def upload(informat, name, order, data, elastic, index, typ, sql=False,
            verbose=True, with_id=False):
     """ Uploads the data to elastic and the database
-        sql      if True,  the data will be stored in the SQL data base as well
+        sql      if True,  the data will be stored in the SQL database as well
                  as ElasticSearch
                  if False, the data will only be stored in ElasticSearch
         informat can either be xml  - lmf

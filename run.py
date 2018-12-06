@@ -4,7 +4,7 @@ from gevent import monkey
 monkey.patch_all()
 import sys
 import json
-from src.main_sb import app, load_urls
+from src.main import app, load_urls
 from gevent.pywsgi import WSGIServer
 
 try:
