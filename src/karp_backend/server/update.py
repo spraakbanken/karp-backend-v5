@@ -92,6 +92,13 @@ def get_lexname(data):
     return names
 
 
+def get_sql_and_es_doc(doc):
+    if 'sql' in doc and 'es' in doc:
+        return doc['sql'], doc['es']
+    else:
+        return doc, doc
+
+
 def update_doc(lexicon, _id, data=None, live=True):
     """ Updates a posted document in the index 'index' with type 'typ'.
         The document must contain a field called 'doc' with
@@ -134,13 +141,15 @@ def update_doc(lexicon, _id, data=None, live=True):
     date = datetime.datetime.now()
     user = helpers.get_user()
     auto_update_document(data_doc, lexicon, 'update', user, date)
+    sql_doc, es_doc = get_sql_and_es_doc(data_doc)
+
     try:
         if version is not None and version != -1:
             ans = es.index(index=index, doc_type=typ, id=_id, version=version,
-                           body=data_doc, op_type='index')
+                           body=es_doc, op_type='index')
         else:
             ans = es.index(index=index, doc_type=typ, id=_id,
-                           body=data_doc, op_type='index')
+                           body=es_doc, op_type='index')
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         # Transport error might be version conflict
@@ -153,7 +162,7 @@ def update_doc(lexicon, _id, data=None, live=True):
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise eh.KarpElasticSearchError("Unexpected error during update.")
 
-    db_loaded, db_error = update_db(_id, data_doc, user, msg, lexiconName,
+    db_loaded, db_error = update_db(_id, sql_doc, user, msg, lexiconName,
                                     status='changed', date=date,
                                     version=ans.get('_version', version))
 
@@ -169,7 +178,7 @@ def update_doc(lexicon, _id, data=None, live=True):
 def update_db(_id, doc, user, msg, lex, status='', version='', suggestion='',
               date=''):
     """ Inserts the document doc into the sql data base, using its id and
-        the current date and time as a key. The user name and a messange is
+        the current date and time as a key. The user name and a message is
         also saved.
         Returns a tuple (loaded, error), where 'loaded' is 1 if the operation
         succeeded and 0 otherwise and 'error' is the error message given, if
@@ -282,7 +291,8 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
 
         date = datetime.datetime.now()
         auto_update_document(data_doc, lexiconName, 'add', user, date)
-        ans = es.index(index=index, doc_type=typ, body=data_doc, id=_id)
+        es_doc = auto_get_es_document(data_doc, lexiconName, 'add', user, date)
+        ans = es.index(index=index, doc_type=typ, body=es_doc, id=_id)
         _id = ans.get('_id')
         version = ans.get('_version', -1)
         db_loaded, db_error = update_db(_id, data_doc, user, message,
