@@ -8,7 +8,7 @@ from functools import update_wrapper
 import karp_backend.server.errorhandler as eh
 import karp_backend.server.helper.configmanager as configM
 import karp_backend.server.update as update
-from src import create_app
+from karp_backend import create_app
 
 
 app = create_app('karp-backend')
