@@ -1,7 +1,7 @@
 import json
 import os
 
-from ..instance_info import get_instance_path
+from src.instance_info import get_instance_path
 
 
 # configdir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'config')

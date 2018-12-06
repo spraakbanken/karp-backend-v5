@@ -1,7 +1,11 @@
 import os
 
+if os.environ.get('KARP_INSTANCE_PATH'):
+    instance_path = os.path.abspath(os.environ.get('KARP_INSTANCE_PATH'))
+else:
+    instance_path = os.path.abspath(__file__)
 
-instance_path = os.path.abspath(os.environ.get('KARP_INSTANCE_PATH'))
+print("INSTANCE_PATH = {}".format(instance_path))
 
 
 def get_instance_path():
