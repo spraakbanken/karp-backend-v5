@@ -6,6 +6,9 @@ from .instance_info import get_instance_path
 from flask import Flask
 
 
+__version__ = '5.1.1'
+
+
 def create_app(name):
     app = Flask(name, instance_path=get_instance_path())
 

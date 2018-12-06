@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "karp-backend"
+version = "5.1.1"
+description = ""
+authors = ["Språkbanken <sb-info@svenska.gu.se>"]
+license = "MIT"
+packages = [
+    { include = "karp_backend", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^2.7.10"
+elasticsearch = "^6.1.1"
+elasticsearch-dsl = "^6.0.0"
+flask = "^0.12"
+flask-sqlalchemy = "*"
+gevent = "1.2.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
