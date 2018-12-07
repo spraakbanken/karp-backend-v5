@@ -32,7 +32,10 @@ setup(
         'Flask>=0.12.3, <1.0.0',
         'SQLAlchemy',
         'urllib3',
-        'gevent==1.2.2'
+        'gevent==1.2.2',
+        'six',
+        'pymsql',
+        'markdown'
     ],
     include_package_data=True,
     zip_safe=False,

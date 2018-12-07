@@ -1,2 +1,0 @@
-pycountry==17.5.14
-wheel==0.24.0
