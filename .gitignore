@@ -5,6 +5,10 @@ venv3
 data
 !data/panacea
 
+# environment #
+###############
+.env
+
 # Config files #
 ################
 config/config.json
@@ -12,9 +16,8 @@ config/lexiconconf.json
 config/dbpassword.py
 config/fieldmappings.json
 config/modes.json
-config/lexiconconf.json
-config/mappings/fieldmappings_panacea.json
-config/mappings/mappingconf_panacea.json
+!config/mappings/fieldmappings_panacea.json
+!config/mappings/mappingconf_panacea.json
 **/*.sw[abcdefghijklmnop]
 
 # Mappings #
