@@ -11,7 +11,7 @@ import karp_backend.server.update as update
 from karp_backend import create_app
 
 
-app = create_app('karp-backend')
+app = create_app()
 
 # set the secret key
 app.secret_key = configM.setupconfig['SECRET_KEY']

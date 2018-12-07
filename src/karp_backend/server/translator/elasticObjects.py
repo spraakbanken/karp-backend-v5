@@ -271,13 +271,6 @@ class Operator:
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
-        elif op == "npegl_lemma_contains":
-            pass
-        elif op == "npegl_lemma_exists":
-            pass
-        elif op == "npegl_lemma_missing":
-            self.operator = "regexp"
-            self.query = '"regexp": {"FIELD": ".*<e.*name=\"\?\".*"}'
         else:
             raise PErr.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'

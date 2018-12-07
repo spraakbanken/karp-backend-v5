@@ -1,13 +1,16 @@
 import json
 import logging
 import re
+import os
 import karp_backend.server.errorhandler as eh
 import karp_backend.server.helper.configpaths as C
+from karp_backend.instance_info import get_instance_path
 
 
 absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
 try:
-    fields = json.load(open(absolute_path+'/config/fieldmappings.json'))
+    with open(os.path.join(get_instance_path(), 'config/fieldmappings.json')) as fp:
+        fields = json.load(fp)
 except Exception as e:
     logging.exception(e)
 standardmode = C.config['SETUP']['STANDARDMODE']

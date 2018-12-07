@@ -14,7 +14,9 @@ elasticsearch-dsl = {version = ">=6.0,<7.0"}
 flask-sqlalchemy = "*"
 gevent = "==1.2.2"
 six = "*"
-karp-backend = {editable = true, path = "."}
+karp-backend = {editable = true,path = "."}
+markdown = "*"
+pymysql = "*"
 
 [requires]
 python_version = "2.7"

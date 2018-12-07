@@ -30,7 +30,7 @@ def get_engine(lexicon, mode='', suggestion=False, echo=True):
         dburl = configM.get_mode_sql(mode)
     else:
         dburl = configM.get_lexicon_sql(lexicon)
-
+    print("dburl = {}".format(dburl))
     if not dburl:
         raise SQLNull('%s/%s' % (lexicon, mode))
 

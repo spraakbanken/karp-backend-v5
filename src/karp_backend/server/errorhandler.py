@@ -28,6 +28,14 @@ class KarpException(Exception):
     def __str__(self):
         return '%s %s' % (self.status_code, self.message)
 
+    def _get_message(self):
+        return self._message
+
+    def _set_message(self, message):
+        self._message = message
+
+    message = property(_get_message, _set_message)
+
 
 class KarpAuthenticationError(KarpException):
     """ Used for errors given by the auth server """

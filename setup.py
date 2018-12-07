@@ -15,6 +15,9 @@ setup(
     # py_modules=['offline.py'],
     packages=find_packages('src'),
     package_dir={'': 'src'},
+    package_data={
+        'karp-backend': ['src/karp_backend/html/*']
+    },
     # packages=[
         # 'karp_backend',
     #     'karp_backend.dbhandler',

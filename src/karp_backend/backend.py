@@ -11,7 +11,10 @@ import karp_backend.server.searching as searching
 import karp_backend.server.suggestions as suggestions
 import karp_backend.server.update as update
 import karp_backend.server.helper.configmanager as configM
+from karp_backend import get_pkg_resource
 import logging
+
+
 def init(route):
 
     @route()
@@ -239,15 +242,17 @@ def init(route):
         STYLES_CSS = 'static/api.css'
         logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
 
-        doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
-        doc_file = 'api.md'
+        # doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
+        # doc_file = 'api.md'
+        #
+        # with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:
+        #     md_text = doc.read()
+        #     logging.debug("md_text: %s", type(md_text))
+        #     md_text = md_text.decode("UTF-8")
+        #     logging.debug("md_text: %s", type(md_text))
 
-        with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:
-            md_text = doc.read()
-            logging.debug("md_text: %s", type(md_text))
-            md_text = md_text.decode("UTF-8")
-            logging.debug("md_text: %s", type(md_text))
-
+        md_text = get_pkg_resource('html/api.md')
+        logging.debug("md_text: %s", type(md_text))
         # Replace placeholders
         md_text = md_text.replace("[SBURL]", SB_API_URL)
         # md_text = md_text.replace("[URL]", request.base_url)
