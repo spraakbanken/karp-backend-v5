@@ -34,7 +34,7 @@ setup(
         'urllib3',
         'gevent==1.2.2',
         'six',
-        'pymsql',
+        'pymysql',
         'markdown'
     ],
     include_package_data=True,
