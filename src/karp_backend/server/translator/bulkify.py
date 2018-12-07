@@ -3,6 +3,10 @@
     Input: json structures that might be of type string ('{"hej" : "hu"}')
 """
 from json import loads
+
+from karp_backend.index import update_es_doc
+
+
 _index = 'test'
 _type = 'test'
 
@@ -14,12 +18,20 @@ def bulkify(data, bulk_info={}, with_id=False):
     index = bulk_info.get('index', _index)
     itype = bulk_info.get('type', _type)
     items = loads(data)
-    if with_id:
-        return [{'_index': index, '_type': itype, '_source': item['_source'],
-                 '_id': item['_id']} for item in items]
-
-    return [{'_index': index, '_type': itype, '_source': item}
-            for item in items]
+    result = []
+    for item in items:
+        es_doc = item['_source'] if with_id else item
+        update_es_doc(es_doc, es_doc['lexiconName'], 'bulk')
+        doc = {
+            '_index': index,
+            '_type': itype,
+            '_source': es_doc,
+        }
+        if with_id:
+            doc['_id'] = es_doc['_id']
+        result.append(doc)
+    return result
+    
 
 
 def bulkify_sql(data, bulk_info={}):

@@ -9,7 +9,7 @@ import os
 
 
 def get_mapping(index):
-    filepath =  'config/mappings/mappingconf_%s.json' % index
+    filepath = 'config/mappings/mappingconf_%s.json' % index
     try:
         return open(filepath).read()
     except:

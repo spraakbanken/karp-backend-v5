@@ -12,7 +12,10 @@ import karp_backend.server.helper.configmanager as configM
 import karp_backend.server.auth as auth
 import karp_backend.server.helper.helpers as helpers
 import karp_backend.server.translator.validatejson as validate
-from karp_backend.server.autoupdates import auto_update_document, autoupdate_child
+from karp_backend.server.autoupdates import auto_update_document
+from karp_backend.server.autoupdates import autoupdate_child
+from karp_backend.index import update_es_doc
+
 
 
 
@@ -141,7 +144,8 @@ def update_doc(lexicon, _id, data=None, live=True):
     date = datetime.datetime.now()
     user = helpers.get_user()
     auto_update_document(data_doc, lexicon, 'update', user, date)
-    sql_doc, es_doc = get_sql_and_es_doc(data_doc)
+    es_doc = data_doc
+    update_es_doc(es_doc, lexiconName, 'update', user, date)
 
     try:
         if version is not None and version != -1:
@@ -162,7 +166,7 @@ def update_doc(lexicon, _id, data=None, live=True):
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise eh.KarpElasticSearchError("Unexpected error during update.")
 
-    db_loaded, db_error = update_db(_id, sql_doc, user, msg, lexiconName,
+    db_loaded, db_error = update_db(_id, data_doc, user, msg, lexiconName,
                                     status='changed', date=date,
                                     version=ans.get('_version', version))
 
@@ -291,7 +295,8 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
 
         date = datetime.datetime.now()
         auto_update_document(data_doc, lexiconName, 'add', user, date)
-        es_doc = auto_get_es_document(data_doc, lexiconName, 'add', user, date)
+        es_doc = data_doc
+        update_es_doc(es_doc, lexiconName, 'add', user, date)
         ans = es.index(index=index, doc_type=typ, body=es_doc, id=_id)
         _id = ans.get('_id')
         version = ans.get('_version', -1)
