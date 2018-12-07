@@ -63,6 +63,7 @@ idgenrun.py
 *.tar
 *.zip
 *.egg-info/
+dist/
 
 # Logs and databases #
 ######################
