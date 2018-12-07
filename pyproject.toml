@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "karp-backend"
-version = "5.1.1"
+version = "5.2.0"
 description = ""
 authors = ["Språkbanken <sb-info@svenska.gu.se>"]
 license = "MIT"

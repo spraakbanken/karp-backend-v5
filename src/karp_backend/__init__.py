@@ -11,7 +11,7 @@ from .instance_info import get_instance_path
 from flask import Flask
 
 
-__version__ = '5.1.1'
+__version__ = '5.2.0'
 __name = 'karp-backend'
 
 
