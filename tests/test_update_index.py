@@ -1,8 +1,8 @@
 import io
 import json
-from karp_backend.index import DocConverter
-from karp_backend.index import doc_to_es
-from karp_backend.index import doc_to_sql
+from karp_backend.document import DocConverter
+from karp_backend.document import doc_to_es
+from karp_backend.document import doc_to_sql
 from karp_backend.server.translator.bulkify import bulkify
 
 

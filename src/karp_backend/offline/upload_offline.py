@@ -5,7 +5,7 @@ import json
 import sys
 import karp_backend.dbhandler.dbhandler as db
 import karp_backend.server.helper.configmanager as configM
-from karp_backend.index import doc_to_sql
+from karp_backend.document import doc_to_sql
 import os
 
 

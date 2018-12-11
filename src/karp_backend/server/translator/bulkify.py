@@ -4,8 +4,8 @@
 """
 from json import loads
 
-from karp_backend.index import doc_to_es
-from karp_backend.index import doc_to_sql
+from karp_backend.document import doc_to_es
+from karp_backend.document import doc_to_sql
 
 
 _index = 'test'

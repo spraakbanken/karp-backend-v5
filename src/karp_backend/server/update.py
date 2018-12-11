@@ -12,9 +12,9 @@ import karp_backend.server.helper.configmanager as configM
 import karp_backend.server.auth as auth
 import karp_backend.server.helper.helpers as helpers
 import karp_backend.server.translator.validatejson as validate
-from karp_backend.server.autoupdates import auto_update_document
-from karp_backend.server.autoupdates import autoupdate_child
-from karp_backend.index import doc_to_es
+from karp_backend.document import auto_update_document
+from karp_backend.document import autoupdate_child
+from karp_backend.document import doc_to_es
 
 
 

@@ -129,7 +129,7 @@ Create a file where you define how the updates work.
 # my_autoupdates.py
 
 # import the decorator
-from src.server.autoupdates import auto_update
+from karp_backend.document import auto_update
 
 # this function will be applied to all objects that are saved in the lexicon 'mylexicon'
 @auto_update('mylexicon')
