@@ -1,6 +1,6 @@
 from karp_backend.server.helper.configmanager import elastic
 import karp_backend.server.helper.configmanager as configM
-import karp_backend.offline.upload_offline as upload
+import upload_offline as upload
 import json
 import logging
 import upload_offline as upload_offline
@@ -54,8 +54,3 @@ def getmapping(alias, outfile=''):
     else:
         print res
     es.indices.delete(index=testindex)
-
-
-
-
-

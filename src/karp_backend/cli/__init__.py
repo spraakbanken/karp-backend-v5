@@ -1,5 +1,5 @@
-import karp_backend.offline.create_metadata as metadata
-import karp_backend.offline.upload_offline as upload
+import create_metadata as metadata
+import upload_offline as upload
 
     # TODO move stuff from upload_offline here, leave the real code there
 def cli_main(argc, argv):
