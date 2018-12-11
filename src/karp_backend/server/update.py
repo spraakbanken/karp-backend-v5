@@ -14,7 +14,7 @@ import karp_backend.server.helper.helpers as helpers
 import karp_backend.server.translator.validatejson as validate
 from karp_backend.server.autoupdates import auto_update_document
 from karp_backend.server.autoupdates import autoupdate_child
-from karp_backend.index import update_es_doc
+from karp_backend.index import doc_to_es
 
 
 
@@ -129,6 +129,7 @@ def update_doc(lexicon, _id, data=None, live=True):
         lexiconName = origin['_source']['lexiconName']
     else:
         lexiconName = origin['_source']['_lexiconName']
+    # aborts if mismatch
     helpers.check_lexiconName(lexicon, lexiconName, _id, 'update')
     data_doc = data.get('doc') or data.get('_source')
     version = data.get('version')
@@ -144,8 +145,7 @@ def update_doc(lexicon, _id, data=None, live=True):
     date = datetime.datetime.now()
     user = helpers.get_user()
     auto_update_document(data_doc, lexicon, 'update', user, date)
-    es_doc = data_doc
-    update_es_doc(es_doc, lexiconName, 'update', user, date)
+    es_doc = doc_to_es(data_doc, lexiconName, 'update', user, date)
 
     try:
         if version is not None and version != -1:
@@ -172,6 +172,8 @@ def update_doc(lexicon, _id, data=None, live=True):
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans}
     if db_error:
+        # TODO: handle partial success.
+        # ans = es.delete(index=index, doc_type=typ, id=_id)
         logging.debug(db_error)
     if live:
         return jsonify(jsonans)
@@ -203,6 +205,7 @@ def modify_db(_id, lexicon, msg, status, origid=''):
     return modifysuggestion(_id, lexicon, msg=msg, status=status, origid=origid)
 
 
+# TODO Is this used?
 def add_multi_doc(lexicon, index=''):
     import karp_backend.dbhandler.dbhandler as db
 
@@ -294,9 +297,10 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
         validate.validate_json(data_doc, lexicon)
 
         date = datetime.datetime.now()
+        # Make general updates
         auto_update_document(data_doc, lexiconName, 'add', user, date)
-        es_doc = data_doc
-        update_es_doc(es_doc, lexiconName, 'add', user, date)
+        # Possibly make index specific updates
+        es_doc = doc_to_es(data_doc, lexiconName, 'add', user, date)
         ans = es.index(index=index, doc_type=typ, body=es_doc, id=_id)
         _id = ans.get('_id')
         version = ans.get('_version', -1)

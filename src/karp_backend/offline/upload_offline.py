@@ -5,6 +5,7 @@ import json
 import sys
 import karp_backend.dbhandler.dbhandler as db
 import karp_backend.server.helper.configmanager as configM
+from karp_backend.index import doc_to_sql
 import os
 
 
@@ -55,10 +56,11 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
             # res is a tuple, res[0]==True
             ansname = 'index' # if with_id else 'create' -- changed from ES2
             _id = res[1].get(ansname).get('_id')
-            source = data[ok].get('_source')
-            if isinstance(source, dict):
-                source = json.dumps(source)
-            sql_bulk.append((_id, source, 'admin',
+            data_doc = data[ok].get('_source')
+            if not isinstance(data_doc, dict):
+                data_doc = json.loads(data_doc)
+            sql_doc = doc_to_sql(data_doc, data_doc['lexiconName'], 'bulk')
+            sql_bulk.append((_id, json.dumps(sql_doc), 'admin',
                              'entry automatically added or reloaded', name,
                              'imported'))
             ok += 1
@@ -341,9 +343,10 @@ def internalize_lexicon(mode, to_add):
         for hit in ans:  # ans is an iterator of objects from in hits.hits
             _id = hit.get('_id')
             source = hit.get('_source')
-            if isinstance(source, dict):
-                source = json.dumps(source)
-            sql_bulk.append((_id, source, 'admin',
+            if not isinstance(source, dict):
+                source = json.loads(source)
+            sql_doc = doc_to_sql(source, lex, 'bulk')
+            sql_bulk.append((_id, json.dumps(sql_doc), 'admin',
                              'entry automatically added or reloaded', lex,
                              'imported'))
 

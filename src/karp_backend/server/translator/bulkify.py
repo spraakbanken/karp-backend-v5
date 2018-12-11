@@ -4,7 +4,8 @@
 """
 from json import loads
 
-from karp_backend.index import update_es_doc
+from karp_backend.index import doc_to_es
+from karp_backend.index import doc_to_sql
 
 
 _index = 'test'
@@ -20,8 +21,9 @@ def bulkify(data, bulk_info={}, with_id=False):
     items = loads(data)
     result = []
     for item in items:
-        es_doc = item['_source'] if with_id else item
-        update_es_doc(es_doc, es_doc['lexiconName'], 'bulk')
+        data_doc = item['_source'] if with_id else item
+        # assert 'lexiconName' in data_doc, "document doesn't have the field 'lexiconName'"
+        es_doc = doc_to_es(data_doc, data_doc['lexiconName'], 'bulk')
         doc = {
             '_index': index,
             '_type': itype,
@@ -31,7 +33,7 @@ def bulkify(data, bulk_info={}, with_id=False):
             doc['_id'] = es_doc['_id']
         result.append(doc)
     return result
-    
+
 
 
 def bulkify_sql(data, bulk_info={}):
@@ -41,3 +43,14 @@ def bulkify_sql(data, bulk_info={}):
     return [{'_index': index, '_type': itype, '_id': _id,
              '_source': item['doc']}
             for _id, item in data.items() if item['status'] != 'removed']
+    result = []
+    for _id, item in data.items():
+        if item['status'] != 'removed':
+            data_doc = item['doc']
+            es_doc = doc_to_es(data_doc, data_doc['lexiconName'], 'bulk')
+            doc = {
+                '_index': index,
+                '_type': itype,
+                '_source': es_doc,
+                '_id': _id
+            }
