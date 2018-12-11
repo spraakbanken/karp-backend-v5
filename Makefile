@@ -8,3 +8,7 @@ dev-run:
 
 test: update
 	pipenv run py.test tests
+
+prepare-release:
+	pipenv lock -r > requirements.txt
+	pipenv lock -r --dev > requirements-dev.txts
