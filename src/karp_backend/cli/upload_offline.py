@@ -1,5 +1,5 @@
 #!/usr/bin/python2
-from elasticsearch import helpers
+from elasticsearch import es_helpers as es_es_helpers
 from elasticsearch import exceptions as esExceptions
 import json
 import sys
@@ -52,7 +52,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         # stream entries one by one to elastic, then update sql db
         # streaming_bulk will notify us at once when an entry fails
         sql_bulk = []
-        for res in helpers.streaming_bulk(elastic, data, request_timeout=60):
+        for res in es_helpers.streaming_bulk(elastic, data, request_timeout=60):
             # res is a tuple, res[0]==True
             ansname = 'index' # if with_id else 'create' -- changed from ES2
             _id = res[1].get(ansname).get('_id')
@@ -70,7 +70,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         ok += db_loaded
     else:
         # upload all at once to elastic
-        ok, err = helpers.bulk(elastic, data, request_timeout=60)
+        ok, err = es_helpers.bulk(elastic, data, request_timeout=60)
         if err:
             msg = "Error during upload. %s documents successfully uploaded. \
                    Message: %s.\n"
@@ -132,7 +132,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     print len(to_keep), 'entries to keep'
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index, 'type': typ})
     try:
-        ok, err = helpers.bulk(es, data, request_timeout=30)
+        ok, err = es_helpers.bulk(es, data, request_timeout=30)
     except:
         print data
     if err:
@@ -167,7 +167,7 @@ def recover_add(index, suffix, lexicon):
 
     print len(to_keep), 'entries to keep'
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index})
-    ok, err = helpers.bulk(es, data, request_timeout=30)
+    ok, err = es_helpers.bulk(es, data, request_timeout=30)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
                Message: %s.\n"
@@ -337,7 +337,7 @@ def internalize_lexicon(mode, to_add):
         # Go through each lexicon separately
         query = {"query": {"term": {"lexiconName": lex}}}
         # scan and scroll
-        ans = helpers.scan(es, query=query, scroll=u'3m', raise_on_error=True,
+        ans = es_helpers.scan(es, query=query, scroll=u'3m', raise_on_error=True,
                            preserve_order=False, index=mode, request_timeout=30)
         sql_bulk = []
         for hit in ans:  # ans is an iterator of objects from in hits.hits
@@ -401,7 +401,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
         ans = es.indices.create(index=target_index, body=data, request_timeout=30)
         print 'Created index', ans
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    ans = helpers.reindex(es, source_index, target_index)
+    ans = es_helpers.reindex(es, source_index, target_index)
     print ans
 
 
