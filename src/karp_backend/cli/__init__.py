@@ -62,13 +62,13 @@ def cli_main(argc, argv):
         gm.getmapping(alias, outfile)
 
     elif argv[1] == '--internalize_lexicon':
-            # adds a lexicon to sql from es
-            # can be done at any time, not noticable
-            # to the end user
-            mode = argv[2]
-            to_upload = argv[3:]
-            upload.internalize_lexicon(mode, to_upload)
-            print('Upload successful')
+        # adds a lexicon to sql from es
+        # can be done at any time, not noticable
+        # to the end user
+        mode = argv[2]
+        to_upload = argv[3:]
+        upload.internalize_lexicon(mode, to_upload)
+        print('Upload successful')
 
     elif argv[1] == '--printlatestversion':
         lexicon = argv[2]
