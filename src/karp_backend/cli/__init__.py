@@ -1,5 +1,6 @@
-import create_metadata as metadata
-import upload_offline as upload
+from karp_backend.cli import create_metadata as metadata
+from karp_backend.cli import upload_offline as upload
+from karp_backend.cli import getmapping as gm
 
     # TODO move stuff from upload_offline here, leave the real code there
 def cli_main(argc, argv):
@@ -38,7 +39,6 @@ def cli_main(argc, argv):
         upload.reindex_alias(index, target_suffix)
 
     elif argv[1] == '--getmapping':
-        import karp_backend.offline.getmapping as gm
         alias = argv[2]
         outfile = argv[3]
         gm.getmapping(alias, outfile)
