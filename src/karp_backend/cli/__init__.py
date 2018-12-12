@@ -1,4 +1,5 @@
 import sys
+import karp_backend
 from karp_backend.cli import create_metadata as metadata
 from karp_backend.cli import upload_offline as upload
 from karp_backend.cli import getmapping as gm
@@ -77,6 +78,8 @@ def cli_main(argc, argv):
         lexicon = argv[2]
         upload.printlatestversion(lexicon, debug=False, with_id=True)
 
+    elif argv[1] == '--version':
+        print('{}, version {}'.format(argv[0], karp_backend.get_version()))
     # Commented since dangerous!
     # if argv[1] == '--delete_all':
     #    upload.delete_all()
