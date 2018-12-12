@@ -188,10 +188,7 @@ class Operator:
             "startswith",
             "endswith",
             "lte",
-            "gte",
-            "npegl_lemma_contains",
-            "npegl_lemma_exists",
-            "npegl_lemma_missing"]
+            "gte"]
 
         if op == "equals":
             # Always use match_phrase, works better with tokenization.
