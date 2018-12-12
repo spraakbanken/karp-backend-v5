@@ -3,11 +3,24 @@ from karp_backend.cli import create_metadata as metadata
 from karp_backend.cli import upload_offline as upload
 from karp_backend.cli import getmapping as gm
 
-    # TODO move stuff from upload_offline here, leave the real code there
+# TODO move stuff from upload_offline here, leave the real code there
+usage = """
+|SCRIPT| --create_metadata
+    Generate 'config/fieldmappings.json' from the 'config/mappings/fieldmappings_*.json' files.
+
+|SCRIPT| --create_mode MODE SUFFIX
+"""
+
+def print_usage(script_name):
+    print(usage.replace('|SCRIPT|', script_name))
+
+
 def cli_main(argc, argv):
     if argc < 2:
         print('No argument given!')
+        print_usage(argv[0])
         sys.exit(2)
+
     if argv[1] == '--create_metadata':
         outpath = 'config/fieldmappings.json'
         metadata.print_all(outpath)
@@ -77,4 +90,4 @@ def cli_main(argc, argv):
     #    print('Deletion successful')
 
     else:
-        print("Don't know what to do")
+        print_usage(argv[0])
