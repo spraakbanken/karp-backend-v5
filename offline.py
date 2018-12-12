@@ -1,6 +1,6 @@
 import sys
 
-from karp_backend.cli import cli_main
+from karp_backend import cli
 
 if __name__ == '__main__':
-    cli_main(len(sys.argv), argv)
+    cli.cli_main(len(sys.argv), sys.argv)
