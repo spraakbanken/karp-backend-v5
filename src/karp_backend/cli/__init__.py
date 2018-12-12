@@ -1,9 +1,13 @@
+import sys
 from karp_backend.cli import create_metadata as metadata
 from karp_backend.cli import upload_offline as upload
 from karp_backend.cli import getmapping as gm
 
     # TODO move stuff from upload_offline here, leave the real code there
 def cli_main(argc, argv):
+    if argc < 2:
+        print('No argument given!')
+        sys.exit(2)
     if argv[1] == '--create_metadata':
         outpath = 'config/fieldmappings.json'
         metadata.print_all(outpath)
