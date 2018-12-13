@@ -407,8 +407,17 @@ def reindex_help(alias, source_index, target_index, create_index=True):
         data = get_mapping(alias)
         ans = es.indices.create(index=target_index, body=data, request_timeout=30)
         print 'Created index', ans
+
+    source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
+
+    def update_source_field(doc):
+        doc['_source'] = document.doc_to_es(doc['_source'], alias, 'update')
+        return doc
+
+    update_docs = (update_source_field(doc) for doc in source_docs)
+    ans = es_helpers.streaming_bulk(es, update_docs, index=target_index)
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    ans = es_helpers.reindex(es, source_index, target_index)
+    # ans = es_helpers.reindex(es, source_index, target_index)
     print ans
 
 
