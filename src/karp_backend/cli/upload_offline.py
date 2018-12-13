@@ -1,12 +1,17 @@
 #!/usr/bin/python2
-from elasticsearch import es_helpers as es_es_helpers
-from elasticsearch import exceptions as esExceptions
 import json
 import sys
+import os
+
+import six
+
+from elasticsearch import helpers as es_helpers
+from elasticsearch import exceptions as esExceptions
+
 import karp_backend.dbhandler.dbhandler as db
 import karp_backend.server.helper.configmanager as configM
-from karp_backend.document import doc_to_sql
-import os
+from karp_backend.util import json_iter
+from karp_backend import document
 
 
 def get_mapping(index):
@@ -59,7 +64,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
             data_doc = data[ok].get('_source')
             if not isinstance(data_doc, dict):
                 data_doc = json.loads(data_doc)
-            sql_doc = doc_to_sql(data_doc, data_doc['lexiconName'], 'bulk')
+            sql_doc = document.doc_to_sql(data_doc, data_doc['lexiconName'], 'bulk')
             sql_bulk.append((_id, json.dumps(sql_doc), 'admin',
                              'entry automatically added or reloaded', name,
                              'imported'))
@@ -176,6 +181,7 @@ def recover_add(index, suffix, lexicon):
 
 
 def printlatestversion(lexicon, debug=True, with_id=False):
+    fp = sys.stdout
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     count = 0
@@ -194,13 +200,14 @@ def printlatestversion(lexicon, debug=True, with_id=False):
     if debug:
         print >> sys.stderr, 'count', count
     if with_id:
-        out = [{'_id': i, '_source': val['doc']} for i, val in to_keep.items()
-               if val['status'] != 'removed']
-        print json.dumps(out)
+        gen_out = ({'_id': i, '_source': document.doc_to_es(val['doc'], lexicon, 'bulk')}
+                   for i, val in six.viewitems(to_keep)
+                   if val['status'] != 'removed')
     else:
-        print '\n'.join((json.dumps(val['doc']) for val in to_keep.values()
-                         if val['status'] != 'removed'))
-
+        gen_out = (val['doc']
+                   for val in six.viewvalues(to_keep)
+                   if val['status'] != 'removed')
+    json_iter.dump_array_fp(fp, gen_out)
 
 def parse_config(name, info, default):
     """ Parse the info in lexiconconf.json and returns
@@ -345,7 +352,7 @@ def internalize_lexicon(mode, to_add):
             source = hit.get('_source')
             if not isinstance(source, dict):
                 source = json.loads(source)
-            sql_doc = doc_to_sql(source, lex, 'bulk')
+            sql_doc = document.doc_to_sql(source, lex, 'bulk')
             sql_bulk.append((_id, json.dumps(sql_doc), 'admin',
                              'entry automatically added or reloaded', lex,
                              'imported'))
