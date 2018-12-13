@@ -423,7 +423,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     update_docs = (update_source_field(doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
     errors = []
-    for ok, item = es_helpers.streaming_bulk(es, update_docs, index=target_index):
+    for ok, item in es_helpers.streaming_bulk(es, update_docs, index=target_index):
         if not ok:
             failed += 1
             errors.append(item)
