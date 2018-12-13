@@ -10,6 +10,16 @@ usage = """
     Generate 'config/fieldmappings.json' from the 'config/mappings/fieldmappings_*.json' files.
 
 |SCRIPT| --create_mode MODE SUFFIX
+|SCRIPT| --create_empty_index MODE SUFFIX
+|SCRIPT| --import_mode MODE SUFFIX
+|SCRIPT| --publish_mode MODE SUFFIX
+|SCRIPT| --reindex_alias MODE SUFFIX
+|SCRIPT| --getmapping ALIAS OUTFILE
+|SCRIPT| --internalize_lexicon MODE LEXICON1 [LEXICON2 LEXICON3 ... LEXICONM]
+|SCRIPT| --printlatestversion MODE [OUTFILE]
+|SCRIPT| --exportlatestversion MODE [OUTFILE]
+|SCRIPT| --version
+    Prints the version and exits.
 """
 
 def print_usage(script_name):
