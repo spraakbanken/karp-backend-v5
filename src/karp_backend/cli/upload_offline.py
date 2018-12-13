@@ -421,10 +421,25 @@ def reindex_help(alias, source_index, target_index, create_index=True):
         return doc
 
     update_docs = (update_source_field(doc) for doc in source_docs)
-    ans = es_helpers.streaming_bulk(es, update_docs, index=target_index)
+    success, failed, total = 0, 0, 0
+    errors = []
+    for ok, item = es_helpers.streaming_bulk(es, update_docs, index=target_index):
+        if not ok:
+            failed += 1
+            errors.append(item)
+        else:
+            success += 1
+        total += 1
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
-    print ans
+    if success == total:
+        print('Done! Reindexed {} entries'.format(total))
+    else:
+        print('Something went wrong!')
+        print('  - Successfully reindexed: {}'.format(success))
+        print('  - Failed to reindex: {}'.format(failed))
+        print('This are the failing entries:')
+        print(errors)
 
 
 def publish_all(suffix):
