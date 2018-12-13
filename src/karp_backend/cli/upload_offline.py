@@ -180,8 +180,14 @@ def recover_add(index, suffix, lexicon):
     print 'recovery done'
 
 
-def printlatestversion(lexicon, debug=True, with_id=False):
-    fp = sys.stdout
+def printlatestversion(lexicon,
+                       debug=True,
+                       with_id=False,
+                       file=None):
+    if file:
+        fp = file
+    else:
+        fp = sys.stdout
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     count = 0

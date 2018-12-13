@@ -72,11 +72,25 @@ def cli_main(argc, argv):
 
     elif argv[1] == '--printlatestversion':
         lexicon = argv[2]
-        upload.printlatestversion(lexicon)
+        filename = None
+        if argc == 4:
+            filename = argv[3]
+        if filename:
+            with open(filename, 'w') as fp:
+                upload.printlatestversion(lexicon, file=fp)
+        else:
+            upload.printlatestversion(lexicon)
 
     elif argv[1] == '--exportlatestversion':
         lexicon = argv[2]
-        upload.printlatestversion(lexicon, debug=False, with_id=True)
+        filename = None
+        if argc == 4:
+            filename = argv[3]
+        if filename:
+            with open(filename, 'w') as fp:
+                upload.printlatestversion(lexicon, debug=False, with_id=True, file=fp)
+        else:
+            upload.printlatestversion(lexicon, debug=False, with_id=True)
 
     elif argv[1] == '--version':
         print('{}, version {}'.format(argv[0], karp_backend.get_version()))
