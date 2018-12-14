@@ -14,6 +14,10 @@ from karp_backend.util import json_iter
 from karp_backend import document
 
 
+# ==============================================
+# helpers
+# ==============================================
+
 def get_mapping(index):
     filepath = 'config/mappings/mappingconf_%s.json' % index
     try:
@@ -103,13 +107,35 @@ def parse_upload(informat, lexname, lexorder, data, index, typ, with_id=False):
     return out_data
 
 
+def get_entries_to_keep_from_sql(lexicons):
+    to_keep = {}
+    if isinstance(lexicons, six.text_type):
+        lexicons = [lexicons]
+
+    for lex in lexicons:
+        engine, db_entry = db.get_engine(lex, echo=False)
+        for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
+            _id = entry['id']
+            if _id:  # don't add things without id, they are errors
+                if _id in to_keep:
+                    last = to_keep[_id]['date']
+                    if last < entry['date']:
+                        logging.debug('|get_entries_to_keep_from_sql| Update entry.')
+                        to_keep[_id] = entry
+                else:
+                        to_keep[_id] = entry
+            else:
+                logging.debug('|sql no id| Found entry without id:')
+                logging.debug('|sql no id| {}}'.format(entry))
+    return to_keep
+
+
 def recover(alias, suffix, lexicon, create_new=True):
     # TODO test this
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
     import karp_backend.server.translator.bulkify as bulk
-    to_keep = {}
     # if not lexicon:
     #     lexicon = conf.keys()
     mapping = get_mapping(alias)
@@ -123,18 +149,9 @@ def recover(alias, suffix, lexicon, create_new=True):
         ans = es.indices.create(index=index, body=mapping, request_timeout=30)
         print ans
 
-    for lex in lexicon:
-        engine, db_entry = db.get_engine(lex, echo=False)
-        for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
-            _id = entry['id']
-            if _id:  # don't add things without id, they are errors
-                if _id in to_keep:
-                    last = to_keep[_id]['date']
-                    if last < entry['date']:
-                        to_keep[_id] = entry
-                else:
-                        to_keep[_id] = entry
+    to_keep = get_entries_to_keep_from_sql(lexicon)
     print len(to_keep), 'entries to keep'
+
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index, 'type': typ})
     try:
         ok, err = es_helpers.bulk(es, data, request_timeout=30)
@@ -156,21 +173,10 @@ def recover_add(index, suffix, lexicon):
     import karp_backend.server.translator.bulkify as bulk
     es = configM.elastic(index)
     print 'Save %s to %s' % (lexicon, index)
-    to_keep = {}
-    for lex in lexicon:
-        engine, db_entry = db.get_engine(lex, echo=False)
-        for entry in db.dbselect(lex, engine=engine, db_entry=db_entry,
-                                 max_hits=-1):
-            _id = entry['id']
-            if _id:  # don't add things without id, they are errors
-                if _id in to_keep:
-                    last = to_keep[_id]['date']
-                    if last < entry['date']:
-                        to_keep[_id] = entry
-                else:
-                        to_keep[_id] = entry
 
+    to_keep = get_entries_to_keep_from_sql(lexicon)
     print len(to_keep), 'entries to keep'
+
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index})
     ok, err = es_helpers.bulk(es, data, request_timeout=30)
     if err:
@@ -188,23 +194,12 @@ def printlatestversion(lexicon,
         fp = file
     else:
         fp = sys.stdout
-    to_keep = {}
-    engine, db_entry = db.get_engine(lexicon, echo=False)
-    count = 0
-    for entry in db.dbselect(lexicon, engine=engine, db_entry=db_entry,
-                             max_hits=-1):
-        _id = entry['id']
-        count += 1
-        if _id:  # don't add things without id, they should not be here at all
-            if _id in to_keep:
-                last = to_keep[_id]['date']
-                if last < entry['date']:
-                    to_keep[_id] = entry
-            else:
-                    to_keep[_id] = entry
+
+    to_keep = get_entries_to_keep_from_sql(lexicon)
 
     if debug:
-        print >> sys.stderr, 'count', count
+        print >> sys.stderr, 'count', len(to_keep)
+
     if with_id:
         gen_out = ({'_id': i, '_source': document.doc_to_es(val['doc'], lexicon, 'bulk')}
                    for i, val in six.viewitems(to_keep)
@@ -213,7 +208,9 @@ def printlatestversion(lexicon,
         gen_out = (val['doc']
                    for val in six.viewvalues(to_keep)
                    if val['status'] != 'removed')
+
     json_iter.dump_array_fp(fp, gen_out)
+
 
 def parse_config(name, info, default):
     """ Parse the info in lexiconconf.json and returns
