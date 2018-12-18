@@ -30,7 +30,7 @@ def bulkify(data, bulk_info={}, with_id=False):
             '_source': es_doc,
         }
         if with_id:
-            doc['_id'] = es_doc['_id']
+            doc['_id'] = item['_id']
         result.append(doc)
     return result
 
@@ -54,3 +54,5 @@ def bulkify_sql(data, bulk_info={}):
                 '_source': es_doc,
                 '_id': _id
             }
+            result.append(doc)
+    return result
