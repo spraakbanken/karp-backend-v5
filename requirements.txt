@@ -1,24 +1,18 @@
 -i https://pypi.org/simple
 -e .
-asn1crypto==0.24.0
-cffi==1.11.5
 click==7.0
-cryptography==2.4.2
 elasticsearch-dsl==6.3.1
 elasticsearch==6.1.1
-enum34==1.1.6 ; python_version < '3'
 flask-sqlalchemy==2.3.2
 flask==0.12.4
 gevent==1.2.2
 greenlet==0.4.15
-idna==2.8
 ipaddress==1.0.22 ; python_version < '3.3'
 itsdangerous==1.1.0
 jinja2==2.10
 markdown==3.0.1
 markupsafe==1.1.0
-pycparser==2.19
-pymysql==0.9.2
+pymysql==0.9.3
 python-dateutil==2.7.5
 six==1.12.0
 sqlalchemy==1.2.15
