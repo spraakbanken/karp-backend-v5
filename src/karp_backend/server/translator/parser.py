@@ -353,20 +353,25 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
     boost_list = configM.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
-        qs.append({"match": {field : {"query": text, "boost": boost_score}}})
+        qs.append({"match": {field: {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
-    q = {"bool" : {"should" :[qs]}}
+    q = {"bool": {"should": [qs]}}
     if extra:
-        q = {"bool" : {"must" :[q, extra]}}
+        q = {"bool": {"must": [q, extra]}}
     if isfilter:
-        return {"filter" : q}
+        return {"filter": q}
 
     res = {"query": q}
     if highlight:
-        res["highlight"] = {"fields": {"*": {"highlight_query": q}},
-                            "require_field_match": False
-                           }
+        res["highlight"] = {
+            "fields": {
+                "*": {
+                    "highlight_query": q
+                }
+            },
+            "require_field_match": False
+        }
     return res
 
 
