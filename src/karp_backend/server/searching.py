@@ -46,7 +46,7 @@ def requestquery(page=0):
         # default values
         default = {'size': 25, 'page': page, 'version': 'true'}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.parse(settings)
+        elasticq = parser.parse(request.args, settings)
     except PErr.QueryError as e:
         logging.exception(e)
         raise eh.KarpQueryError('Parse error - '+e.message, debug_msg=e.debug_msg,
@@ -121,7 +121,8 @@ def querycount(page=0):
         q_ans = requestquery(page=page)
 
         # raise the size for the statistics call
-        count_elasticq, more = parser.statistics(settings,
+        count_elasticq, more = parser.statistics(request.args,
+                                                 settings,
                                                  order={"lexiconOrder":
                                                         ("_key", "asc")},
                                                  show_missing=False,
@@ -159,7 +160,7 @@ def test():
     try:
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(settings)
+        elasticq = parser.parse(request.args, settings)
     except PErr.QueryError as e:
         raise eh.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     return jsonify({'elastic_json_query': elasticq})
@@ -170,7 +171,7 @@ def explain():
     try:
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(settings)
+        elasticq = parser.parse(request.args, settings)
     except PErr.QueryError as e:
         raise eh.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     es = configM.elastic(mode=settings['mode'])
@@ -187,11 +188,11 @@ def minientry():
     max_page = configM.setupconfig['MINIENTRY_PAGE']
     auth, permitted = validate_user(mode="read")
     try:
-        mode = parser.get_mode()
+        mode = parser.get_mode(request.args)
         default = {'show': configM.searchfield(mode, 'minientry_fields'),
                    'size': 25}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.parse(settings)
+        elasticq = parser.parse(request.args, settings)
         show = settings['show']
         if not auth:
             # show = show - exclude
@@ -230,11 +231,11 @@ def minientry():
 def random():
     auth, permitted = validate_user(mode="read")
     try:
-        mode = parser.get_mode()
+        mode = parser.get_mode(request.args)
         default = {"show": configM.searchfield(mode, 'minientry_fields'),
                    "size": 1}
         settings = parser.make_settings(permitted, default)
-        elasticq = parser.random(settings)
+        elasticq = parser.random(request.args, settings)
         logging.debug('random %s', elasticq)
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
@@ -266,13 +267,13 @@ def statistics():
     """ Returns the counts and stats for the query """
     auth, permitted = validate_user(mode="read")
     try:
-        mode = parser.get_mode()
+        mode = parser.get_mode(request.args)
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
         exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
 
-        elasticq, more = parser.statistics(settings, exclude=exclude)
+        elasticq, more = parser.statistics(request.args, settings, exclude=exclude)
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
         is_more = check_bucketsize(more, settings, index, es)
@@ -299,14 +300,14 @@ def statlist():
     """ Returns the counts and stats for the query """
     auth, permitted = validate_user(mode="read")
     try:
-        mode = parser.get_mode()
+        mode = parser.get_mode(request.args)
         logging.debug('mode is %s', mode)
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
 
         exclude = [] if auth else configM.searchfield(mode, 'secret_fields')
-        elasticq, more = parser.statistics(settings, exclude=exclude,
+        elasticq, more = parser.statistics(request.args, settings, exclude=exclude,
                                            prefix='STAT_')
         es = configM.elastic(mode=settings['mode'])
         index, typ = configM.get_mode_index(settings['mode'])
@@ -380,9 +381,8 @@ def formatpost():
     """
     # get and parse data
     request.get_data()
-    data = request.data
     try:
-        data = loads(data)
+        data = loads(request.data)
     except ValueError as e:
         raise eh.KarpParsingError(str(e))
 
@@ -390,9 +390,9 @@ def formatpost():
     auth, permitted = validate_user(mode="read")
     # find the wanted format
     settings = parser.make_settings(permitted, {'size': 25})
-    parser.parse_extra(settings)
+    parser.parse_extra(request.args, settings)
     to_format = settings.get('format', '')
-    mode = parser.get_mode()
+    mode = parser.get_mode(request.args)
     logging.debug('mode "%s"', mode)
     index, typ = configM.get_mode_index(mode)
 
@@ -422,8 +422,8 @@ def autocomplete():
     #query = request.query_string
     try:
         settings = parser.make_settings(permitted, {'size': 1000})
-        mode = parser.get_mode()
-        resource = parser.parse_extra(settings)
+        mode = parser.get_mode(request.args)
+        resource = parser.parse_extra(request.args, settings)
         if 'q' in request.args or 'query' in request.args:
             qs = [request.args.get('q', '') or request.args.get('query', '')]
             logging.debug('qs is %s', qs)
@@ -535,7 +535,7 @@ def testquery():
     try:
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
-        elasticq = parser.parse(settings)
+        elasticq = parser.parse(request.args, settings)
         mode = settings['mode']
         if not settings.get('sort', ''):
             # default: group by lexicon, then sort by score
@@ -544,7 +544,7 @@ def testquery():
             sort = settings['sort']
         start = settings['start'] if 'start' in settings\
                                   else settings['page'] * settings['size']
-        elasticq = parser.parse()
+        elasticq = parser.parse(request.args)
         return dumps(elasticq) + dumps({'sort': sort, '_from': start,
                                         'size': settings['size'],
                                         'version': 'true'
@@ -567,7 +567,7 @@ def get_context(lexicon):
     # make default settings
     settings = parser.make_settings(permitted, {"size": 10, "resource": lexicon})
     # parse parameter settings
-    parser.parse_extra(settings)
+    parser.parse_extra(request.args, settings)
 
     # set searching configurations
     mode = configM.get_lexicon_mode(lexicon)
@@ -653,8 +653,8 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
     size = settings['size']+1
     show = configM.searchfield(mode, 'minientry_fields')
     for _i, _v in enumerate(show):
-	if _v == "Corpus_unit_id.raw":
-	    show[_i] = "Corpus_unit_id"
+        if _v == "Corpus_unit_id.raw":
+            show[_i] = "Corpus_unit_id"
     logging.debug("searching.py:get_pre_post show = {0}".format(show))
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
@@ -711,7 +711,7 @@ def export(lexicon):
                                          'lexicon %s' % lexicon)
 
     settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
-    parser.parse_extra(settings)
+    parser.parse_extra(request.args, settings)
     date = settings.get('date', '')
     mode = settings.get('mode', '')
     if date:
@@ -752,6 +752,7 @@ def export(lexicon):
         if len(ans) < divsize:
             logging.debug('simply sending entries')
             return jsonify({lexicon: ans})
+
         def gen():
             start, stop = 0, divsize
             yield '{"%s": [' % lexicon
@@ -760,7 +761,7 @@ def export(lexicon):
                 if start > 1:
                     yield ','
                 yield ','.join([dumps(obj) for obj in ans[start:stop]])
-                #yield dumps(ans[start:stop])
+                # yield dumps(ans[start:stop])
                 start = stop
                 stop += divsize
             yield ']}'
@@ -852,8 +853,6 @@ def main_handler(generator):
             except:
                 raise
 
-
-
             # result = dumps(result)
             # print 'last yield'
             yield result
@@ -876,7 +875,7 @@ def export2(lexicon, divsize=5000):
                                          'lexicon %s' % lexicon)
 
     settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
-    parser.parse_extra(settings)
+    parser.parse_extra(request.args, settings)
     date = settings.get('date', '')
     mode = settings.get('mode', '')
     if date:
@@ -886,8 +885,8 @@ def export2(lexicon, divsize=5000):
         date = dateP.parse(date, dateP.parserinfo(yearfirst=True),
                            default=datetime(1999, 01, 01, 23, 59))
 
-    #def get_data(inp):
-    #time.sleep(10)
+    # def get_data(inp):
+    # time.sleep(10)
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     size = settings['size']
@@ -907,14 +906,14 @@ def export2(lexicon, divsize=5000):
     if size != float('inf') and size < len(ans):
         # print 'done, %s < %s' % (size, len(ans))
         ans = ans[:settings['size']]
-    #inp['out'] = ans
+    # inp['out'] = ans
     # print 'I am done!'
-    #return
+    # return
 
     if settings.get('format', ''):
-        #ans = {}
-        #get_data(ans)
-        #ans = ans['out']
+        # ans = {}
+        # get_data(ans)
+        # ans = ans['out']
         # print 'exporting %s entries' % len(ans)
         toformat = settings.get('format')
         index, typ = configM.get_mode_index(mode)
@@ -924,15 +923,15 @@ def export2(lexicon, divsize=5000):
         yield Response(lmf, mimetype='text/xml')
 
     else:
-        #import threading
-        #import time
+        # import threading
+        # import time
         # print 'divsize %s' % divsize
         divsize = int(divsize)
-        #def gen():
-        #ans = {}
-        #t = threading.Thread(target=get_data, args=[ans])
-        #t.start()
-        #yield '{"%s": [' % lexicon
+        # def gen():
+        # ans = {}
+        # t = threading.Thread(target=get_data, args=[ans])
+        # t.start()
+        # yield '{"%s": [' % lexicon
         yield '"%s": [' % lexicon
         # while t.is_alive():
         #     yield(' ')
@@ -940,8 +939,8 @@ def export2(lexicon, divsize=5000):
         #     time.sleep(1)
         #     logging.debug('wake up')
 
-        #print 'thread finished %s' % t.is_alive()
-        #ans = ans['out']
+        # print 'thread finished %s' % t.is_alive()
+        # ans = ans['out']
         # print 'exporting %s entries' % len(ans)
         start, stop = 0, divsize
         # print 'streaming entries'
@@ -958,7 +957,7 @@ def export2(lexicon, divsize=5000):
             except:
                 # print 'exception here! % - %s' % start, stop
                 raise
-            #yield dumps(ans[start:stop])
+            # yield dumps(ans[start:stop])
             start = stop
             stop += divsize
         # print 'done'

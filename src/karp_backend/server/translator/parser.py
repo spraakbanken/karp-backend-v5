@@ -5,7 +5,6 @@ import re
 
 from collections import defaultdict
 from elasticsearch import helpers as EShelpers
-from flask import request
 
 import karp_backend.server.translator.elasticObjects as elasticObjects
 import karp_backend.server.translator.fieldmapping as F
@@ -13,9 +12,8 @@ import karp_backend.server.translator.parsererror as PErr
 import karp_backend.server.helper.configmanager as configM
 
 
-
-def get_mode():
-    return request.args.get('mode', configM.standardmode)
+def get_mode(request_args):
+    return request_args.get('mode', configM.standardmode)
 
 
 def make_settings(permitted, in_settings):
@@ -24,7 +22,7 @@ def make_settings(permitted, in_settings):
     return settings
 
 
-def parse(settings=None, isfilter=False):
+def parse(request_args, settings=None, isfilter=False):
     """ Parses a query on the form simple||..., extended||...
         returns the corresponding elasticsearch query object
         settings is a dictionary where the 'size' (the number of wanted hits)
@@ -35,11 +33,10 @@ def parse(settings=None, isfilter=False):
     if settings is None:
         settings = {}
     # isfilter is used for minientries and some queries to statistics
-    parsed = request.args
     # only one query is allowed
-    query = parsed.get('q', ['']) or parsed.get('query')
-    #query = query.decode('utf8')  # use utf8, same as lexiconlist
-    p_extra = parse_extra(settings)
+    query = request_args.get('q', ['']) or request_args.get('query')
+    # query = query.decode('utf8')  # use utf8, same as lexiconlist
+    p_extra = parse_extra(request_args, settings)
     command, query = query.split('||', 1)
     settings['query_command'] = command
     highlight = settings.get('highlight', False)
@@ -74,13 +71,13 @@ def parse(settings=None, isfilter=False):
                              )
 
 
-def get_command():
-    query = request.args.get('q', ['']) or request.args.get('query')
-    command, query = query.split('||', 1)
-    return command
+# def get_command(request_args):
+#     query = request_args.get('q', ['']) or request_args.get('query')
+#     command, query = query.split('||', 1)
+#     return command
 
 
-def parse_extra(settings):
+def parse_extra(request_args, settings):
     """ Parses extra information, such as resource and size """
     # TODO specify available options per url/function
     lex_wanted = []
@@ -89,33 +86,33 @@ def parse_extra(settings):
                  'show', 'show_all', 'status', 'index', 'cardinality',
                  'highlight', 'format', 'export', 'mode', 'center', 'multi',
                  'date', 'statsize']
-    for k in request.args.keys():
+    for k in request_args.keys():
         if k not in available:
             raise PErr.QueryError("Option not recognized: %s.\
                                    Available options: %s"
                                   % (k, ','.join(available)))
 
-    if 'mode' in request.args:
+    if 'mode' in request_args:
         # logging.debug('change mode -> %s' % (parsed))
-        settings['mode'] = request.args['mode']
+        settings['mode'] = request_args['mode']
 
     mode = settings.get('mode')
     logging.info('Mode %s', mode)
     # set resources, based on the query and the user's permissions
-    if 'resource' in request.args:
-        wanted = request.args['resource'].split(',')
+    if 'resource' in request_args:
+        wanted = request_args['resource'].split(',')
     else:
         wanted = []
     ok_lex = []  # lists all allowed lexicons
     for r in settings.get('allowed', []):
         if r in wanted or not wanted:
             ok_lex.append(r)
-            lex_wanted.append({"term" : {F.lookup("lexiconName", mode): r}})
+            lex_wanted.append({"term": {F.lookup("lexiconName", mode): r}})
 
     if len(lex_wanted) > 1:
         # if more than one lexicon, the must be put into a 'should' ('or'),
         # not the 'must' query ('and') that will be constructed later
-        info = {"bool" : {"should" : lex_wanted}}
+        info = {"bool": {"should": lex_wanted}}
     elif len(lex_wanted) == 1:
         info = lex_wanted[0]
 
@@ -128,47 +125,47 @@ def parse_extra(settings):
     # the below line is used by checklexiconhistory and checksuggestions
     settings['resource'] = ok_lex
 
-    if 'size' in request.args:
-        size = request.args['size']
+    if 'size' in request_args:
+        size = request_args['size']
         settings['size'] = float(size) if size == 'inf' else int(size)
-    if 'sort' in request.args:
-        #settings['sort'] = F.lookup_multiple(request.args['sort'].split(','), mode)
+    if 'sort' in request_args:
+        # settings['sort'] = F.lookup_multiple(request_args['sort'].split(','), mode)
         settings['sort'] = sum([F.lookup_multiple(s, mode)
-                                for s in request.args['sort'].split(',')], [])
-    if 'page' in request.args:
-        settings['page'] = min(int(request.args['page'])-1, 0)
-    if 'start' in request.args:
-        settings['start'] = int(request.args['start'])
-    if 'buckets' in request.args:
+                                for s in request_args['sort'].split(',')], [])
+    if 'page' in request_args:
+        settings['page'] = min(int(request_args['page'])-1, 0)
+    if 'start' in request_args:
+        settings['start'] = int(request_args['start'])
+    if 'buckets' in request_args:
         settings['buckets'] = [F.lookup(r, mode) for r
-                               in request.args['buckets'].split(',')]
+                               in request_args['buckets'].split(',')]
 
-    if 'show' in request.args:
-        #settings['show'] = F.lookup_multiple(request.args['show'][0].split(','), mode)
+    if 'show' in request_args:
+        # settings['show'] = F.lookup_multiple(request_args['show'][0].split(','), mode)
         settings['show'] = sum([F.lookup_multiple(s, mode)
-                                for s in request.args['show'].split(',')], [])
+                                for s in request_args['show'].split(',')], [])
     # to be used in random
-    if 'show_all' in request.args:
+    if 'show_all' in request_args:
         settings['show'] = []
 
-    if 'statsize' in request.args:
-        settings['statsize'] = request.args['statsize']
+    if 'statsize' in request_args:
+        settings['statsize'] = request_args['statsize']
 
-    if 'cardinality' in request.args:
+    if 'cardinality' in request_args:
         settings['cardinality'] = True
-    if 'highlight' in request.args:
+    if 'highlight' in request_args:
         settings['highlight'] = True
 
     # status is only used by checksuggestions
     list_flags = ['status', 'index', 'multi']
     for flag in list_flags:
-        if flag in request.args:
-            settings[flag] = request.args[flag].split(',')
+        if flag in request_args:
+            settings[flag] = request_args[flag].split(',')
 
     single_flags = ['format', 'export', 'center', 'q', 'date']
     for flag in single_flags:
-        if flag in request.args:
-            settings[flag] = request.args[flag]
+        if flag in request_args:
+            settings[flag] = request_args[flag]
     return info
 
 
@@ -459,8 +456,8 @@ def construct_exp(exps, querytype="filter", constant_score=True):
     return query
 
 
-def random(settings):
-    resource = parse_extra(settings)
+def random(request_args, settings):
+    resource = parse_extra(request_args, settings)
     elasticq = {"query": {"function_score": {"random_score": {}}}}
     if resource:
         elasticq["query"]["function_score"]["query"] = resource
@@ -468,16 +465,16 @@ def random(settings):
     return elasticq
 
 
-def statistics(settings, exclude=[], order={}, prefix='',
+def statistics(request_args, settings, exclude=[], order={}, prefix='',
                show_missing=True, force_size=-1):
     """ Constructs a ES query for an statistics view (aggregated information)
         Contains the number of hits in each lexicon, grouped by POS
     """
-    q = request.args.get('q', '')
-    resource = parse_extra(settings)
+    q = request_args.get('q', '')
+    resource = parse_extra(request_args, settings)
     # q is the search query and/or the chosen resource
     if q:
-        q = parse(isfilter=True, settings=settings)
+        q = parse(request_args, isfilter=True, settings=settings)
     else:  # always filter to show only the permitted resources
         q = {"filter" : resource}
 
