@@ -2,8 +2,9 @@
 # TODO move to karp-backend-sb
 from gevent import monkey
 monkey.patch_all()
+
 import sys
-import json
+
 from karp_backend.main import app, load_urls
 from gevent.pywsgi import WSGIServer
 

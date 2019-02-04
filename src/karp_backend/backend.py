@@ -3,8 +3,7 @@
     Is also responsible for which ES node to query.
 """
 
-from flask import jsonify, request, session
-from karp_backend.server.helper.flaskhelper import app
+from flask import jsonify, session
 import karp_backend.server.checkdbhistory as checkdbhistory
 import karp_backend.server.idgenerator as idgenerator
 import karp_backend.server.searching as searching
