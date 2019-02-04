@@ -6,7 +6,7 @@ update:
 dev-run:
 	pipenv run python run.py 8081
 
-test: update
+test:
 	pipenv run py.test tests
 
 prepare-release:
