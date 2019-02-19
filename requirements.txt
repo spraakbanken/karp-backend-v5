@@ -1,5 +1,4 @@
 -i https://pypi.org/simple
--e .
 click==7.0
 elasticsearch-dsl==6.3.1
 elasticsearch==6.1.1
@@ -13,8 +12,8 @@ jinja2==2.10
 markdown==3.0.1
 markupsafe==1.1.0
 pymysql==0.9.3
-python-dateutil==2.7.5
+python-dateutil==2.8.0
 six==1.12.0
-sqlalchemy==1.2.15
+sqlalchemy==1.2.18
 urllib3==1.22
 werkzeug==0.14.1
