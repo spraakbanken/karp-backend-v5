@@ -2,7 +2,7 @@
     that can be sent to elasticsearch
     Input: json structures that might be of type string ('{"hej" : "hu"}')
 """
-from json import loads
+import json
 
 from karp_backend.document import doc_to_es
 from karp_backend.document import doc_to_sql
@@ -18,7 +18,7 @@ def bulkify(data, bulk_info={}, with_id=False):
     """
     index = bulk_info.get('index', _index)
     itype = bulk_info.get('type', _type)
-    items = loads(data)
+    items = json.loads(data)
     result = []
     for item in items:
         data_doc = item['_source'] if with_id else item
