@@ -4,7 +4,7 @@ from gevent import monkey
 monkey.patch_all()
 import sys
 import json
-from karp_backend.main import app, load_urls
+from karp5.main import app, load_urls
 from gevent.pywsgi import WSGIServer
 
 try:

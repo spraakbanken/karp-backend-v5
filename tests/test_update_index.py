@@ -1,9 +1,9 @@
 import io
 import json
-from karp_backend.document import DocConverter
-from karp_backend.document import doc_to_es
-from karp_backend.document import doc_to_sql
-from karp_backend.server.translator.bulkify import bulkify
+from karp5.document import DocConverter
+from karp5.document import doc_to_es
+from karp5.document import doc_to_sql
+from karp5.server.translator.bulkify import bulkify
 
 
 in_data = u"""[
