@@ -1,17 +1,26 @@
 default: test
 
-update:
-	pipenv install --dev
+venv: venv/made
 
-dev-run:
-	pipenv run python run.py 8081
+venv-dev: venv venv/made-dev
 
-test: update
-	pipenv run py.test tests
+venv/made: requirements.txt
+	test -d venv || virtualenv --python python2.7 venv
+	. ./venv/bin/activate; pip install pip-tools; pip install -Ur $<
+	touch $@
 
-prepare-release:
-	pipenv lock -r > requirements.txt
-	pipenv lock -r --dev > requirements-dev.txt
+venv/made-dev: setup.py
+	. ./venv/bin/activate; pip install -e .[dev]
+	touch $@
+
+dev-run: venv
+	. ./venv/bin/activate; python run.py 8081
+
+test: venv-dev
+	. ./venv/bin/activate; py.test tests
+
+prepare-release: venv setup.py
+	. ./venv/bin/activate; pip-compile
 
 bump-version-patch: prepare-release
 	bumpversion patch
