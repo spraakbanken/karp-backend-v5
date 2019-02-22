@@ -3,7 +3,6 @@ import os
 
 from karp5.instance_info import get_instance_path
 
-
 # configdir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'config')
 
 configdir = os.path.join(get_instance_path(), 'config')

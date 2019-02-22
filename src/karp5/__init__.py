@@ -12,7 +12,7 @@ from flask import Flask
 
 
 __version__ = '5.6.0'
-__name = 'karp-backend'
+__name = 'karp5'
 
 
 def create_app():
