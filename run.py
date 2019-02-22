@@ -4,6 +4,10 @@ from gevent import monkey
 monkey.patch_all()
 import sys
 import json
+
+import dotenv
+dotenv.load_dotenv(dotenv_path='.env', verbose=True)
+
 from karp5.main import app, load_urls
 from gevent.pywsgi import WSGIServer
 
