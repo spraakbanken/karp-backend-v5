@@ -1,5 +1,6 @@
 
 # Calls to the backend
+*Version: [SBVERSION]*
 
 |        |                            |
 |:-------|:---------------------------|

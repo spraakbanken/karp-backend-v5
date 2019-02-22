@@ -11,7 +11,7 @@ import karp5.server.searching as searching
 import karp5.server.suggestions as suggestions
 import karp5.server.update as update
 import karp5.server.helper.configmanager as configM
-from karp5 import get_pkg_resource
+import karp5
 import logging
 
 
@@ -237,7 +237,7 @@ def init(route):
 
         logging.debug('index page')
 
-        SB_API_URL = "https://ws.spraakbanken.gu.se/ws/karp/v5"
+        KARP_API_URL = configM.setupconfig.get('BACKEND_URL', 'https://ws.spraakbanken.gu.se/ws/karp/v5')
         KARP_VERSION = "5"
         STYLES_CSS = 'static/api.css'
         logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
@@ -251,10 +251,11 @@ def init(route):
         #     md_text = md_text.decode("UTF-8")
         #     logging.debug("md_text: %s", type(md_text))
 
-        md_text = get_pkg_resource('html/api.md')
+        md_text = karp5.get_pkg_resource('html/api.md')
         logging.debug("md_text: %s", type(md_text))
         # Replace placeholders
-        md_text = md_text.replace("[SBURL]", SB_API_URL)
+        md_text = md_text.replace("[SBURL]", KARP_API_URL)
+        md_text = md_text.replace('[SBVERSION]', karp5.get_version())
         # md_text = md_text.replace("[URL]", request.base_url)
         # md_text = md_text.replace("[VERSION]", KARP_VERSION)
 
