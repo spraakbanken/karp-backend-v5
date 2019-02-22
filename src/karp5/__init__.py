@@ -11,7 +11,7 @@ from .instance_info import get_instance_path
 from flask import Flask
 
 
-__version__ = '5.6.0'
+__version__ = '5.6.1'
 __name = 'karp5'
 
 
