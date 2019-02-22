@@ -135,12 +135,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
-<<<<<<< HEAD:src/karp5/cli/upload_offline.py
     import karp5.server.translator.bulkify as bulk
-    to_keep = {}
-=======
-    import karp_backend.server.translator.bulkify as bulk
->>>>>>> extract code to get the latest entries from sql to a separate function:src/karp_backend/cli/upload_offline.py
     # if not lexicon:
     #     lexicon = conf.keys()
     mapping = get_mapping(alias)
