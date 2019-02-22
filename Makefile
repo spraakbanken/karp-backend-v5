@@ -22,11 +22,14 @@ test: venv-dev
 prepare-release: venv setup.py
 	. ./venv/bin/activate; pip-compile
 
-bump-version-patch: prepare-release
+bump-version-patch:
 	bumpversion patch
+	make prepare-release
 
-bump-version-minor: prepare-release
+bump-version-minor:
 	bumpversion minor
+	make prepare-release
 
-bump-version-major: prepare-release
+bump-version-major:
 	bumpversion major
+	make prepare-release
