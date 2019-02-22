@@ -173,7 +173,8 @@ def parse_extra(settings):
 
 
 def parse_ext(exp, exps, filters, mode, isfilter=False):
-    """ Parses one expression from a extended query
+    """ Parse one expression from a extended query.
+
         Returns a dictionary of information about the search field used
         Appends the search equry to exps
 
@@ -187,6 +188,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     etype, field, op = xs[:3]
     field_info = get_field(field, mode)
     operands = [re.sub('\\\\\|', '|', x) for x in xs[3:]]  # replace \| by |
+    logging.debug('operands: {0}'.format(operands))
     operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
     format_query = configM.extra_src(mode, 'format_query', None)
@@ -194,7 +196,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
     logging.debug('construct from %s', operands)
-    logging.debug('f_query %s', f_query)
+    logging.debug('f_query {0!r}', f_query)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         logging.debug('filter %s, %s', q, filters)

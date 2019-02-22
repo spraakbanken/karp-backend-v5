@@ -30,6 +30,9 @@ class Operator:
         self.set_etype(etype, op)
         self.set_op(op, isfilter)
 
+    def __repr__(self):
+        return 'Operator(operator={0},query={1})'.format(self.operator, self.query)
+
     def make_object(self):
         return json.loads(self)
 
@@ -111,9 +114,13 @@ class Operator:
         self.etype = etype
 
     def construct_query(self, operands):
-        """ Constructs a query corresponding to the information given so far
-            operands is a list of strings, the query
-            returns a string
+        """
+        Construct a query from operands.
+
+        Constructs a query corresponding to the information given so far
+        operands is a list of strings, the query
+
+        returns a string
         """
         ops = []
         no_opers = len(operands)
@@ -148,7 +155,9 @@ class Operator:
             # No operand (missing, exists) means we're done
             if not operands:
                 # return self.string()
-                return json.loads('{%s}' % self.make_string(self.query))
+                query_string = self.make_string(self.query)
+                logging.debug('made {0}'.format(query_string))
+                return json.loads('{%s}' % query_string)
             # Just one operand => no disjunction
             if len(operands) == 1:
                 # don't use ops, they contain to many curly brackets

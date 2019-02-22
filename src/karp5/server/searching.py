@@ -134,7 +134,7 @@ def querycount(page=0):
                               body=count_elasticq,
                               search_type="query_then_fetch",
                               # raise the size for the statistics call
-                              size=0  # stat_size
+                              size=25  # stat_size
                              )
         logging.debug('ANNE: count_ans: %s\n', count_ans)
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
