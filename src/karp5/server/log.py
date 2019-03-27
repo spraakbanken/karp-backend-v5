@@ -9,7 +9,7 @@ debugmode = C.config['DEBUG']
 
 today = time.strftime("%Y%m%d")
 DEBUGFILE = os.path.join(debugmode['LOGDIR'], '%s-debug.txt' % today)
-LOGFILE = os.path.join(debugmode['LOGDIR'], 'log.txt')
+LOGFILE = os.path.join(debugmode['LOGDIR'], 'karp5.log')
 
 def debug_str_to_int(s):
     """
