@@ -9,7 +9,7 @@ class LazyJsonLoader(object):
     def __init__(
             self,
             path,
-            # *,
+            *,
             setup_func = None
         ):
         self.path = path
@@ -20,13 +20,7 @@ class LazyJsonLoader(object):
         if not self.data:
             self._load_data()
 
-        return self.data[key]
-
-    def __setitem__(self, key, value):
-        if not self.data:
-            self._load_data()
-
-        self.data[key] = value
+        return self.data.get(key)
 
     def _load_data(self):
         with open(self.path) as fp:
