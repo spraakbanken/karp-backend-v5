@@ -6,6 +6,8 @@ from email.mime.text import MIMEText
 import karp5.server.helper.configmanager as configM
 # Sends emails from the adress specified in dbconf.py
 
+_logger = logging.getLogger('karp5')
+
 
 def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
@@ -26,7 +28,7 @@ def send_notification(email, subject, message):
         smtp_server = 'localhost'
         if 'SMTP_SERVER' in configM.config['DB']:
             smtp_server = configM.config['DB']['SMTP_SERVER']
-        logging.debug('Using smtp server: {}'.format(smtp_server))
+        _logger.debug('Using smtp server: {}'.format(smtp_server))
         s = smtplib.SMTP(smtp_server)
         s.sendmail(sender_email, emaillist, msg.as_string())
         s.quit()
@@ -34,4 +36,4 @@ def send_notification(email, subject, message):
         import datetime
         error = '%s: Could not send notification to email %s,  %s\n %s'\
                 % (datetime.datetime.now(), str(email), str(e), message)
-        logging.exception(error)
+        _logger.exception(error)

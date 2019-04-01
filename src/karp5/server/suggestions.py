@@ -10,6 +10,9 @@ import karp5.server.helper.configmanager as configM
 import karp5.server.update as update
 
 
+_logger = logging.getLogger('karp5')
+
+
 def suggest(lexicon, _id):
     return update.add_doc(lexicon, _id=_id, suggestion=True)
 
@@ -21,7 +24,7 @@ def checksuggestions():
     size = settings.get('size', 50)
     lexicons = settings.get('resource', [])
     status = settings.get('status', ['waiting', 'rejected', 'accepted'])
-    logging.debug('checksuggestions in %s' % lexicons)
+    _logger.debug('checksuggestions in %s' % lexicons)
     if not lexicons:
         return jsonify({'updates': []})
     updates = []
@@ -37,7 +40,7 @@ def checksuggestions():
 def acceptsuggestion(lexicon, _id):
     try:
         ans = savesuggestion(lexicon, _id)
-        logging.debug('saved sugg')
+        _logger.debug('saved sugg')
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
@@ -58,13 +61,13 @@ def acceptmodified(lexicon, _id):
                              source=modified_doc)
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
-        logging.exception(e)
+        _logger.exception(e)
         update.handle_update_error(e, {"id": _id, "data": data},
                                    helpers.get_user(), 'accept modified')
         raise eh.KarpElasticSearchError("Error during update. Document not saved.",
                                         debug_msg=str(e))
     except Exception as e:
-        logging.exception(e)
+        _logger.exception(e)
         update.handle_update_error(e, {"id": _id, "data": data},
                                    helpers.get_user(), 'accept modified')
         raise eh.KarpGeneralError(str(e))
@@ -107,7 +110,7 @@ def savesuggestion(lexicon, _id, status='accepted', source=''):
     ans['sugg_db_loaded'] = ok
     ans['sugg_es_ans'] = suggans
     if not ok:
-        logging.debug(err)
+        _logger.debug(err)
     update.send_notification(origin['user'], message, _id, status)
     return ans
 
@@ -142,7 +145,7 @@ def rejectsuggestion(lexicon, _id):
 
         ans['sugg_db_loaded'] = ok
         if not ok:
-            logging.debug(err)
+            _logger.debug(err)
         update.send_notification(origin['user'], message, _id, "rejected")
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:

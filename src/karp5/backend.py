@@ -4,7 +4,6 @@
 """
 
 from flask import jsonify, request, session
-from karp5.server.helper.flaskhelper import app
 import karp5.server.checkdbhistory as checkdbhistory
 import karp5.server.idgenerator as idgenerator
 import karp5.server.searching as searching
@@ -13,6 +12,9 @@ import karp5.server.update as update
 import karp5.server.helper.configmanager as configM
 import karp5
 import logging
+
+
+_logger = logging.getLogger('karp5')
 
 
 def init(route):
@@ -231,28 +233,28 @@ def init(route):
     @route(name='/index')
     def helppage():
         """Render API documentation."""
-        logging.debug('ok')
+        _logger.debug('ok')
         import os
         import markdown
 
-        logging.debug('index page')
+        _logger.debug('index page')
 
         KARP_API_URL = configM.setupconfig.get('BACKEND_URL', 'https://ws.spraakbanken.gu.se/ws/karp/v5')
         KARP_VERSION = "5"
         STYLES_CSS = 'static/api.css'
-        logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
+        _logger.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
 
         # doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
         # doc_file = 'api.md'
         #
         # with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:
         #     md_text = doc.read()
-        #     logging.debug("md_text: %s", type(md_text))
+        #     _logger.debug("md_text: %s", type(md_text))
         #     md_text = md_text.decode("UTF-8")
-        #     logging.debug("md_text: %s", type(md_text))
+        #     _logger.debug("md_text: %s", type(md_text))
 
         md_text = karp5.get_pkg_resource('html/api.md')
-        logging.debug("md_text: %s", type(md_text))
+        _logger.debug("md_text: %s", type(md_text))
         # Replace placeholders
         md_text = md_text.replace("[SBURL]", KARP_API_URL)
         md_text = md_text.replace('[SBVERSION]', karp5.get_version())

@@ -24,6 +24,7 @@ import sys
 import time
 
 """ Methods for querying the data base """
+_logger = logging.getLogger('karp5')
 
 
 def query(page=0):
@@ -32,10 +33,10 @@ def query(page=0):
         return jsonify(ans)
 
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions and show for user
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError(str(e), user_msg=str(e),
                                   query=request.query_string)
 
@@ -50,18 +51,18 @@ def requestquery(page=0):
         settings = parser.make_settings(permitted, default)
         elasticq = parser.parse(settings)
     except PErr.QueryError as e:
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpQueryError('Parse error - '+e.message, debug_msg=e.debug_msg,
                                 query=request.query_string)
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpQueryError("Could not parse data", debug_msg=e,
                                 query=request.query_string)
     mode = settings['mode']
@@ -131,7 +132,7 @@ def querycount(page=0):
         mode = settings['mode']
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
-        logging.debug('Will ask %s', count_elasticq)
+        _logger.debug('Will ask %s', count_elasticq)
         count_ans = es.search(index=index,
                               body=count_elasticq,
                               search_type="query_then_fetch",
@@ -140,16 +141,16 @@ def querycount(page=0):
                              )
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
 
     except (elasticsearch.RequestError, elasticsearch.TransportError) as e:
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpElasticSearchError("ElasticSearch failure. Message: %s.\n" % e)
 
     except Exception as e:  # catch *all* exceptions
         # Remember that 'buckets' is not allowed here! %s"
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpQueryError("Could not parse data", debug_msg=e,
                                 query=request.query_string)
     return jsonify({'query': q_ans, 'distribution': distribution})
@@ -214,17 +215,17 @@ def minientry():
 
         return jsonify(ans)
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except PErr.QueryError as e:
         raise eh.KarpQueryError("Parse error, %s" % e.message, debug_msg=e,
                                 query=request.query_string)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=query)
 
 
@@ -236,7 +237,7 @@ def random():
                    "size": 1}
         settings = parser.make_settings(permitted, default)
         elasticq = parser.random(settings)
-        logging.debug('random %s', elasticq)
+        _logger.debug('random %s', elasticq)
         es = configM.elastic(mode=mode)
         index, typ = configM.get_mode_index(mode)
         es_q = {'index': index, 'body': elasticq,
@@ -252,14 +253,14 @@ def random():
         ans = es.search(**es_q)
         return jsonify(ans)
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
@@ -279,20 +280,20 @@ def statistics():
         is_more = check_bucketsize(more, settings, index, es)
 
         # TODO allow more than 100 000 hits here?
-        logging.debug('stat body %s', elasticq)
+        _logger.debug('stat body %s', elasticq)
         ans = es.search(index=index, body=elasticq,
                         search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
@@ -301,7 +302,7 @@ def statlist():
     auth, permitted = validate_user(mode="read")
     try:
         mode = parser.get_mode()
-        logging.debug('mode is %s', mode)
+        _logger.debug('mode is %s', mode)
         default = {"buckets": configM.searchfield(mode, 'statistics_buckets'),
                    "size": 100, "cardinality": False}
         settings = parser.make_settings(permitted, default)
@@ -328,15 +329,15 @@ def statlist():
         return jsonify({"stat_table": tables, "is_more": is_more})
 
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
         # raise
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
@@ -346,9 +347,9 @@ def check_bucketsize(bucket_sizes, size, index, es):
         countans = es.search(index=index, body=sizebucket,
                              size=0,
                              search_type="query_then_fetch")
-        logging.debug('countans %s', countans)
+        _logger.debug('countans %s', countans)
         bucketsize = countans['aggregations']['more']['value']
-        logging.debug('size %s, type %s', bucketsize, type(bucketsize))
+        _logger.debug('size %s, type %s', bucketsize, type(bucketsize))
         if int(bucketsize) > size:
             is_more[bucketname] = int(bucketsize)
     return is_more
@@ -394,7 +395,7 @@ def formatpost():
     parser.parse_extra(settings)
     to_format = settings.get('format', '')
     mode = parser.get_mode()
-    logging.debug('mode "%s"', mode)
+    _logger.debug('mode "%s"', mode)
     index, typ = configM.get_mode_index(mode)
 
     if to_format:
@@ -427,12 +428,12 @@ def autocomplete():
         resource = parser.parse_extra(settings)
         if 'q' in request.args or 'query' in request.args:
             qs = [request.args.get('q', '') or request.args.get('query', '')]
-            logging.debug('qs is %s', qs)
+            _logger.debug('qs is %s', qs)
             multi = False
         else:
             # check if there are multiple words forms to complete
             qs = settings.get('multi', [])
-            logging.debug('qs %s', qs)
+            _logger.debug('qs %s', qs)
             multi = True
 
         # use utf8, escape '"'
@@ -452,11 +453,11 @@ def autocomplete():
             fields = {"exists": {"field" : autocomplete_field}}
             # last argument is the 'fields' used for highlightning
             elasticq = parser.search([exp, fields, resource], [], '', usefilter=True)
-            logging.debug('Will send %s', elasticq)
+            _logger.debug('Will send %s', elasticq)
 
             es = configM.elastic(mode=mode)
-            logging.debug('_source: %s', autocomplete_field)
-            logging.debug(elasticq)
+            _logger.debug('_source: %s', autocomplete_field)
+            _logger.debug(elasticq)
             index, typ = configM.get_mode_index(mode)
             ans = parser.adapt_query(settings['size'], 0, es, elasticq,
                                      {'size': settings['size'], 'index': index,
@@ -470,14 +471,14 @@ def autocomplete():
             # single querys: only return the latest answer
             return jsonify(ans)
     except PErr.AuthenticationError as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = e.message
         raise eh.KarpAuthenticationError(msg)
     except eh.KarpException as e:  # pass on karp exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise
     except Exception as e:  # catch *all* exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
@@ -500,9 +501,9 @@ def autocompletequery(mode, boost, q):
 def clean_highlight(ans):
     stop_offset = 9  # The number of extra tokens added by the <em> tags
     for n, hit in enumerate(ans.get('hits', {}).get('hits', [])):
-        # logging.debug('CLEAN hit %s\n\n\n' % hit)
+        # _logger.debug('CLEAN hit %s\n\n\n' % hit)
         for field, texts in hit.get('highlight', {}).items():
-            # logging.debug('CLEAN texts %s: %s' % (field, texts))
+            # _logger.debug('CLEAN texts %s: %s' % (field, texts))
             if field == 'lexiconName':
                 del ans['hits']['hits'][n]['highlight'][field]
             else:
@@ -553,7 +554,7 @@ def testquery():
                                       )
     except Exception as e:  # catch *all* exceptions
         # TODO only catch relevant exceptions
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError(e, request.query_string)
 
 
@@ -607,16 +608,16 @@ def get_context(lexicon):
         # center_id = lexstart['hits']['hits'][0]['_id']
 
     if not lexstart['hits']['hits']:
-        logging.error('No center found %s, %s', center_id, lexstart)
+        _logger.error('No center found %s, %s', center_id, lexstart)
         raise eh.KarpElasticSearchError("Could not find entry %s" % center_id)
 
     centerentry = lexstart['hits']['hits'][0]
-    logging.debug('center %s, %s', centerentry, centerentry['_id'])
+    _logger.debug('center %s, %s', centerentry, centerentry['_id'])
     origentry_sort = [key for key in centerentry['sort'] if key is not None][0]
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
     sortvalue = control_escape(origentry_sort)
-    logging.debug(u'Orig entry escaped key %s', sortvalue)
+    _logger.debug(u'Orig entry escaped key %s', sortvalue)
 
     # Construct queries to ES
     exps = []
@@ -719,7 +720,7 @@ def export(lexicon):
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     size = settings['size']
-    logging.debug('exporting %s entries from %s ' % (size, lexicon))
+    _logger.debug('exporting %s entries from %s ' % (size, lexicon))
     for entry in db.dbselect(lexicon, engine=engine, db_entry=db_entry,
                              max_hits=-1, to_date=date):
         _id = entry['id']
@@ -733,7 +734,7 @@ def export(lexicon):
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
     ans = ans[:size]
 
-    logging.debug('exporting %s entries', len(ans))
+    _logger.debug('exporting %s entries', len(ans))
     if settings.get('format', ''):
         toformat = settings.get('format')
         msg = 'Unkown %s %s for mode %s' % ('format', toformat, mode)
@@ -744,13 +745,13 @@ def export(lexicon):
     else:
         divsize = 5000
         if len(ans) < divsize:
-            logging.debug('simply sending entries')
+            _logger.debug('simply sending entries')
             return jsonify({lexicon: ans})
         def gen():
-            start, stop = 0, divsize 
+            start, stop = 0, divsize
             yield '{"%s": [' % lexicon
             while start < len(ans):
-                logging.debug('chunk %s - %s' % (start, stop))
+                _logger.debug('chunk %s - %s' % (start, stop))
                 if start > 1:
                     yield ','
                 yield ','.join([dumps(obj) for obj in ans[start:stop]])
@@ -758,7 +759,7 @@ def export(lexicon):
                 start = stop
                 stop += divsize
             yield ']}'
-        logging.debug('streaming entries')
+        _logger.debug('streaming entries')
         return Response(stream_with_context(gen()))
 
 
@@ -808,11 +809,11 @@ def main_handler(generator):
     @functools.wraps(generator)  # Copy original function's information, needed by Flask
     def decorated(args=None, *pargs, **kwargs):
         # Function is called externally
-    
+
         def incremental_json(ff):
             """Incrementally yield result as JSON."""
             yield "{\n"
-    
+
             try:
                 for response in ff:
                     if not response:
@@ -828,11 +829,11 @@ def main_handler(generator):
                 raise
             # print 'main done'
             yield "\n"
-    
+
         def full_json(ff):
             """Yield full JSON at end, but keep returning newlines to prevent timeout."""
             result = {}
-    
+
             try:
                 for response in ff:
                     if not response:
@@ -847,13 +848,13 @@ def main_handler(generator):
             except:
                 raise
 
-    
-    
+
+
             # result = dumps(result)
             # print 'last yield'
             yield result
             # print 'main done'
-    
+
         # Incremental response
         return Response(stream_with_context(incremental_json(generator(args, *pargs, **kwargs))),
                         mimetype="application/json")
@@ -904,7 +905,7 @@ def export2(lexicon, divsize=5000):
         ans = ans[:settings['size']]
     #inp['out'] = ans
     # print 'I am done!'
-    #return 
+    #return
 
     if settings.get('format', ''):
         #ans = {}
@@ -931,14 +932,14 @@ def export2(lexicon, divsize=5000):
         yield '"%s": [' % lexicon
         # while t.is_alive():
         #     yield(' ')
-        #     logging.debug('sleep')
+        #     _logger.debug('sleep')
         #     time.sleep(1)
-        #     logging.debug('wake up')
+        #     _logger.debug('wake up')
 
         #print 'thread finished %s' % t.is_alive()
         #ans = ans['out']
         # print 'exporting %s entries' % len(ans)
-        start, stop = 0, divsize 
+        start, stop = 0, divsize
         # print 'streaming entries'
         while start < len(ans):
             # print 'chunk %s - %s' % (start, stop)

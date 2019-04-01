@@ -8,13 +8,16 @@ import urllib
 from urllib2 import urlopen, HTTPError
 
 
+_logger = logging.getLogger('karp5')
+
+
 def check_user(force_lookup=False):
     """Authenticates a user against an authentication server.
        Returns a dictionary with permitted resources for the user
     """
     # Logged in, just return the lexicon list
     if not force_lookup and 'username' in session:
-        logging.debug('user has %s' % session)
+        _logger.debug('user has %s' % session)
         return session
 
     # If there is no session for this user, check with the auth server
@@ -39,17 +42,17 @@ def check_user(force_lookup=False):
         server = configM.config['AUTH']['AUTH_SERVER']
 
     try:
-        logging.debug("Auth server: " + server)
+        _logger.debug("Auth server: " + server)
         contents = urlopen(server, urllib.urlencode(postdata)).read()
-        # logging.debug("Auth answer: "+str(contents))
+        # _logger.debug("Auth answer: "+str(contents))
         auth_response = loads(contents)
     except HTTPError as e:
-        logging.error(e)
+        _logger.error(e)
         raise eh.KarpAuthenticationError("Could not contact authentication server.")
     except ValueError:
         raise eh.KarpAuthenticationError("Invalid response from authentication server.")
     except Exception as e:
-        logging.error(e)
+        _logger.error(e)
         raise eh.KarpAuthenticationError("Unexpected error during authentication.")
 
     lexitems = auth_response.get("permitted_resources", {})

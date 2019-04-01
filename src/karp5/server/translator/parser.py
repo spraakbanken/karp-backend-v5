@@ -13,6 +13,8 @@ import karp5.server.translator.parsererror as PErr
 import karp5.server.helper.configmanager as configM
 
 
+_logger = logging.getLogger('karp5')
+
 
 def get_mode():
     return request.args.get('mode', configM.standardmode)
@@ -53,14 +55,14 @@ def parse(settings=None, isfilter=False):
         fields = []
         p_ex = [p_extra]
         for e in split_query(query):
-            logging.debug('parsing %s', e)
+            _logger.debug('parsing %s', e)
             if '|||' in e:
                 fields.append(parse_nested(e, p_ex, filters, mode,
                                            isfilter=isfilter))
             else:
                 fields.append(parse_ext(e, p_ex, filters, mode,
                                         isfilter=isfilter))
-            logging.debug('fields %s, p_ex %s', fields, p_ex)
+            _logger.debug('fields %s, p_ex %s', fields, p_ex)
         # unless the user wants to sort by _score, use a filter rather
         # than a query. will improve ES speed, since no scoring is done.
         usefilter = '_score' not in settings.get('sort', '')
@@ -96,11 +98,11 @@ def parse_extra(settings):
                                   % (k, ','.join(available)))
 
     if 'mode' in request.args:
-        # logging.debug('change mode -> %s' % (parsed))
+        # _logger.debug('change mode -> %s' % (parsed))
         settings['mode'] = request.args['mode']
 
     mode = settings.get('mode')
-    logging.info('Mode %s', mode)
+    _logger.info('Mode %s', mode)
     # set resources, based on the query and the user's permissions
     if 'resource' in request.args:
         wanted = request.args['resource'].split(',')
@@ -188,21 +190,21 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     etype, field, op = xs[:3]
     field_info = get_field(field, mode)
     operands = [re.sub('\\\\\|', '|', x) for x in xs[3:]]  # replace \| by |
-    logging.debug('operands: {0}'.format(operands))
+    _logger.debug('operands: {0}'.format(operands))
     operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
     format_query = configM.extra_src(mode, 'format_query', None)
     if format_query is not None:
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
-    logging.debug('construct from %s', operands)
-    logging.debug('f_query {0!r}', f_query)
+    _logger.debug('construct from %s', operands)
+    _logger.debug('f_query {0!r}', f_query)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
-        logging.debug('filter %s, %s', q, filters)
+        _logger.debug('filter %s, %s', q, filters)
         filters.append(q)
     else:
-        logging.debug('extend %s, %s', q, exps)
+        _logger.debug('extend %s, %s', q, exps)
         exps.append(q)
         field_info['highlight_query'] = q
     return field_info
@@ -269,7 +271,7 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
     # Exclude queries already used inside others
     for ix in set(sum(tmp.values(), [])):
         if nesteds[ix]:
-            logging.debug('add nested %s: %s', ix, nesteds[ix])
+            _logger.debug('add nested %s: %s', ix, nesteds[ix])
             exps.append(nesteds[ix])
 
     # TODO what to do with filters?? most likely always empty
@@ -314,7 +316,7 @@ def parse_field(field_info, op):
 
     fields = field_info['fields']
     constraints = field_info['constraints']
-    logging.debug('fields %s', fields)
+    _logger.debug('fields %s', fields)
     if len(fields) > 1 or constraints:
         # If there's more than one field, use the multiple_field_string
         op.multiple_fields_string(fields=fields, constraints=constraints)
@@ -384,7 +386,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
                  is wanted
         Returns a string, representing complete elasticsearch object
     """
-    logging.debug("start parsing expss %s \n filters %s ", exps, filters)
+    _logger.debug("start parsing expss %s \n filters %s ", exps, filters)
     if isfilter:
         filters += exps  # add to filter list
         exps = []  # nothing left to put in query
@@ -392,27 +394,27 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
     # extended queries: always use filter, scoring is never used
     res = {}
     if usefilter and not isfilter:
-        logging.debug('case 1')
+        _logger.debug('case 1')
         q_obj = construct_exp(exps+filters, querytype="must", constant_score=constant_score)
         q_obj = {"bool": q_obj}
 
     else:
-        logging.debug("construct %s ", filters)
+        _logger.debug("construct %s ", filters)
         f_obj = construct_exp(filters, querytype="filter")
-        logging.debug("got %s\n\n", f_obj)
+        _logger.debug("got %s\n\n", f_obj)
         if isfilter:
-            logging.debug('case 2')
+            _logger.debug('case 2')
             q_obj = f_obj
 
         elif f_obj and exps:
-            logging.debug('case 3')
+            _logger.debug('case 3')
             qs = construct_exp(exps, querytype="must", constant_score=constant_score)
             qs.update(f_obj)
             q_obj = {"bool" : qs}
         else:
-            logging.debug('case 4')
+            _logger.debug('case 4')
             q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
-            logging.debug('got %s', q_obj)
+            _logger.debug('got %s', q_obj)
 
     if constant_score and usefilter and not isfilter:
         res["constant_score"] = {"filter": q_obj}
@@ -422,7 +424,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
     if highlight:
         high_fields = {}
         for field_q in fields:
-            logging.debug('field_q %s', field_q)
+            _logger.debug('field_q %s', field_q)
             for field in field_q['fields']:
                 high_fields[field] = {"number_of_fragments": 0,
                                       "highlight_query": field_q["highlight_query"],
@@ -430,7 +432,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
                                      }
 
         res["highlight"] = {"fields": high_fields, "require_field_match": False}
-        logging.debug('highlight %s', res['highlight'])
+        _logger.debug('highlight %s', res['highlight'])
 
     return res
 
@@ -442,7 +444,7 @@ def construct_exp(exps, querytype="filter", constant_score=True):
         isfilter should be set to True when a filter, rather than a query,
                  is wanted
     """
-    logging.debug('exps %s', exps)
+    _logger.debug('exps %s', exps)
     if not exps:
         return ''
     if isinstance(exps, list):
@@ -466,7 +468,7 @@ def random(settings):
     elasticq = {"query": {"function_score": {"random_score": {}}}}
     if resource:
         elasticq["query"]["function_score"]["query"] = resource
-    logging.debug('Will send %s', elasticq)
+    _logger.debug('Will send %s', elasticq)
     return elasticq
 
 
@@ -484,7 +486,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
         q = {"filter" : resource}
 
     buckets = settings.get('buckets')
-    logging.debug('buckets %s', buckets)
+    _logger.debug('buckets %s', buckets)
     # buckets = buckets - exclude
     if exclude:
         # buckets = buckets - exclude
@@ -599,7 +601,7 @@ def adapt_query(size, _from, es, query, kwargs):
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= configM.setupconfig['SCAN_LIMIT']:
         kwargs['body'] = query
-        logging.debug('Will ask for %s', kwargs)
+        _logger.debug('Will ask for %s', kwargs)
         return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search
@@ -650,7 +652,7 @@ def adapt_query(size, _from, es, query, kwargs):
                 hits.append(hit)
             index += 1
 
-        logging.debug("Finished scrolling")
+        _logger.debug("Finished scrolling")
         esans['hits']['hits'] = hits
         return esans
 
