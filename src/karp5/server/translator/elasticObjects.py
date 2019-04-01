@@ -5,6 +5,8 @@ import karp5.server.translator.parsererror as PErr
 
 # TODO isfilter is (probably) not used anymore, delete from code
 
+_logger = logging.getLogger('karp5')
+
 
 class Operator:
     """ A class for representing complete and incomplet elasticsearch objects
@@ -94,7 +96,7 @@ class Operator:
 
         fieldquery = '"bool" : {"%s" : [' % (combinator) + \
                      ','.join('{' + q + '}' for q in queries) + ']}'
-        logging.debug('made fieldquery %s', fieldquery)
+        _logger.debug('made fieldquery %s', fieldquery)
 
         if constraints:
             nestedquery = '"match_phrase": {"%s": "%s"}' % (constraints[1],
@@ -124,7 +126,7 @@ class Operator:
         """
         ops = []
         no_opers = len(operands)
-        logging.debug('operator %s ', self.operator)
+        _logger.debug('operator %s ', self.operator)
         if no_opers > self.max_operands or no_opers < self.min_operands:
             raise PErr.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
@@ -139,15 +141,15 @@ class Operator:
             # them one by one here, and save the list to be coordinated by 'or'
             # och 'and not'
             else:
-                logging.debug('append %s - %s', self.query, operand)
+                _logger.debug('append %s - %s', self.query, operand)
                 ops.append('{%s}' % self.make_string(self.query, query=operand))
-                logging.debug('ops is %s', ops)
+                _logger.debug('ops is %s', ops)
 
-        logging.debug('finished, ops is %s', ops)
+        _logger.debug('finished, ops is %s', ops)
         if not operands:
             # if there are no operands (an unary operator), the query is
             # complete already
-            logging.debug('ping')
+            _logger.debug('ping')
             ops = ['{%s}' % self.query]
 
         if self.etype == "and":  # prepare conjunctions
@@ -156,21 +158,21 @@ class Operator:
             if not operands:
                 # return self.string()
                 query_string = self.make_string(self.query)
-                logging.debug('made {0}'.format(query_string))
+                _logger.debug('made {0}'.format(query_string))
                 return json.loads('{%s}' % query_string)
             # Just one operand => no disjunction
             if len(operands) == 1:
                 # don't use ops, they contain to many curly brackets
                 obj = self.make_string(self.query, query=operands[0])
-                logging.debug('made %s', obj)
+                _logger.debug('made %s', obj)
                 return json.loads('{%s}' % self.make_string(self.query, query=operands[0]))
                 # return self.string(query=operands[0])
 
             # Several operands here means disjunction, the 'and' tells us that
             # the result should later be conjuncted with the rest of the
             # queries.
-            logging.debug('ops is now %s', ops)
-            logging.debug('load %s', '{"bool" : {"should" : [%s]}}' % ','.join(ops))
+            _logger.debug('ops is now %s', ops)
+            _logger.debug('load %s', '{"bool" : {"should" : [%s]}}' % ','.join(ops))
             return json.loads('{"bool" : {"should" : [%s]}}' % ','.join(ops))
 
         if self.etype == "not":

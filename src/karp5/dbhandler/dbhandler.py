@@ -11,6 +11,8 @@ from sqlalchemy.ext.compiler import compiles
 import karp5.server.helper.configmanager as configM
 
 
+_logger = logging.getLogger('karp5')
+
 DBCONF = configM.config['DB']
 
 
@@ -221,7 +223,7 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
         return res
 
     except SQLNull(lexicon):
-        logging.warning("Attempt to search for %s in SQL, no db available",
+        _logger.warning("Attempt to search for %s in SQL, no db available",
                         lexicon)
         return []
 

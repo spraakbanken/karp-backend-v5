@@ -1,49 +1,95 @@
-from elasticsearch import Elasticsearch
+import json
 import logging
+import os
+
+from elasticsearch import Elasticsearch
+
+import six
+
 import karp5.server.helper.configpaths as C
 import karp5.server.errorhandler as eh
 from karp5.server.translator import fieldmapping as F
+from karp5.instance_info import get_instance_path
 
 
-searchconfig = C.searchconfig
-config = C.config
-lexiconconfig = C.lexiconconfig
+_logger = logging.getLogger('karp5')
+
+
+def set_defaults(data):
+    defaults = data.get('default', None)
+    if not defaults:
+        return
+    for data_key, data_val in six.viewitems(data):
+        if data_key != 'default':
+            for def_key, def_val in six.viewitems(defaults):
+                if def_key not in data_val:
+                    data_val[def_key] = def_val
+
+
+configdir = os.path.join(get_instance_path(), 'config')
+
+
+
+
+class ConfigManager(object):
+    def __init__(self):
+        self.searchconfig = {}
+        self.config = {}
+        self.lexiconconfig = {}
+        self.defaultfields = {}
+        self.load_config()
+
+    def load_config(self):
+        with open(os.path.join(configdir, 'modes.json')) as fp:
+            self.searchconfig = json.load(fp)
+        set_defaults(self.searchconfig)
+
+        with open(os.path.join(configdir, 'lexiconconf.json')) as fp:
+	        self.lexiconconfig = json.load(fp)
+        set_defaults(self.lexiconconfig)
+
+        with open(os.path.join(configdir, 'config.json')) as fp:
+	        self.config = json.load(fp)
+
+        with open(os.path.join(configdir, 'mappings/fieldmappings_default.json')) as fp:
+	        self.defaultfields = json.load(fp)
+
+    def override_elastic_url(self, elastic_url):
+        for mode, mode_settings in six.viewitems(self.searchconfig):
+            mode_settings['elastic_url'] = elastic_url
+
+
+
+_configmanager = ConfigManager()
+
+searchconfig = _configmanager.searchconfig
+config = _configmanager.config
+lexiconconfig = _configmanager.lexiconconfig
 setupconfig = config['SETUP']
 standardmode = setupconfig['STANDARDMODE']
 
-defaultmode = searchconfig.get('default', {})
-for mode, vals in searchconfig.items():
-    if mode != 'default':
-        for key, val in defaultmode.items():
-            if key not in vals:
-                vals[key] = val
+def override_elastic_url(elastic_url):
+    _configmanager.override_elastic_url(elastic_url)
 
-
-defaultlexicon = lexiconconfig.get('default', {})
-for mode, vals in lexiconconfig.items():
-    if mode != 'default':
-        for key, val in defaultlexicon.items():
-            if key not in vals:
-                vals[key] = val
 
 
 " Default fields. Remember to add 'anything' to each index mapping "
-defaultfields = C.defaultfields
+defaultfields = _configmanager.defaultfields
 
 
 def extra_src(mode, funcname, default):
     import importlib
     # If importing fails, try with a different path.
-    logging.debug('look for %s in %s' % (funcname, mode))
-    logging.debug('file: %s' % searchconfig[mode]['src'])
+    _logger.debug('look for %s in %s' % (funcname, mode))
+    _logger.debug('file: %s' % searchconfig[mode]['src'])
     try:
         classmodule = importlib.import_module(searchconfig[mode]['src'])
-        logging.debug('\n\ngo look in %s\n\n' % classmodule)
+        _logger.debug('\n\ngo look in %s\n\n' % classmodule)
         func = getattr(classmodule, funcname)
         return func
     except Exception as e:
-        logging.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
-        logging.debug(e)
+        _logger.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
+        _logger.debug(e)
         return default
 
 
@@ -55,15 +101,15 @@ def searchconf(mode, field, failonerror=True):
     # looks up field in modes.json, eg. "autocomplete"
     # returns the karp field name (eg. baseform.raw)
     try:
-        logging.debug('\n%s\n' % searchconfig[mode])
+        _logger.debug('\n%s\n' % searchconfig[mode])
         return searchconfig[mode][field]
     except Exception as e:
         if mode not in searchconfig:
             msg = "Mode %s not found" % mode
         else:
             msg = "Config field %s not found in mode %s" % (field, mode)
-        logging.error(msg+": ")
-        logging.exception(e)
+        _logger.error(msg+": ")
+        _logger.exception(e)
         if failonerror:
             raise eh.KarpGeneralError(msg)
         return ''
@@ -87,7 +133,7 @@ def searchfield(mode, field):
 
 def all_searchfield(mode):
     # returns the json path of the field anything
-    logging.debug('%LOOK FOR ANYTHING\n')
+    _logger.debug('%LOOK FOR ANYTHING\n')
     return F.lookup_multiple('anything', mode)
 
 
@@ -168,5 +214,5 @@ def get_lexicon_mode(lexicon):
         return C.lexiconconfig[lexicon]['mode']
     except Exception:
         # TODO what to return
-        logging.warning("Lexicon %s not in conf" % lexicon)
+        _logger.warning("Lexicon %s not in conf" % lexicon)
         return ''

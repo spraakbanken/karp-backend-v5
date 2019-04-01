@@ -3,16 +3,14 @@ import pytest
 import dotenv
 dotenv.load_dotenv(dotenv_path='.env', verbose=True)
 
-# from karp5 import create_app
-import karp5.server.helper.flaskhelper as flaskhelper
-import karp5.backend as backend
+from karp5 import create_app, Config
 
+class TestConfig(Config):
+    TESTING = True
 
 @pytest.fixture(scope="session")
 def app():
-    app = flaskhelper.app
-    flaskhelper.register(backend.init)
-    app.testing = True
+    app = create_app(TestConfig)
 
     return app
 

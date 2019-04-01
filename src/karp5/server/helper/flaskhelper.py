@@ -11,10 +11,7 @@ import karp5.server.update as update
 from karp5 import create_app
 
 
-app = create_app()
-
-# set the secret key
-app.secret_key = configM.setupconfig['SECRET_KEY']
+_logger = logging.getLogger('karp5')
 
 
 # Decorator for allowing cross site http request etc.
@@ -66,7 +63,7 @@ def crossdomain(origin=None, methods=None, headers=None,
     return decorator
 
 
-def register(initiator):
+def register(app, initiator):
     urls = []
 
     def route(url='', methods=None, crossdomain=True, name=None):
@@ -95,7 +92,7 @@ def register(initiator):
                 urlname = '/%s/%s' % (func.__name__, url)
             else:
                 urlname = '/%s' % func.__name__
-            logging.debug('add url\n\n')
+            _logger.debug('add url\n\n')
             urls.append((urlname, func, methods, crossdomain))
             return func
         return f
@@ -109,58 +106,59 @@ def register(initiator):
 
 # TODO test if error handling works. If not: move the decorator to top level
 # Error handling, show all KarpExceptions to the client
-@app.errorhandler(Exception)
-@crossdomain(origin='*')
-def handle_invalid_usage(error):
-    try:
-        request.get_data()
-        data = request.data
-        data = data.decode('utf8')
-        auth = request.authorization
-        e_type = 'Predicted' if isinstance(error, eh.KarpException) else 'Unpredicted'
+def init_errorhandler(app):
+    @app.errorhandler(Exception)
+    @crossdomain(origin='*')
+    def handle_invalid_usage(error):
+        try:
+            request.get_data()
+            data = request.data
+            data = data.decode('utf8')
+            auth = request.authorization
+            e_type = 'Predicted' if isinstance(error, eh.KarpException) else 'Unpredicted'
 
-        logging.debug('Error on url %s' % request.full_path)
-        user = 'unknown'
-        if auth:
-            user = auth.username
-        # s = '%s: %s  User: %s\n\t%s: %s\n\t%s\n' \
-        #     % (datetime.datetime.now(), request.path, user, e_type,
-        #        str(error), data)
-        s = '%s  User: %s\n%s: %s\n%s\n' \
-            % (request.full_path, user, e_type, error.message, data)
-        logging.exception(s)
+            _logger.debug('Error on url %s' % request.full_path)
+            user = 'unknown'
+            if auth:
+                user = auth.username
+            # s = '%s: %s  User: %s\n\t%s: %s\n\t%s\n' \
+            #     % (datetime.datetime.now(), request.path, user, e_type,
+            #        str(error), data)
+            s = '%s  User: %s\n%s: %s\n%s\n' \
+                % (request.full_path, user, e_type, error.message, data)
+            _logger.exception(s)
 
-        if isinstance(error, ConnectionError):
-            logging.debug(update.handle_update_error(error, data, user, ''))
+            if isinstance(error, ConnectionError):
+                _logger.debug(update.handle_update_error(error, data, user, ''))
 
-        if isinstance(error, eh.KarpException):
-            # Log full error message if available
-            if error.debug_msg:
-                logging.debug(error.debug_msg)
+            if isinstance(error, eh.KarpException):
+                # Log full error message if available
+                if error.debug_msg:
+                    _logger.debug(error.debug_msg)
 
-            status_code = error.status_code
-            if error.user_msg:
-                return str(error.user_msg), status_code
+                status_code = error.status_code
+                if error.user_msg:
+                    return str(error.user_msg), status_code
+                else:
+                    return error.message, status_code
+
             else:
-                return error.message, status_code
+                _logger.exception(error.message)
+                return "Oops, something went wrong\n", 500
 
-        else:
-            logging.exception(error.message)
+        except Exception:
+            # In case of write conflicts etc, print to anoter file
+            # and send email to admin
+            import time
+            import traceback
+            logdir = configM.config['DEBUG']['LOGDIR']
+            dbconf = configM.config['DB']
+            trace = traceback.format_exc()
+            date = time.strftime('%Y-%m-%d %H:%M:%S')
+            msg = 'Cannot print log file: %s, %s' % (date, trace)
+            title = 'Karp urgent logging error'
+            if dbconf['admin_emails']:
+                import dbhandler.emailsender as email
+                email.send_notification(dbconf['admin_emails'], title, msg)
+            open(logdir+'KARPERR'+time.strftime("%Y%m%d"), 'a').write(msg)
             return "Oops, something went wrong\n", 500
-
-    except Exception:
-        # In case of write conflicts etc, print to anoter file
-        # and send email to admin
-        import time
-        import traceback
-        logdir = configM.config['DEBUG']['LOGDIR']
-        dbconf = configM.config['DB']
-        trace = traceback.format_exc()
-        date = time.strftime('%Y-%m-%d %H:%M:%S')
-        msg = 'Cannot print log file: %s, %s' % (date, trace)
-        title = 'Karp urgent logging error'
-        if dbconf['admin_emails']:
-            import dbhandler.emailsender as email
-            email.send_notification(dbconf['admin_emails'], title, msg)
-        open(logdir+'KARPERR'+time.strftime("%Y%m%d"), 'a').write(msg)
-        return "Oops, something went wrong\n", 500

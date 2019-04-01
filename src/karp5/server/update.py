@@ -18,6 +18,8 @@ from karp5.document import doc_to_es
 
 
 
+_logger = logging.getLogger('karp5')
+
 
 def checkuser():
     """ Shows which lexica the user may edit """
@@ -44,13 +46,13 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         ans = es.delete(index=index, doc_type=typ, id=_id)
         db_loaded, db_error = 0, ''
         if sql:
-            # logging.debug("Delete " + msg)
-            logging.debug('delete from sql.\nmsg %s\nans_entry %s',
+            # _logger.debug("Delete " + msg)
+            _logger.debug('delete from sql.\nmsg %s\nans_entry %s',
                           msg, ans_entry)
             db_loaded, db_error = update_db(_id, ans_entry['_source'],
                                             helpers.get_user(), msg,
                                             lexiconName, status='removed')
-            logging.debug('updated db %s %s', db_loaded, db_error)
+            _logger.debug('updated db %s %s', db_loaded, db_error)
 
         if db_error:
             raise eh.KarpDbError(db_error)
@@ -81,7 +83,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans}
     if db_error:
-        logging.debug(db_error)
+        _logger.debug(db_error)
     if live:
         return jsonify(jsonans)
     else:
@@ -120,8 +122,8 @@ def update_doc(lexicon, _id, data=None, live=True):
         es = configM.elastic(lexicon=lexicon)
         origin = es.get(index=index, doc_type=typ, id=_id)
     except Exception as e:
-        logging.warning("Looking for entry at the wrong place:")
-        logging.exception(e)
+        _logger.warning("Looking for entry at the wrong place:")
+        _logger.exception(e)
         msg = "The entry %s in lexicon %s was not found" % (_id, lexicon)
         raise eh.KarpElasticSearchError(msg, debug_msg=msg+" in lexicon "+lexicon)
 
@@ -157,8 +159,8 @@ def update_doc(lexicon, _id, data=None, live=True):
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         # Transport error might be version conflict
-        logging.exception(e)
-        logging.debug('index: %s, type: %s, id: %s', index, typ, _id)
+        _logger.exception(e)
+        _logger.debug('index: %s, type: %s, id: %s', index, typ, _id)
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise eh.KarpElasticSearchError("Error during update. Message: %s.\n"
                                         % str(e))
@@ -174,7 +176,7 @@ def update_doc(lexicon, _id, data=None, live=True):
     if db_error:
         # TODO: handle partial success.
         # ans = es.delete(index=index, doc_type=typ, id=_id)
-        logging.debug(db_error)
+        _logger.debug(db_error)
     if live:
         return jsonify(jsonans)
     else:
@@ -227,7 +229,7 @@ def add_multi_doc(lexicon, index=''):
             doc['lexiconName'] = lexicon
             validate.validate_json(doc, lexicon)
             date = datetime.datetime.now()
-            logging.debug('\n\nWill go to autoupdate\n\n')
+            _logger.debug('\n\nWill go to autoupdate\n\n')
             auto_update_document(doc, lexicon, 'add', user, date)
             bulk.append({'_index': index, '_type': typ, '_source': doc})
 
@@ -248,7 +250,7 @@ def add_multi_doc(lexicon, index=''):
 
     db_loaded, db_error = db.update_bulk(lexicon, sql_bulk)
     if db_error:
-        logging.debug(db_error)
+        _logger.debug(db_error)
 
     jsonans = {'es_loaded': ok, 'sql_loaded': db_loaded, 'suggestion': False,
                'ids': ids}
@@ -319,7 +321,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans,
                'suggestion': suggestion, 'id': _id}
     if db_error:
-        logging.debug(db_error)
+        _logger.debug(db_error)
     if live:
         return jsonify(jsonans)
     else:
@@ -339,8 +341,8 @@ def add_child(lexicon, parentid, suggestion=False):
     # add child to parent
     autoupdate_child(data_doc, parent, lexicon, user, '')
     parent_doc = {"doc": parent, "user": user, "message": msg}
-    logging.debug('save parent %s', parent_doc)
-    logging.debug('save child %s', parent_doc)
+    _logger.debug('save parent %s', parent_doc)
+    _logger.debug('save child %s', parent_doc)
     parres = update_doc(lexicon, parentid, data=parent_doc, live=False)
     # add child to lexicon
     childres = add_doc(lexicon, index=index, data=data, live=False)
