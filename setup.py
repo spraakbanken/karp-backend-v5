@@ -29,10 +29,10 @@ setup(
     install_requires=[
         'elasticsearch>=6.1.0,<6.2.0',
         'elasticsearch-dsl>=6.0.0,<7.0.0',
-        'Flask>=0.12.3, <1.0.0',
+        'Flask',
         'SQLAlchemy',
         'urllib3',
-        'gevent==1.2.2',
+        'gevent',
         'six',
         'pymysql',
         'markdown',
