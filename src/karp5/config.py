@@ -52,3 +52,5 @@ class Config(object):
     LOG_TO_STDERR = _config['DEBUG'].get('DEBUG_TO_STDERR')
     SECRET_KEY = _config['SETUP']['SECRET_KEY']
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+    TESTING = False
+    DEBUG = False
