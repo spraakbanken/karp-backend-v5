@@ -9,7 +9,7 @@ class LazyJsonLoader(object):
     def __init__(
             self,
             path,
-            *,
+            # *,
             setup_func = None
         ):
         self.path = path
@@ -20,12 +20,18 @@ class LazyJsonLoader(object):
         if not self.data:
             self._load_data()
 
-        return self.data.get(key)
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        if not self.data:
+            self._load_data()
+
+        self.data[key] = value
 
     def _load_data(self):
         with open(self.path) as fp:
             self.data = json.load(fp)
-            
+
         assert self.data is not None
 
         if self.setup_func:
@@ -58,7 +64,7 @@ lexiconconfig = LazyJsonLoader(
 config = LazyJsonLoader(
     os.path.join(configdir, 'config.json')
 )
-    
+
 defaultfields = LazyJsonLoader(
     os.path.join(configdir, 'mappings/fieldmappings_default.json')
 )

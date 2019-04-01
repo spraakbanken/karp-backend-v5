@@ -6,11 +6,13 @@ import six
 
 doc_converters = {}
 
+_logger = logging.getLogger('karp5')
+
 
 def register_converter(lexicons, converter):
 
     for lexicon in lexicons:
-        logging.debug('|index| add converter {}'.format(converter))
+        _logger.info('|{}| adding converter {}'.format(lexicon, converter))
         doc_converters.setdefault(lexicon, []).append(converter)
 
 def has_converter(lexicon):
@@ -57,7 +59,7 @@ def doc_to_es(doc, lexiconName, actiontype, user=None, date=None):
         if not user:
             date = 'admin'
         for converter in doc_converters[lexiconName]:
-            logging.debug('\n\ndoc_to_es, apply {} on {}'.format(converter, es_doc))
+            _logger.debug('\n\ndoc_to_es, apply {} on {}'.format(converter, es_doc))
             converter.to_es_doc(es_doc, lexiconName, actiontype, user, date)
         return es_doc
     else:
@@ -74,7 +76,7 @@ def doc_to_sql(doc, lexiconName, actiontype, user=None, date=None):
         if not user:
             date = 'admin'
         for converter in doc_converters[lexiconName]:
-            logging.debug('\n\ndoc_to_sql, apply {} on {}'.format(converter, sql_doc))
+            _logger.debug('\n\ndoc_to_sql, apply {} on {}'.format(converter, sql_doc))
             converter.to_sql_doc(sql_doc, lexiconName, actiontype, user, date)
         return sql_doc
     else:
