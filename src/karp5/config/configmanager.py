@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 
 import six
 
-import karp5.server.helper.configpaths as C
+# import karp5.server.helper.configpaths as C
 import karp5.server.errorhandler as eh
 from karp5.server.translator import fieldmapping as F
 from karp5.instance_info import get_instance_path
@@ -61,13 +61,13 @@ class ConfigManager(object):
 
 
 
-_configmanager = ConfigManager()
+# _configmanager = ConfigManager()
 
-searchconfig = _configmanager.searchconfig
-config = _configmanager.config
-lexiconconfig = _configmanager.lexiconconfig
-setupconfig = config['SETUP']
-standardmode = setupconfig['STANDARDMODE']
+# searchconfig = _configmanager.searchconfig
+# config = _configmanager.config
+# lexiconconfig = _configmanager.lexiconconfig
+# setupconfig = config['SETUP']
+# standardmode = setupconfig['STANDARDMODE']
 
 def override_elastic_url(elastic_url):
     _configmanager.override_elastic_url(elastic_url)
@@ -76,7 +76,7 @@ def set_app_config(app_config):
     _configmanager.app_config = app_config
 
 " Default fields. Remember to add 'anything' to each index mapping "
-defaultfields = _configmanager.defaultfields
+# defaultfields = _configmanager.defaultfields
 
 
 def extra_src(mode, funcname, default):
