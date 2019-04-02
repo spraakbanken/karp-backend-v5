@@ -17,7 +17,7 @@ dev-run: venv
 	. ./venv/bin/activate; python run.py 8081
 
 test: venv-dev
-	. ./venv/bin/activate; py.test tests
+	./venv/bin/pytest --cov=src --cov-report=term-missing tests
 
 prepare-release: venv setup.py
 	. ./venv/bin/activate; pip-compile

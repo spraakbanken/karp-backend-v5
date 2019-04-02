@@ -4,7 +4,7 @@ import os
 
 import six
 
-from .instance_info import get_instance_path
+from karp5.instance_info import get_instance_path
 
 
 def debug_str_to_int(s):
@@ -45,7 +45,8 @@ with open(os.path.join(get_instance_path(), 'config/config.json')) as fp:
 
 
 class Config(object):
-    LOG_LEVEL = debug_str_to_int(_config['DEBUG']['DEBUGLEVEL'])
+    LOG_LEVEL = getattr(logging, _config['DEBUG']['DEBUGLEVEL'].upper(), logging.WARNING)
+    # LOG_LEVEL = debug_str_to_int(_config['DEBUG']['DEBUGLEVEL'])
     LOG_FMT = _config['DEBUG'].get('LOGFMT')
     LOG_DIR = _config['DEBUG'].get('LOGDIR')
     LOG_DATEFMT = _config['DEBUG'].get('DATEFMT')
@@ -54,3 +55,8 @@ class Config(object):
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     TESTING = False
     DEBUG = False
+    DATABASE_BASEURL = (
+        'mysql+pymysql://{}/'.format(
+            _config['DB']['DBPASS']
+        ) + '{}?charset=utf8'
+    )
