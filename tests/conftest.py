@@ -1,5 +1,7 @@
+import logging
 import os
 import tempfile
+
 import pytest
 
 # import dotenv
@@ -11,10 +13,11 @@ os.environ['KARP_INSTANCE_PATH'] = os.path.join(
 from karp5 import create_app, Config
 
 
-_tempfile = tempfile.NamedTemporaryFile(suffix='db')
+_tempfile = tempfile.NamedTemporaryFile(suffix='.db')
 
 class TestConfig(Config):
     TESTING = True
+    LOG_LEVEL = logging.WARNING
     DATABASE_BASEURL = 'sqlite://' + _tempfile.name + '/{}'
 
 
