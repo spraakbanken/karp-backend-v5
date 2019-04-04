@@ -2,6 +2,7 @@
 import json
 import sys
 import os
+import logging
 
 import six
 
@@ -13,6 +14,8 @@ import karp5.server.helper.configmanager as configM
 from karp5.util import json_iter
 from karp5 import document
 
+
+_logger = logging.getLogger('karp5')
 
 # ==============================================
 # helpers
@@ -120,13 +123,13 @@ def get_entries_to_keep_from_sql(lexicons):
                 if _id in to_keep:
                     last = to_keep[_id]['date']
                     if last < entry['date']:
-                        logging.debug('|get_entries_to_keep_from_sql| Update entry.')
+                        _logger.debug('|get_entries_to_keep_from_sql| Update entry.')
                         to_keep[_id] = entry
                 else:
                         to_keep[_id] = entry
             else:
-                logging.debug('|sql no id| Found entry without id:')
-                logging.debug('|sql no id| {}}'.format(entry))
+                _logger.debug('|sql no id| Found entry without id:')
+                _logger.debug('|sql no id| {}}'.format(entry))
     return to_keep
 
 

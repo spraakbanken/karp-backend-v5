@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 
 import six
 
-import karp5.server.helper.configpaths as C
+# import karp5.server.helper.configpaths as C
 import karp5.server.errorhandler as eh
 from karp5.server.translator import fieldmapping as F
 from karp5.instance_info import get_instance_path
@@ -33,21 +33,21 @@ configdir = os.path.join(get_instance_path(), 'config')
 
 class ConfigManager(object):
     def __init__(self):
-        self.searchconfig = {}
+        self.moded = {}
         self.config = {}
-        self.lexiconconfig = {}
+        self.lexicons = {}
         self.defaultfields = {}
         self.app_config = None
         self.load_config()
 
     def load_config(self):
         with open(os.path.join(configdir, 'modes.json')) as fp:
-            self.searchconfig = json.load(fp)
-        set_defaults(self.searchconfig)
+            self.modes = json.load(fp)
+        set_defaults(self.modes)
 
         with open(os.path.join(configdir, 'lexiconconf.json')) as fp:
-	        self.lexiconconfig = json.load(fp)
-        set_defaults(self.lexiconconfig)
+	        self.lexicons = json.load(fp)
+        set_defaults(self.lexicons)
 
         with open(os.path.join(configdir, 'config.json')) as fp:
 	        self.config = json.load(fp)
@@ -56,65 +56,60 @@ class ConfigManager(object):
 	        self.defaultfields = json.load(fp)
 
     def override_elastic_url(self, elastic_url):
-        for mode, mode_settings in six.viewitems(self.searchconfig):
+        for mode, mode_settings in six.viewitems(self.modes):
             mode_settings['elastic_url'] = elastic_url
 
+    def get_mode_sql(self, mode):
+        # dburl = 'mysql+pymysql://%s/%s?charset=utf8'
+        dburl = self.app_config.DATABASE_BASEURL
+        sql = self.searchconf(mode, 'sql', failonerror=False)
+        if sql:
+            return dburl.format(sql)
+            # return dburl % (C.config['DB']['DBPASS'], sql)
+        else:
+            return None
+
+    def searchconf(self, mode, field, failonerror=True):
+        # looks up field in modes.json, eg. "autocomplete"
+        # returns the karp field name (eg. baseform.raw)
+        try:
+            _logger.debug('\n%s\n' % self.modes[mode])
+            return self.modes[mode][field]
+        except Exception as e:
+            if mode not in searchconfig:
+                msg = "Mode %s not found" % mode
+            else:
+                msg = "Config field %s not found in mode %s" % (field, mode)
+            _logger.error(msg+": ")
+            _logger.exception(e)
+            if failonerror:
+                raise eh.KarpGeneralError(msg)
+            return 
 
 
-_configmanager = ConfigManager()
-
-searchconfig = _configmanager.searchconfig
-config = _configmanager.config
-lexiconconfig = _configmanager.lexiconconfig
-setupconfig = config['SETUP']
-standardmode = setupconfig['STANDARDMODE']
-
-def override_elastic_url(elastic_url):
-    _configmanager.override_elastic_url(elastic_url)
-
-def set_app_config(app_config):
-    _configmanager.app_config = app_config
-
-" Default fields. Remember to add 'anything' to each index mapping "
-defaultfields = _configmanager.defaultfields
+#" Default fields. Remember to add 'anything' to each index mapping "
+# defaultfields = _configmanager.defaultfields
 
 
-def extra_src(mode, funcname, default):
-    import importlib
-    # If importing fails, try with a different path.
-    _logger.debug('look for %s in %s' % (funcname, mode))
-    _logger.debug('file: %s' % searchconfig[mode]['src'])
-    try:
-        classmodule = importlib.import_module(searchconfig[mode]['src'])
-        _logger.debug('\n\ngo look in %s\n\n' % classmodule)
-        func = getattr(classmodule, funcname)
-        return func
-    except Exception as e:
-        _logger.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
-        _logger.debug(e)
-        return default
+    def extra_src(self, mode, funcname, default):
+        import importlib
+        # If importing fails, try with a different path.
+        _logger.debug('look for %s in %s' % (funcname, mode))
+        _logger.debug('file: %s' % self.modes[mode]['src'])
+        try:
+            classmodule = importlib.import_module(self.moded[mode]['src'])
+            _logger.debug('\n\ngo look in %s\n\n' % classmodule)
+            func = getattr(classmodule, funcname)
+            return func
+        except Exception as e:
+            _logger.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
+            _logger.debug(e)
+            return default
 
 
 def elastic(mode='', lexicon=''):
     return Elasticsearch(elasticnodes(mode=mode, lexicon=lexicon))
 
-
-def searchconf(mode, field, failonerror=True):
-    # looks up field in modes.json, eg. "autocomplete"
-    # returns the karp field name (eg. baseform.raw)
-    try:
-        _logger.debug('\n%s\n' % searchconfig[mode])
-        return searchconfig[mode][field]
-    except Exception as e:
-        if mode not in searchconfig:
-            msg = "Mode %s not found" % mode
-        else:
-            msg = "Config field %s not found in mode %s" % (field, mode)
-        _logger.error(msg+": ")
-        _logger.exception(e)
-        if failonerror:
-            raise eh.KarpGeneralError(msg)
-        return ''
 
 
 def searchonefield(mode, field):
@@ -183,16 +178,6 @@ def get_mode_index(mode):
     typ = searchconf(mode, 'type')
     return index, typ
 
-
-def get_mode_sql(mode):
-    # dburl = 'mysql+pymysql://%s/%s?charset=utf8'
-    dburl = _configmanager.app_config.DATABASE_BASEURL
-    sql = searchconf(mode, 'sql', failonerror=False)
-    if sql:
-        return dburl.format(sql)
-        # return dburl % (C.config['DB']['DBPASS'], sql)
-    else:
-        return None
 
 
 def get_lexicon_sql(lexicon):

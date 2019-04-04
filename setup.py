@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='karp5',
-    version='5.7.1',
+    version='5.8.0',
     description='Backend for Karp',
     author='Språkbanken at the University of Gothenburg',
     maintainer='Språkbanken',
@@ -29,10 +29,10 @@ setup(
     install_requires=[
         'elasticsearch>=6.1.0,<6.2.0',
         'elasticsearch-dsl>=6.0.0,<7.0.0',
-        'Flask>=0.12.3, <1.0.0',
+        'Flask',
         'SQLAlchemy',
         'urllib3',
-        'gevent==1.2.2',
+        'gevent',
         'six',
         'pymysql',
         'markdown',

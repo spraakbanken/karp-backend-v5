@@ -1,6 +1,8 @@
 # import this to start up the logging, always have this line at the top of the file
-import server.log
 import pkg_resources
+import logging
+import logging.handlers
+import os
 
 import six
 
@@ -10,13 +12,61 @@ from .instance_info import get_instance_path
 
 from flask import Flask
 
+from karp5.config import Config, mgr as conf_mgr
+from karp5.server.helper import configmanager
 
-__version__ = '5.7.1'
+
+__version__ = '5.8.0'
 __name = 'karp5'
 
 
-def create_app():
+def create_app(config_class = Config):
     app = Flask(__name, instance_path=get_instance_path())
+    app.config.from_object(config_class)
+
+    #configmanager.set_app_config(config_class)
+    conf_mgr.app_config = config_class
+    
+    print('app.config = {}'.format(app.config))
+
+    if app.config['ELASTICSEARCH_URL']:
+        from karp5.server.helper import configmanager
+        configmanager.override_elastic_url(app.config['ELASTICSEARCH_URL'])
+        conf_mgr.override_elastic_url(app.config['ELASTICSEARCH_URL'])
+
+    from karp5.server.helper import flaskhelper
+    flaskhelper.init_errorhandler(app)
+
+    from karp5 import backend
+    flaskhelper.register(app, backend.init)
+
+    print('app.debug = {}'.format(app.debug))
+    print('app.testing = {}'.format(app.testing))
+    if not app.debug and not app.testing:
+        logger = logging.getLogger('karp5')
+        logger.setLevel(app.config['LOG_LEVEL'])
+        formatter = logging.Formatter(
+            fmt = app.config['LOG_FMT'],
+            datefmt = app.config['LOG_DATEFMT']
+        )
+
+        if app.config['LOG_TO_STDERR']:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(app.config['LOG_LEVEL'])
+            logger.addHandler(stream_handler)
+        else:
+            log_dir = app.config['LOG_DIR']
+            if not os.path.exists(log_dir):
+                os.mkdir(log_dir)
+
+            file_handler = logging.handlers.TimedRotatingFileHandler(
+                os.path.join(log_dir, 'karp5.log'),
+                when='d',
+                interval=1,
+                backupCount=0
+            )
+            file_handler.setLevel(app.config['LOG_LEVEL'])
+            logger.addHandler(file_handler)
 
     return app
 
@@ -35,18 +85,3 @@ def get_pkg_resource(filename):
     if isinstance(result, six.binary_type):
         result = result.decode('utf-8')
     return result
-# # import server.log
-# from flask import Flask
-#
-# def create_app(app_path,
-#                settings_override=None):
-#     app = Flask('karp-backend', instance_path=app_path)
-#
-#     app.config.from_object('karp5.settings')
-#     app.config.from_json('config/config.json', silent=True)
-#     app.config.from_object(settings_override)
-#
-#     return app
-#
-# import logging
-# logging.getLogger(__name__).addHandler(logging.NullHandler())

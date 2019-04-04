@@ -4,15 +4,18 @@ import logging
 import karp5.server.helper.configmanager as configM
 
 
+_logger = logging.getLogger('karp5')
+
+
 # SAOL stopped at 508133 when imported to Karp (set start to that number)
 def create_sequence_index(index_name='', start=''):
     es = configM.elastic(mode=index_name)
     sequence_index = Index("sequence", using=es)
     if sequence_index.exists():
-        logging.debug('sequence id %s already exists' % index_name)
+        _logger.debug('sequence id %s already exists' % index_name)
 
     else:
-        logging.debug('create sequence id %s starting at %s' % (index_name, start or 0))
+        _logger.debug('create sequence id %s starting at %s' % (index_name, start or 0))
         sequence_index.settings(
             number_of_shards=1,
             number_of_replicas=0
@@ -28,7 +31,7 @@ def create_sequence_index(index_name='', start=''):
         tasks = ('{"index": {"_index": "sequence", "_type": "sequence", "_id": "%s", "version": "%s", "version_type": "external"}}\n{}\n' %
                  (index_name, start))
         result = es.bulk(body=tasks)
-        logging.debug('sequence id starting at %s: %s' % (start, result))
+        _logger.debug('sequence id starting at %s: %s' % (start, result))
         return result
 
 

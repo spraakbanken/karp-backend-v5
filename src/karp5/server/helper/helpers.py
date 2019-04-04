@@ -5,6 +5,9 @@ import karp5.server.errorhandler as eh
 import karp5.server.helper.configmanager as configM
 
 
+_logger = logging.getLogger('karp5')
+
+
 def get_user():
     auth = request.authorization
     if auth is None:
@@ -41,7 +44,7 @@ def get_update_index(lexicon, suggestion=False):
         return configM.elastic(lexicon=lexicon), index, typ
 
     except Exception as e:
-        logging.exception(e)
+        _logger.exception(e)
         msg = "No writable mode for lexicon %s was found" % lexicon
         raise eh.KarpElasticSearchError(msg, debug_msg=msg+", index: "+index)
 

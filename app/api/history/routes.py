@@ -4,131 +4,129 @@
 """
 
 from flask import jsonify, request, session
-import karp5.server.checkdbhistory as checkdbhistory
-import karp5.server.idgenerator as idgenerator
-import karp5.server.searching as searching
-import karp5.server.suggestions as suggestions
-import karp5.server.update as update
-import karp5.server.helper.configmanager as configM
-import karp5
+#from karp5.server.helper.flaskhelper import app
+#import karp5.server.checkdbhistory as checkdbhistory
+#import karp5.server.idgenerator as idgenerator
+#import karp5.server.searching as searching
+#import karp5.server.suggestions as suggestions
+#import karp5.server.update as update
+#import karp5.server.helper.configmanager as configM
+#import karp5
 import logging
+from app.search import bp
 
 
-_logger = logging.getLogger('karp5')
+@bp.route()
+def explain():
+    """ Asking a query and show the elastic query """
+    return searching.explain()
+
+@bp.route()
+def test():
+    """ Show the elastic query """
+    return searching.test()
+
+@bp.route()
+def query(page=0):
+    """ Querying the database """
+    return searching.query(page=page)
+
+@bp.route()
+def querycount(page=0):
+    """ Querying the database """
+    return searching.querycount(page=page)
+
+@bp.route()
+def minientry():
+    """ Returns just some information about the results """
+    return searching.minientry()
+
+@bp.route()
+def statistics():
+    """ Returns the counts and statistics """
+    return searching.statistics()
+
+@bp.route()
+def statlist():
+    """ Returns the counts and statistics """
+    return searching.statlist()
+
+@bp.route()
+def random():
+    return searching.random()
+
+@bp.route()
+def autocomplete():
+    return searching.autocomplete()
+
+# For seeing the posted data formated
+@bp.route()
+def format():
+    return searching.formatpost()
+
+# For getting a possible new identifier for an entry
+@bp.route('<mode>')
+def suggestid(mode):
+    return jsonify({"suggested_id": idgenerator.suggest_id(mode)})
+
+# For seeing the posted data formated
+@bp.route('<lexicon>')
+def export(lexicon):
+    return searching.export(lexicon)
 
 
-def init(route):
-
-    @route()
-    def explain():
-        """ Asking a query and show the elastic query """
-        return searching.explain()
-
-    @route()
-    def test():
-        """ Show the elastic query """
-        return searching.test()
-
-    @route()
-    def query(page=0):
-        """ Querying the database """
-        return searching.query(page=page)
-
-    @route()
-    def querycount(page=0):
-        """ Querying the database """
-        return searching.querycount(page=page)
-
-    @route()
-    def minientry():
-        """ Returns just some information about the results """
-        return searching.minientry()
-
-    @route()
-    def statistics():
-        """ Returns the counts and statistics """
-        return searching.statistics()
-
-    @route()
-    def statlist():
-        """ Returns the counts and statistics """
-        return searching.statlist()
-
-    @route()
-    def random():
-        return searching.random()
-
-    @route()
-    def autocomplete():
-        return searching.autocomplete()
-
-    # For seeing the posted data formated
-    @route()
-    def format():
-        return searching.formatpost()
-
-    # For getting a possible new identifier for an entry
-    @route('<mode>')
-    def suggestid(mode):
-        return jsonify({"suggested_id": idgenerator.suggest_id(mode)})
-
-    # For seeing the posted data formated
-    @route('<lexicon>')
-    def export(lexicon):
-        return searching.export(lexicon)
-
-    # TODO remove For seeing the posted data formated
-    @route('<lexicon>/<divsize>')
-    def export2(lexicon, divsize=5000):
-        return searching.export2(lexicon, divsize)
+# TODO remove For seeing the posted data formated
+@bp.route('<lexicon>/<divsize>')
+def export2(lexicon, divsize=5000):
+    return searching.export2(lexicon, divsize)
 
     # For deleting a lexical entry from elastic and sql
-    @route('<lexicon>/<_id>')
+    @bp.route('<lexicon>/<_id>')
     def delete(lexicon, _id):
         return update.delete_entry(lexicon, _id, sql=True)
 
     # For updating a document
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def mkupdate(lexicon, _id):
         return update.update_doc(lexicon, _id)
 
     # For adding a document
-    @route('<lexicon>', methods=['POST'])
+    @bp.route('<lexicon>', methods=['POST'])
     def add(lexicon):
         return update.add_doc(lexicon)
 
     # For adding a document which already has an id (one that has been deleted)
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def readd(lexicon, _id):
         return update.add_doc(lexicon, _id=_id)
 
     # For adding many document
-    @route('<lexicon>', methods=['POST'])
+    @bp.route('<lexicon>', methods=['POST'])
     def addbulk(lexicon):
         return update.add_multi_doc(lexicon)
 
-    @route('<lexicon>/<parentid>', methods=['POST'])
+    @bp.route('<lexicon>/<parentid>', methods=['POST'])
     def addchild(lexicon, parentid):
         return update.add_child(lexicon, parentid, suggestion=False)
 
     # For checking which resources a user may edit
-    @route(methods=['GET'])
+    @bp.route(methods=['GET'])
     def checkuser():
         return update.checkuser()
 
     # For retrieving update history of an entry
-    @route('<lexicon>/<_id>')
+    @bp.route('<lexicon>/<_id>')
     def checkhistory(lexicon, _id):
         return checkdbhistory.checkhistory(lexicon, _id)
 
     # For retrieving update history of a user
-    @route()
+    @bp.route()
     def checkuserhistory():
         return checkdbhistory.checkuserhistory()
 
     # For retrieving update history of one lexicon
-    @route('<lexicon>')
-    @route('<lexicon>/<date>')
+    @bp.route('<lexicon>')
+    @bp.route('<lexicon>/<date>')
     def checklexiconhistory(lexicon, date=''):
         try:
             return checkdbhistory.checklexiconhistory(lexicon, date=date)
@@ -136,72 +134,72 @@ def init(route):
             raise e
 
     # For retrieving the lexicon order of a lexicon
-    @route()
+    @bp.route()
     def lexiconorder():
         return searching.lexiconorder()
 
     # For retrieving the difference between two versions
-    @route('<lexicon>/<_id>/latest')
-    @route('<lexicon>/<_id>/latest/<fromdate>')
-    @route('<lexicon>/<_id>/<fromdate>/<todate>')
+    @bp.route('<lexicon>/<_id>/latest')
+    @bp.route('<lexicon>/<_id>/latest/<fromdate>')
+    @bp.route('<lexicon>/<_id>/<fromdate>/<todate>')
     def checkdifference(_id, lexicon, todate='', fromdate=''):
         return checkdbhistory.comparejson(lexicon, _id, todate=todate,
                                           fromdate=fromdate)
 
     # For submitting a suggestion
-    @route(name='/suggestnew/<lexicon>', methods=['POST'])
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route(name='/suggestnew/<lexicon>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def suggest(lexicon, _id=None):
         return suggestions.suggest(lexicon, _id)
 
     # For seeing suggestions
-    @route()
+    @bp.route()
     def checksuggestions():
         return suggestions.checksuggestions()
 
     # For accepting a suggestion
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def acceptsuggestion(lexicon, _id):
         return suggestions.acceptsuggestion(lexicon, _id)
 
     # For accepting a suggestion
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def acceptandmodify(lexicon, _id):
         return suggestions.acceptmodified(lexicon, _id)
 
     # For rejecting a suggestion
-    @route('<lexicon>/<_id>', methods=['POST'])
+    @bp.route('<lexicon>/<_id>', methods=['POST'])
     def rejectsuggestion(lexicon, _id):
         return suggestions.rejectsuggestion(lexicon, _id)
 
     # For seeing the status of a suggestion
-    @route('<lexicon>/<_id>')
+    @bp.route('<lexicon>/<_id>')
     def checksuggestion(lexicon, _id):
         return suggestions.checksuggestion(lexicon, _id)
 
     # For seeing entries that are the alphabetically close
-    @route('<lexicon>')
+    @bp.route('<lexicon>')
     def getcontext(lexicon):
         return searching.get_context(lexicon)
 
-    @route('<mode>')
+    @bp.route('<mode>')
     def modeinfo(mode):
         """ Show information about a mode """
         return searching.modeinfo(mode)
 
-    @route('<lexicon>')
+    @bp.route('<lexicon>')
     def lexiconinfo(lexicon):
         """ Show information about a lexicon """
         return searching.lexiconinfo(lexicon)
 
-    @route()
+    @bp.route()
     def modes():
         jsonmodes = {}
         for mode, info in configM.searchconfig.items():
             jsonmodes[mode] = info.get('groups', {})
         return jsonify(jsonmodes)
 
-    @route()
+    @bp.route()
     def groups():
         modes = {}
         for name, val in configM.lexiconconfig.items():
@@ -221,7 +219,7 @@ def init(route):
     # Other ways of finding and sending files:
     # http://flask.pocoo.org/docs/0.10/api/#flask.Flask.open_resource
     # http://flask.pocoo.org/docs/0.10/api/#flask.Flask.send_static_file
-    @route()
+    @bp.route()
     def order():
         orderlist = []
         for name, val in configM.lexiconconfig.conf.items():
@@ -229,32 +227,32 @@ def init(route):
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist
 
-    @route(name='/')
-    @route(name='/index')
+    @bp.route(name='/')
+    @bp.route(name='/index')
     def helppage():
         """Render API documentation."""
-        _logger.debug('ok')
+        logging.debug('ok')
         import os
         import markdown
 
-        _logger.debug('index page')
+        logging.debug('index page')
 
         KARP_API_URL = configM.setupconfig.get('BACKEND_URL', 'https://ws.spraakbanken.gu.se/ws/karp/v5')
         KARP_VERSION = "5"
         STYLES_CSS = 'static/api.css'
-        _logger.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
+        logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
 
         # doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
         # doc_file = 'api.md'
         #
         # with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:
         #     md_text = doc.read()
-        #     _logger.debug("md_text: %s", type(md_text))
+        #     logging.debug("md_text: %s", type(md_text))
         #     md_text = md_text.decode("UTF-8")
-        #     _logger.debug("md_text: %s", type(md_text))
+        #     logging.debug("md_text: %s", type(md_text))
 
         md_text = karp5.get_pkg_resource('html/api.md')
-        _logger.debug("md_text: %s", type(md_text))
+        logging.debug("md_text: %s", type(md_text))
         # Replace placeholders
         md_text = md_text.replace("[SBURL]", KARP_API_URL)
         md_text = md_text.replace('[SBVERSION]', karp5.get_version())
@@ -295,7 +293,7 @@ def init(route):
 
         return "\n".join(html)
 
-    @route('/logout')
+    @bp.route('/logout')
     def logout():
         # remove the username from the session if it's there
         session.pop('username', None)

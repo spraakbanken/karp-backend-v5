@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
-import server.helper.flaskhelper as flaskhelper
-import karp5.backend as backend
+import karp5
 
-
-def load_urls():
-    flaskhelper.register(backend.init)
-
-
-app = flaskhelper.app
+def main():
+    app = karp5.create_app()
+    app.run()
 
 if __name__ == '__main__':
-    load_urls()
-    flaskhelper.app.run()
+    main()

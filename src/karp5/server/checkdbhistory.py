@@ -6,6 +6,9 @@ import karp5.server.helper.helpers as helpers
 from karp5.server.auth import validate_user
 
 
+_logger = logging.getLogger('karp5')
+
+
 def checkhistory(lexicon, lid):
     """ Shows the update log of an entry """
     from karp5.dbhandler.dbhandler import dbselect
@@ -33,7 +36,7 @@ def checkuserhistory():
 
         return jsonify({'updates': updates})
     except Exception as e:
-        logging.exception(e)
+        _logger.exception(e)
         raise eh.KarpGeneralError(str(e))
 
 

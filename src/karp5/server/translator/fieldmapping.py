@@ -7,12 +7,15 @@ import karp5.server.helper.configpaths as C
 from karp5.instance_info import get_instance_path
 
 
+_logger = logging.getLogger('karp5')
+
+
 absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
 try:
     with open(os.path.join(get_instance_path(), 'config/fieldmappings.json')) as fp:
         fields = json.load(fp)
 except Exception as e:
-    logging.exception(e)
+    _logger.exception(e)
 standardmode = C.config['SETUP']['STANDARDMODE']
 
 
@@ -29,8 +32,8 @@ def lookup_spec(field, mode=standardmode, own_fields={}):
             return (val[0],)
     except Exception as e:
         msg = "Field %s not found in mode %s" % (field, mode)
-        logging.error(msg+": ")
-        logging.exception(e)
+        _logger.error(msg+": ")
+        _logger.exception(e)
         raise eh.KarpGeneralError(msg)
 
 
@@ -43,8 +46,8 @@ def lookup_multiple_spec(field, mode=standardmode):
             return (val, '')
     except Exception as e:
         msg = "Field %s not found in mode %s" % (field, mode)
-        logging.error(msg+": ")
-        logging.exception(e)
+        _logger.error(msg+": ")
+        _logger.exception(e)
         raise eh.KarpGeneralError(msg)
 
 
@@ -67,5 +70,5 @@ def get_value(field, mode, own_fields=''):
         import parsererror as PErr
         msg = ("Could not find field %s for mode %s, %s"
                % (field, mode, mappings))
-        logging.debug(msg)
+        _logger.debug(msg)
         raise PErr.QueryError(msg, debug_msg=msg+"\n%s" % mappings)

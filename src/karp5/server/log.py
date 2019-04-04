@@ -9,6 +9,7 @@ debugmode = C.config['DEBUG']
 
 today = time.strftime("%Y%m%d")
 DEBUGFILE = os.path.join(debugmode['LOGDIR'], '%s-debug.txt' % today)
+LOGFILE = os.path.join(debugmode['LOGDIR'], 'karp5.log')
 
 def debug_str_to_int(s):
     """
@@ -60,3 +61,13 @@ else:
         format=debugmode['LOGFMT'],
         datefmt=debugmode['DATEFMT']
     )
+
+    logger = logging.getLogger('karp5')
+    logger.setLevel(debug_str_to_int(debugmode['DEBUGLEVEL']))
+    handler = logging.handlers.TimedRotatingFileHandler(
+        LOGFILE,
+        when='D',
+        interval=1,
+        backupCount=0
+    )
+    logger.addHandler(handler)
