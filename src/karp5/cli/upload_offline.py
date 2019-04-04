@@ -232,6 +232,35 @@ def make_parents(group):
     return parents
 
 
+def publish_mode(mode, suffix):
+    modes = make_parents(mode)
+    index = make_indexname(mode, suffix)
+    add_actions = []
+    rem_actions = []
+    for alias in modes:
+        add_actions.append(
+            '{"add" : {"index": "%s", "alias": "%s"}}' % (index, alias)
+        )
+        rem_actions.append(
+            '{"remove": {"index":"%s_*", "alias":"%s"}}' % (mode, alias)
+        )
+    print('remove {}'.format(rem_actions))    
+    print('add {}'.format(add_actions))    
+    try:
+                print('remove old aliases')
+                es.indices.update_aliases(
+                    '{"actions" : [%s]}' % ','.join(rem_actions),
+                    request_timeout=30
+                )
+            except Exception:
+                print('No previous aliased indices, could not do remove any')
+                print(rem_actions)
+            return es.indices.update_aliases(
+                '{"actions" : [%s]}' % ','.join(add_actions),
+                request_timeout=30
+            )
+
+
 def publish_group(group, suffix):
     # TODO for some reason, this sometimes removes siblings
     # of the group from an mode. Eg. publish_group(saldo)
