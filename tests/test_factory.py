@@ -1,4 +1,4 @@
-from karp_backend import create_app
+from karp5 import create_app
 
 
 def test_config():

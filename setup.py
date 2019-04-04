@@ -4,8 +4,8 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(
-    name='karp-backend',
-    version='5.3.0',
+    name='karp5',
+    version='5.7.0',
     description='Backend for Karp',
     author='Språkbanken at the University of Gothenburg',
     maintainer='Språkbanken',
@@ -16,15 +16,15 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     package_data={
-        'karp-backend': ['src/karp_backend/html/*']
+        'karp5': ['src/karp5/html/*']
     },
     # packages=[
-        # 'karp_backend',
-    #     'karp_backend.dbhandler',
-    #     'karp_backend.offline',
-    #     'karp_backend.server',
-    #     'karp_backend.server.helper',
-    #     'karp_backend.server.translator'
+        # 'karp5',
+    #     'karp5.dbhandler',
+    #     'karp5.offline',
+    #     'karp5.server',
+    #     'karp5.server.helper',
+    #     'karp5.server.translator'
     # ],
     install_requires=[
         'elasticsearch>=6.1.0,<6.2.0',
@@ -35,8 +35,15 @@ setup(
         'gevent==1.2.2',
         'six',
         'pymysql',
-        'markdown'
+        'markdown',
+        'python-dotenv',
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'pytest-cov',
+        ]
+    },
     include_package_data=True,
     zip_safe=False,
     classifiers=[

@@ -13,7 +13,9 @@ For easy testing, use [Docker](https://docs.docker.com/engine/installation/) to 
 * Test it by running `curl localhost:8081/app/test`
 
 
-If you want to use Karp without Docker, keep on reading.
+**If you want to use Karp without Docker, keep on reading.**
+
+
 Prerequisites
 =============
 

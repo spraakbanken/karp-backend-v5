@@ -1,8 +1,11 @@
 import pytest
 
-# from karp_backend import create_app
-import karp_backend.server.helper.flaskhelper as flaskhelper
-import karp_backend.backend as backend
+import dotenv
+dotenv.load_dotenv(dotenv_path='.env', verbose=True)
+
+# from karp5 import create_app
+import karp5.server.helper.flaskhelper as flaskhelper
+import karp5.backend as backend
 
 
 @pytest.fixture(scope="session")
