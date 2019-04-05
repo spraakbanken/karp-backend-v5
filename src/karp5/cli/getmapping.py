@@ -1,22 +1,21 @@
-from karp5.server.helper.configmanager import elastic
-import karp5.server.helper.configmanager as configM
-import upload_offline as upload
 import json
 import logging
-import upload_offline as upload_offline
 import os
+
+from karp5.config import mgr as conf_mgr
+import upload_offline as upload
 
 _mapping = 'kastmapp.json'
 
 def getmapping(alias, outfile=''):
 
-    es = elastic(alias)
-    if configM.searchconfig.get(alias)['is_index']:
+    es = conf_mgr.elastic(alias)
+    if conf_mgr.modes.get(alias)['is_index']:
         to_create = [alias]
     else:
-        to_create = configM.searchconfig.get(alias)['groups']
+        to_create = conf_mgr.modes.get(alias)['groups']
 
-    typ = configM.searchconfig.get(alias)['type']
+    typ = conf_mgr.modes.get(alias)['type']
     testindex = 'testmapping'
     try:
         mapp = open(_mapping, 'r').read()
@@ -34,9 +33,9 @@ def getmapping(alias, outfile=''):
             es.indices.create(index=testindex, body=mapp)
             raise
 
-        for name, info in configM.lexiconconfig.items():
+        for name, info in conf_mgr.lexicons.items():
             if name == index:
-                default = configM.lexiconconfig.get('default', {})
+                default = conf_mgr.lexicons.get('default', {})
                 path = info.get('path', default.get('path', ''))
                 fformat = info.get('format', default.get('format', 'json'))
                 data = open('%s.%s' % (os.path.join(path, name), fformat), 'r').read()

@@ -1,11 +1,11 @@
-default: test
+default: test clean clean-pyc
 
 venv: venv/made
 
 install-dev: venv venv/req-dev.installed
 install: venv venv/req.installed
 
-venv/made: 
+venv/made:
 	test -d venv || python -m venv venv
 	venv/bin/python -m pip install pip-tools
 	touch $@
@@ -21,9 +21,12 @@ venv/req-dev.installed: setup.py
 dev-run: install-dev
 	venv/bin/python run.py
 
-test: install-dev
-	venv/bin/python -m pytest --cov=src --cov-report=term-missing tests
-	# venv/bin/python -m pytest tests
+test: venv-dev clean-pyc
+	./venv/bin/pytest --cov=src --cov-report=term-missing tests
+
+clean: clean-pyc
+clean-pyc:
+	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
 	venv/bin/activate; pip-compile

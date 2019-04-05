@@ -1,18 +1,18 @@
 from __future__ import unicode_literals
 from future import standard_library
+
 standard_library.install_aliases()
 from flask import request, session
 from json import loads
 import hashlib
 import logging
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
-import urllib.request, urllib.parse, urllib.error
-from urllib.request import urlopen
-from urllib.error import HTTPError
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
+import urllib
+from urllib2 import urlopen, HTTPError
 
 
-_logger = logging.getLogger('karp5')
+_logger = logging.getLogger("karp5")
 
 
 def check_user(force_lookup=False):
@@ -20,16 +20,16 @@ def check_user(force_lookup=False):
        Returns a dictionary with permitted resources for the user
     """
     # Logged in, just return the lexicon list
-    if not force_lookup and 'username' in session:
-        _logger.debug('user has %s' % session)
+    if not force_lookup and "username" in session:
+        _logger.debug("user has %s" % session)
         return session
 
     # If there is no session for this user, check with the auth server
     auth = request.authorization
 
     postdata = {"include_open_resources": "true"}
-    server = configM.config['AUTH']['AUTH_RESOURCES']
-    user, pw = "", ''
+    server = conf_mgr.app_config.AUTH_RESOURCES
+    user, pw = "", ""
     if auth is not None:
         # if the user has provided log in details, check them against
         # the auth server. Otherwise only the open list of open resources will
@@ -37,13 +37,15 @@ def check_user(force_lookup=False):
         try:
             user, pw = auth.username, auth.password
         except TypeError:
-            raise eh.KarpAuthenticationError("Incorrect username or password.",
-                                             "Make sure that they are properly encoded")
+            raise errors.KarpAuthenticationError(
+                "Incorrect username or password.",
+                "Make sure that they are properly encoded",
+            )
         postdata["username"] = user
         postdata["password"] = pw
-        secret = configM.config['AUTH']['AUTH_SECRET']
-        postdata["checksum"] = hashlib.md5(user + pw + secret).hexdigest()
-        server = configM.config['AUTH']['AUTH_SERVER']
+        secret = conf_mgr.app_config.AUTH_SECRET
+        postdata["checksum"] = md5.new(user + pw + secret).hexdigest()
+        server = conf_mgr.app_config.AUTH_SERVER
 
     try:
         _logger.debug("Auth server: " + server)
@@ -52,20 +54,25 @@ def check_user(force_lookup=False):
         auth_response = loads(contents)
     except HTTPError as e:
         _logger.error(e)
-        raise eh.KarpAuthenticationError("Could not contact authentication server.")
+        raise errors.KarpAuthenticationError("Could not contact authentication server.")
     except ValueError:
-        raise eh.KarpAuthenticationError("Invalid response from authentication server.")
+        raise errors.KarpAuthenticationError(
+            "Invalid response from authentication server."
+        )
     except Exception as e:
         _logger.error(e)
-        raise eh.KarpAuthenticationError("Unexpected error during authentication.")
+        raise errors.KarpAuthenticationError("Unexpected error during authentication.")
 
     lexitems = auth_response.get("permitted_resources", {})
-    session['lexicon_list'] = lexitems.get("lexica", {})
-    session['username'] = user
-    session['authenticated'] = auth_response['authenticated']
-    return {"auth_response": auth_response, "username": user,
-            "lexicon_list": lexitems.get("lexica", {}),
-            "authenticated": auth_response['authenticated']}
+    session["lexicon_list"] = lexitems.get("lexica", {})
+    session["username"] = user
+    session["authenticated"] = auth_response["authenticated"]
+    return {
+        "auth_response": auth_response,
+        "username": user,
+        "lexicon_list": lexitems.get("lexica", {}),
+        "authenticated": auth_response["authenticated"],
+    }
 
 
 def validate_user(mode="write"):
@@ -80,13 +87,13 @@ def validate_user(mode="write"):
 
     if mode == "verbose":
         auth = check_user(force_lookup=True)
-        return auth.get('authenticated'), auth.get("auth_response")
+        return auth.get("authenticated"), auth.get("auth_response")
 
     user_auth = check_user()
-    auth_response = user_auth['authenticated']
+    auth_response = user_auth["authenticated"]
 
     allowed = []
-    for lex, val in list(user_auth['lexicon_list'].items()):
+    for lex, val in list(user_auth["lexicon_list"].items()):
         if val[mode]:
             allowed.append(lex)
 

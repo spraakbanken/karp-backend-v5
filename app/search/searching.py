@@ -11,7 +11,7 @@ from flask import jsonify, request, session
 #import karp5.server.searching as searching
 #import karp5.server.suggestions as suggestions
 #import karp5.server.update as update
-#import karp5.server.helper.configmanager as configM
+#from karp5.config import mgr as conf_mgr
 #import karp5
 import logging
 

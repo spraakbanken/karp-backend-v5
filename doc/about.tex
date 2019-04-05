@@ -396,7 +396,7 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
 
   \verb|all_fields|: specifies which fields should be used for free text search (simple search).
              Set this to \\
-             \verb|all_fields = F.lookup_multiple("anything")|
+             \verb|all_fields = conf_mgr.lookup_multiple("anything")|
              %ES will keep a copy of all text from the fields of your choice
              %(you will set this in the \verb|mappingconf.json|)
              %in one or more designated fields, usually referred to as \verb|_all|.
@@ -422,22 +422,22 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
           The field names in all settings in \verb|searchconf.py| should always
           be - or evaluate to - the json paths in your lexical entries.
           You can use the function
-          \verb|F.lookup| and the keys from \verb|fieldmappings.py|:\\
-          \verb|sort_by = [F.lookup(pos)]| \\
+          \verb|conf_mgr.lookup| and the keys from \verb|fieldmappings.py|:\\
+          \verb|sort_by = [conf_mgr.lookup(pos)]| \\
           to achieve this, or simply put the whole json path: \\
           \verb|sort_by = ["Entry.partOfSpeech"]|.\\
           %Whenever referring to a json field, you can use the \textit{key}
           %names (as in \verb|fieldmappings.py|) or the actual json path to the
           %field.
-          Note that the function \verb|F.lookup| only picks the first path in case of
+          Note that the function \verb|conf_mgr.lookup| only picks the first path in case of
           an one-to-many mapping. If \\
           {\verb|"pos" : ["Entry.partOfSpeech", "Entry.simplePartOfSpeech",|\\}
           {\verb|         "Entry.translatedPartOfSpeech"]|\\}
           then\\
-          \verb|[F.lookup(pos)] = "Entry.partOfSpeech"| \\
+          \verb|[conf_mgr.lookup(pos)] = "Entry.partOfSpeech"| \\
           %multiple
           %If you use the \textit{key} names of the fields, use the syntax
-          %\verb|F.lookup("pos")|.
+          %\verb|conf_mgr.lookup("pos")|.
           %It is recommended to use the json path
           %whenever you have mapped multiple values to one key.
 
@@ -458,7 +458,7 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
 %"pos" : ["Entry.partOfSpeech"]
 %
 %# (searchconf.py) ok to use the key names
-% sort_by = [F.lookup(pos)]
+% sort_by = [conf_mgr.lookup(pos)]
 %     \end{verbatim}}\\
 
 

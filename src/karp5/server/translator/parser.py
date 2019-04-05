@@ -10,9 +10,9 @@ from elasticsearch import helpers as EShelpers
 from flask import request
 
 import karp5.server.translator.elasticObjects as elasticObjects
-import karp5.server.translator.fieldmapping as F
+
 import karp5.server.translator.parsererror as PErr
-import karp5.server.helper.configmanager as configM
+from karp5.config import mgr as conf_mgr
 
 
 _logger = logging.getLogger('karp5')
@@ -114,7 +114,7 @@ def parse_extra(settings):
     for r in settings.get('allowed', []):
         if r in wanted or not wanted:
             ok_lex.append(r)
-            lex_wanted.append({"term" : {F.lookup("lexiconName", mode): r}})
+            lex_wanted.append({"term" : {conf_mgr.lookup("lexiconName", mode): r}})
 
     if len(lex_wanted) > 1:
         # if more than one lexicon, the must be put into a 'should' ('or'),
@@ -136,20 +136,20 @@ def parse_extra(settings):
         size = request.args['size']
         settings['size'] = float(size) if size == 'inf' else int(size)
     if 'sort' in request.args:
-        #settings['sort'] = F.lookup_multiple(request.args['sort'].split(','), mode)
-        settings['sort'] = sum([F.lookup_multiple(s, mode)
+        #settings['sort'] = conf_mgr.lookup_multiple(request.args['sort'].split(','), mode)
+        settings['sort'] = sum([conf_mgr.lookup_multiple(s, mode)
                                 for s in request.args['sort'].split(',')], [])
     if 'page' in request.args:
         settings['page'] = min(int(request.args['page'])-1, 0)
     if 'start' in request.args:
         settings['start'] = int(request.args['start'])
     if 'buckets' in request.args:
-        settings['buckets'] = [F.lookup(r, mode) for r
+        settings['buckets'] = [conf_mgr.lookup(r, mode) for r
                                in request.args['buckets'].split(',')]
 
     if 'show' in request.args:
-        #settings['show'] = F.lookup_multiple(request.args['show'][0].split(','), mode)
-        settings['show'] = sum([F.lookup_multiple(s, mode)
+        #settings['show'] = conf_mgr.lookup_multiple(request.args['show'][0].split(','), mode)
+        settings['show'] = sum([conf_mgr.lookup_multiple(s, mode)
                                 for s in request.args['show'].split(',')], [])
     # to be used in random
     if 'show_all' in request.args:
@@ -195,7 +195,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
     _logger.debug('operands: {0}'.format(operands))
     operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
-    format_query = configM.extra_src(mode, 'format_query', None)
+    format_query = conf_mgr.extra_src(mode, 'format_query', None)
     if format_query is not None:
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
@@ -304,7 +304,7 @@ def get_field(field, mode):
         field  is an unparsed string
         returns a dictionary """
 
-    fields, constraints = F.lookup_multiple_spec(field, mode)
+    fields, constraints = conf_mgr.lookup_multiple_spec(field, mode)
     highlight = ['*'] if field == 'anything' else fields
     return {"fields": fields, "constraints": constraints,
             "highlight": highlight}
@@ -351,15 +351,15 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
     """
     if extra is None:
         extra = {}
-    if 'format_query' in configM.mode_fields(mode):
+    if 'format_query' in conf_mgr.mode_fields(mode):
         # format the query text as specified in settings
-        text = configM.formatquery(mode, 'anything', text)
+        text = conf_mgr.formatquery(mode, 'anything', text)
 
     qs = []
-    for field in configM.all_searchfield(mode):
+    for field in conf_mgr.all_searchfield(mode):
         qs.append({"match": {field: {"query": text, "operator": "and"}}})
 
-    boost_list = configM.searchfield(mode, 'boosts')
+    boost_list = conf_mgr.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
         qs.append({"match": {field : {"query": text, "boost": boost_score}}})
@@ -601,7 +601,7 @@ def adapt_query(size, _from, es, query, kwargs):
         del kwargs['from_']
 
     # If the wanted number of hits is below the scan limit, do a normal search
-    if stop_num <= configM.setupconfig['SCAN_LIMIT']:
+    if stop_num <= conf_mgr.app_config.SCAN_LIMIT:
         kwargs['body'] = query
         _logger.debug('Will ask for %s', kwargs)
         return es.search(**kwargs)
@@ -630,7 +630,7 @@ def adapt_query(size, _from, es, query, kwargs):
             return esans
         # If the total number of hits are less than the scan limit,
         # do a normal search
-        elif tot_hits < configM.setupconfig['SCAN_LIMIT']:
+        elif tot_hits < conf_mgr.app_config.SCAN_LIMIT:
             kwargs['body'] = query
             kwargs['size'] = tot_hits
             return es.search(**kwargs)
