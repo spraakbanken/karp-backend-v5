@@ -1,0 +1,25 @@
+{
+    "default": {
+        "elastic_url": ["http://elasticsearch:9200"],
+        "sql": "karp",
+        "type": "lexicalentry",
+        "secret_fields": ["lastmodifiedBy"],
+        "src": "",
+        "suggestionalias": "karpsuggestion",
+        "sort_by": ["lexiconOrder", "_score", "baseform.sort"],
+        "head_sort_field": ["lexiconOrder"],
+        "autocomplete_field": ["baseform"],
+        "minientry_fields": ["lexiconName", "baseform", "baseform_en"],
+        "statistics_buckets": ["lexiconName", "pos"],
+        "boosts": ["baseform", "baseform_en"]
+    },
+   "panacea": {
+        "is_index": true,
+        "indexalias": "panacea"
+    },
+   "karp": {
+        "is_index": false,
+        "groups": ["panacea"],
+        "indexalias": "karp"
+    }
+}

@@ -1,0 +1,29 @@
+{
+  "AUTH": {
+    "AUTH_RESOURCES" : "http://wsauth:80/app/resources",
+    "AUTH_SERVER" : "http://wsauth:80/app/authenticate",
+    "AUTH_SECRET" : "secret"
+  },
+  "DB": {
+    "ADMIN_EMAILS": ["mail@mail.com"],
+    "SENDER_EMAIL": "karp@mail.com",
+    "DBPASS": "karp:karp@mariadb"
+  },
+  "DEBUG": {
+    "DEBUGLEVEL": "DEBUG",
+    "DEBUG_TO_STDERR":  true,
+    "LOGDIR":  "log/",
+    "LOGFMT": "%(asctime)s - %(levelname)s: %(message)s",
+    "DATEFMT": "%Y-%m-%d %H:%M:%S"
+  },
+  "SETUP":{
+    "ABSOLUTE_PATH" : ".",
+    "SCRIPT_PATH" : ".",
+    "STANDARDMODE": "karp",
+    "SCAN_LIMIT": 1000000,
+    "MAX_PAGE": 1000,
+    "MINIENTRY_PAGE": 10000,
+    "SECRET_KEY": "secret"
+  }
+
+}
