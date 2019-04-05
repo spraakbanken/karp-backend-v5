@@ -32,7 +32,7 @@ setup(
         'Flask',
         'SQLAlchemy',
         'urllib3',
-        'gevent',
+        #'gevent',
         'six',
         'pymysql',
         'markdown',
