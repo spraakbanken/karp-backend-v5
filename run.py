@@ -5,18 +5,14 @@ from __future__ import unicode_literals
 from gevent import monkey
 
 monkey.patch_all()
-import sys
-import json
+import sys  # noqa: E402
 
-import dotenv
+import dotenv  # noqa: E402
 
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 
-import karp5
-
-# from gevent.pywsgi import WSGIServer
-
-#
+import karp5  # noqa: E402
+from gevent.pywsgi import WSGIServer  # noqa: E402
 
 
 if __name__ == "__main__":
@@ -29,6 +25,5 @@ if __name__ == "__main__":
             port = int(arg)
         except (IndexError, ValueError):
             sys.exit("Usage %s <port>" % sys.argv[0])
-        from gevent.pywsgi import WSGIServer
 
         WSGIServer(("0.0.0.0", port), app).serve_forever()
