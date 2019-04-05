@@ -2,8 +2,8 @@ netrc
 .venv
 venv
 venv3
-data
-!data/panacea
+/data
+!/data/panacea
 
 # environment #
 ###############
