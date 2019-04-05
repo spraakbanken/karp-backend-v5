@@ -1,17 +1,15 @@
 from __future__ import unicode_literals
 # startup-scriptet (samma som strix har)
 # TODO move to karp-backend-sb
-#from gevent import monkey
-#monkey.patch_all()
-import sys
-import json
+from gevent import monkey
+monkey.patch_all()
+import sys  # noqa: E402
 
-import dotenv
+import dotenv  # noqa: E402
 dotenv.load_dotenv(dotenv_path='.env', verbose=True)
 
-import karp5
-#from gevent.pywsgi import WSGIServer
-
+import karp5  # noqa: E402
+from gevent.pywsgi import WSGIServer  # noqa: E402
 
 
 if __name__ == '__main__':
