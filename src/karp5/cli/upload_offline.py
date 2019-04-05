@@ -21,12 +21,7 @@ _logger = logging.getLogger('karp5')
 # helpers
 # ==============================================
 
-def get_mapping(index):
-    filepath = 'config/mappings/mappingconf_%s.json' % index
-    try:
-        return open(filepath).read()
-    except:
-        return None
+
 
 
 def make_indexname(index, suffix):
@@ -141,7 +136,6 @@ def recover(alias, suffix, lexicon, create_new=True):
     import karp5.server.translator.bulkify as bulk
     # if not lexicon:
     #     lexicon = conf.keys()
-    mapping = get_mapping(alias)
     index = make_indexname(alias, suffix)
     typ = conf_mgr.get_mode_type(alias)
     print('Save %s to %s' % (lexicon or 'all', index))
@@ -149,6 +143,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = conf_mgr.elastic(alias)
     if create_new:
         # Create the index
+        mapping = conf_mgr.get_mapping(alias)
         ans = es.indices.create(index=index, body=mapping, request_timeout=30)
         print ans
 
@@ -225,30 +220,19 @@ def parse_config(name, info, default):
     return info['mode'], data, info.get('order'), fformat
 
 
-def make_parents(group):
-    # a group is its own parent
-    # (bliss should publish bliss170208, etc)
-    parents = [group]
-    for name, info in conf_mgr.modes.items():
-        if group in info.get('groups', []):
-            parents.append(name)
-    return parents
-
-
 def publish_mode(mode, suffix):
-    modes = make_parents(mode)
     index = make_indexname(mode, suffix)
     add_actions = []
     rem_actions = []
-    for alias in modes:
+    for alias in conf_mgr.get_modes_that_include_mode(mode):
         add_actions.append(
             '{"add" : {"index": "%s", "alias": "%s"}}' % (index, alias)
         )
         rem_actions.append(
             '{"remove": {"index":"%s_*", "alias":"%s"}}' % (mode, alias)
         )
-    print('remove {}'.format(rem_actions))    
-    print('add {}'.format(add_actions))    
+    print('remove {}'.format(rem_actions))
+    print('add {}'.format(add_actions))
     try:
         print('remove old aliases')
         es.indices.update_aliases(
@@ -279,7 +263,7 @@ def publish_group(group, suffix):
         print "Publish %s as %s" % (name, group)
         add_actions = []
         rem_actions = []
-        for parent in make_parents(group):
+        for parent in conf_mgr.get_modes_that_include_mode(group):
             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}'
                                % (name, parent))
             rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}'
@@ -298,7 +282,7 @@ def publish_group(group, suffix):
 
 def create_empty_index(name, suffix, with_id=False):
     es = conf_mgr.elastic(name)
-    data = get_mapping(name)
+    data = conf_mgr.get_mapping(name)
     newname = make_indexname(name, suffix)
     try:
         ans = es.indices.create(index=newname, body=data, request_timeout=30)
@@ -317,7 +301,7 @@ def create_mode(alias, suffix, with_id=False):
 
     typ = conf_mgr.modes[alias]['type']
     for index in to_create:
-        data = get_mapping(index)
+        data = conf_mgr.get_mapping(index)
         newname = make_indexname(index, suffix)
         try:
             ans = es.indices.create(index=newname, body=data, request_timeout=30)
@@ -339,7 +323,7 @@ def create_mode(alias, suffix, with_id=False):
 
 def add_lexicon(to_add_name, to_add_file, alias, suffix):
     es = conf_mgr.elastic(alias)
-    data = get_mapping(alias)
+    data = conf_mgr.get_mapping(alias)
     indexname = make_indexname(alias, suffix)
     typ = conf_mgr.modes[alias]['type']
     try:
@@ -434,12 +418,11 @@ def reindex_alias(alias, target_suffix, create_index=True):
 
 
 def reindex_help(alias, source_index, target_index, create_index=True):
-    # TODO This function doesn't call doc_to_es
     print 'Reindex from %s to %s' % (source_index, target_index)
     es = conf_mgr.elastic(alias)
     if create_index:
         print 'create %s' % target_index
-        data = get_mapping(alias)
+        data = conf_mgr.get_mapping(alias)
         ans = es.indices.create(index=target_index, body=data, request_timeout=30)
         print 'Created index', ans
 
