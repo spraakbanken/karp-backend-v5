@@ -1,1 +1,10 @@
-../../../config/lexiconconf.json.panacea
+{
+  "panacea": {
+    "path": "data/panacea/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "panacea",
+    "order": 0
+  }
+}
