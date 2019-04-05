@@ -3,6 +3,7 @@ from builtins import object
 import json
 import logging
 import os
+import re
 
 from elasticsearch import Elasticsearch
 
@@ -10,7 +11,7 @@ import six
 
 # import karp5.server.helper.configpaths as C
 import karp5.server.errorhandler as eh
-from karp5.server.translator import fieldmapping as F
+# from karp5.server.translator import fieldmapping as F
 from karp5.instance_info import get_instance_path
 
 
@@ -38,6 +39,7 @@ class ConfigManager(object):
         self.modes = {}
         self.config = {}
         self.lexicons = {}
+        self.field = {}
         self.defaultfields = {}
         self.app_config = None
         self.load_config()
@@ -56,6 +58,9 @@ class ConfigManager(object):
 
         with open(os.path.join(configdir, 'mappings/fieldmappings_default.json')) as fp:
 	        self.defaultfields = json.load(fp)
+
+        with open(os.path.join(configdir, 'fieldmappings.json')) as fp:
+            self.fields = json.load(fp)
 
     def override_elastic_url(self, elastic_url):
         for mode, mode_settings in six.viewitems(self.modes):
@@ -86,7 +91,7 @@ class ConfigManager(object):
             _logger.exception(e)
             if failonerror:
                 raise eh.KarpGeneralError(msg)
-            return 
+            return
 
 
 #" Default fields. Remember to add 'anything' to each index mapping "
@@ -99,7 +104,7 @@ class ConfigManager(object):
         _logger.debug('look for %s in %s' % (funcname, mode))
         _logger.debug('file: %s' % self.modes[mode]['src'])
         try:
-            classmodule = importlib.import_module(self.moded[mode]['src'])
+            classmodule = importlib.import_module(self.modes[mode]['src'])
             _logger.debug('\n\ngo look in %s\n\n' % classmodule)
             func = getattr(classmodule, funcname)
             return func
@@ -109,101 +114,162 @@ class ConfigManager(object):
             return default
 
 
-def elastic(mode='', lexicon=''):
-    return Elasticsearch(elasticnodes(mode=mode, lexicon=lexicon))
+    def elastic(self, mode='', lexicon=''):
+        return Elasticsearch(self.elasticnodes(mode=mode, lexicon=lexicon))
 
 
 
-def searchonefield(mode, field):
-    # looks up field in modes.json, eg "autocomplete"
-    # returns the first json path
-    # TODO should change name to mode_one_field
-    # TODO what to do if the field does not exist?
-    # is probably handled elsewhere (searchconf or lookup_multiple)?
-    return searchfield(mode, field)[0]
+    def searchonefield(self, mode, field):
+        # looks up field in modes.json, eg "autocomplete"
+        # returns the first json path
+        # TODO should change name to mode_one_field
+        # TODO what to do if the field does not exist?
+        # is probably handled elsewhere (searchconf or lookup_multiple)?
+        return self.searchfield(mode, field)[0]
 
 
-def searchfield(mode, field):
-    # looks up field in modes.json, eg "autocomplete"
-    # returns the json path
-    fields = searchconf(mode, field)
-    return sum([F.lookup_multiple(f, mode) for f in fields], [])
+    def searchfield(self, mode, field):
+        # looks up field in modes.json, eg "autocomplete"
+        # returns the json path
+        fields = self.searchconf(mode, field)
+        return sum([self..lookup_multiple(f, mode) for f in fields], [])
 
 
-def all_searchfield(mode):
-    # returns the json path of the field anything
-    _logger.debug('%LOOK FOR ANYTHING\n')
-    return F.lookup_multiple('anything', mode)
+    def all_searchfield(self, mode):
+        # returns the json path of the field anything
+        _logger.debug('%LOOK FOR ANYTHING\n')
+        return self.lookup_multiple('anything', mode)
 
 
-def mode_fields(mode):
-    return searchconfig.get(mode, {})
+    def mode_fields(self, mode):
+        return self.modes.get(mode, {})
 
 
-def formatquery(mode, field, op):
-    return searchconf(mode, 'format_query')(field, op)
+    def formatquery(self, mode, field, op):
+        return self.searchconf(mode, 'format_query')(field, op)
 
 
-def elasticnodes(mode='', lexicon=''):
-    if not mode:
-        mode = get_lexicon_mode(lexicon)
-    return searchconf(mode, 'elastic_url')
+    def elasticnodes(self, mode='', lexicon=''):
+        if not mode:
+            mode = self.get_lexicon_mode(lexicon)
+        return self.searchconf(mode, 'elastic_url')
 
 
-def get_lexicon_suggindex(lexicon):
-    mode = get_lexicon_mode(lexicon)
-    sugg_index = searchconf(mode, 'suggestionalias')
-    typ = searchconf(mode, 'type')
-    return sugg_index, typ
+    def get_lexicon_suggindex(self, lexicon):
+        mode = self.get_lexicon_mode(lexicon)
+        sugg_index = self.searchconf(mode, 'suggestionalias')
+        typ = self.searchconf(mode, 'type')
+        return sugg_index, typ
 
 
-def get_group_suggindex(mode):
-    sugg_index = searchconf(mode, 'suggestionalias')
-    typ = searchconf(mode, 'type')
-    return sugg_index, typ
+    def get_group_suggindex(self, mode):
+        sugg_index = self.searchconf(mode, 'suggestionalias')
+        typ = self.searchconf(mode, 'type')
+        return sugg_index, typ
 
 
-def get_lexicon_index(lexicon):
-    mode = get_lexicon_mode(lexicon)
-    index = searchconf(mode, 'indexalias')
-    typ = searchconf(mode, 'type')
-    return index, typ
+    def get_lexicon_index(self, lexicon):
+        mode = self.get_lexicon_mode(lexicon)
+        index = self.searchconf(mode, 'indexalias')
+        typ = self.searchconf(mode, 'type')
+        return index, typ
 
 
-def get_mode_type(mode):
-    typ = searchconf(mode, 'type')
-    return typ
+    def get_mode_type(self, mode):
+        return self.searchconf(mode, 'type')
 
 
-def get_mode_index(mode):
-    index = searchconf(mode, 'indexalias')
-    typ = searchconf(mode, 'type')
-    return index, typ
+    def get_mode_index(self, mode):
+        index = self.searchconf(mode, 'indexalias')
+        typ = self.searchconf(mode, 'type')
+        return index, typ
 
 
 
-def get_lexicon_sql(lexicon):
-    mode = get_lexicon_mode(lexicon)
-    return get_mode_sql(mode)
+    def get_lexicon_sql(self, lexicon):
+        mode = self.get_lexicon_mode(lexicon)
+        return self.get_mode_sql(mode)
 
 
-def get_lexiconlist(mode):
-    lexiconlist = set()
-    grouplist = [mode]
-    modeconf = searchconfig.get(mode, {})
-    for group in modeconf.get('groups', []):
-        grouplist.append(group)
-    for lex, lexconf in list(C.lexiconconfig.items()):
-        if lexconf.get('mode', '') in grouplist:
-            lexiconlist.add(lex)
+    def get_lexiconlist(self, mode):
+        lexiconlist = set()
+        grouplist = [mode]
+        modeconf = self.searchconfig.get(mode, {})
+        for group in modeconf.get('groups', []):
+            grouplist.append(group)
+        for lex, lexconf in self.lexicons.items():
+            if lexconf.get('mode', '') in grouplist:
+                lexiconlist.add(lex)
 
-    return list(lexiconlist)
+        return list(lexiconlist)
 
 
-def get_lexicon_mode(lexicon):
-    try:
-        return C.lexiconconfig[lexicon]['mode']
-    except Exception:
-        # TODO what to return
-        _logger.warning("Lexicon %s not in conf" % lexicon)
-        return ''
+    def get_lexicon_mode(lexicon):
+        try:
+            return C.lexiconconfig[lexicon]['mode']
+        except Exception:
+            # TODO what to return
+            _logger.warning("Lexicon %s not in conf" % lexicon)
+            return ''
+
+
+
+
+
+absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
+standardmode = C.config['SETUP']['STANDARDMODE']
+
+
+    def lookup(self, field, mode=standardmode, own_fields={}):
+        return self.lookup_spec(field, mode, own_fields=own_fields)[0]
+
+
+    def lookup_spec(self, field, mode=standardmode, own_fields={}):
+        try:
+            val = self.get_value(field, mode, own_fields=own_fields)
+            if type(val) is dict:
+                return ([val["search"]], (val["path"], val["typefield"], val["type"]))
+            else:
+                return (val[0],)
+        except Exception as e:
+            msg = "Field %s not found in mode %s" % (field, mode)
+            _logger.error(msg+": ")
+            _logger.exception(e)
+            raise eh.KarpGeneralError(msg)
+
+
+    def lookup_multiple_spec(self, field, mode=standardmode):
+        try:
+            val = self.get_value(field, mode)
+            if type(val) is dict:
+                return ([val["search"]], (val["path"], val["typefield"], val["type"]))
+            else:
+                return (val, '')
+        except Exception as e:
+            msg = "Field %s not found in mode %s" % (field, mode)
+            _logger.error(msg+": ")
+            _logger.exception(e)
+            raise eh.KarpGeneralError(msg)
+
+
+    def lookup_multiple(self, field, mode=standardmode):
+        return self.lookup_multiple_spec(field, mode)[0]
+
+
+    def get_value(self, field, mode, own_fields=''):
+        if own_fields:
+            use_fields = own_fields
+        else:
+            use_fields = self.fields
+        mappings = use_fields.get(mode, {})
+        group = re.search('(.*)((.bucket)|(.search)|(.sort))$', field)
+        if field in mappings:
+            return mappings[field]
+        elif group is not None:
+            return get_value(group.group(1), mode, own_fields=own_fields)
+        else:
+            import parsererror as PErr
+            msg = ("Could not find field %s for mode %s, %s"
+                    % (field, mode, mappings))
+            _logger.debug(msg)
+            raise PErr.QueryError(msg, debug_msg=msg+"\n%s" % mappings)
