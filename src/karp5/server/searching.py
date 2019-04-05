@@ -19,7 +19,6 @@ from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
 
 from karp5.server.translator import parser
-from karp5.server.translator import parsererror as PErr
 
 # from gevent.threadpool import ThreadPool
 # from gevent.queue import Queue, Empty
@@ -54,11 +53,11 @@ def requestquery(page=0):
         default = {'size': 25, 'page': page, 'version': 'true'}
         settings = parser.make_settings(permitted, default)
         elasticq = parser.parse(settings)
-    except PErr.QueryError as e:
+    except errors.QueryError as e:
         _logger.exception(e)
         raise errors.KarpQueryError('Parse error - '+e.message, debug_msg=e.debug_msg,
                                 query=request.query_string)
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)
@@ -167,7 +166,7 @@ def test():
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
         elasticq = parser.parse(settings)
-    except PErr.QueryError as e:
+    except errors.QueryError as e:
         raise errors.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     return jsonify({'elastic_json_query': elasticq})
 
@@ -178,7 +177,7 @@ def explain():
         # default
         settings = parser.make_settings(permitted, {'size': 25, 'page': 0})
         elasticq = parser.parse(settings)
-    except PErr.QueryError as e:
+    except errors.QueryError as e:
         raise errors.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     es = conf_mgr.elastic(mode=settings['mode'])
     index, typ = conf_mgr.get_mode_index(settings['mode'])
@@ -219,11 +218,11 @@ def minientry():
             clean_highlight(ans)
 
         return jsonify(ans)
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)
-    except PErr.QueryError as e:
+    except errors.QueryError as e:
         raise errors.KarpQueryError("Parse error, %s" % e.message, debug_msg=e,
                                 query=request.query_string)
     except errors.KarpException as e:  # pass on karp exceptions
@@ -257,7 +256,7 @@ def random():
 
         ans = es.search(**es_q)
         return jsonify(ans)
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)
@@ -290,7 +289,7 @@ def statistics():
                         search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)
@@ -333,7 +332,7 @@ def statlist():
             tables = tables[:size]
         return jsonify({"stat_table": tables, "is_more": is_more})
 
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)
@@ -475,7 +474,7 @@ def autocomplete():
         else:
             # single querys: only return the latest answer
             return jsonify(ans)
-    except PErr.AuthenticationError as e:
+    except errors.AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
         raise errors.KarpAuthenticationError(msg)

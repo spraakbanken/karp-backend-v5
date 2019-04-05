@@ -319,17 +319,17 @@ the [ES documentation](https://www.elastic.co/guide/en/elasticsearch/reference/2
 (TODO all this will change if we upgrade to ES6.)
 
 The second section in the mappings file, `mappings`, is a definition of your data’s structure.
-You can control the _all fields here:
+You can control the `_all` fields here:
 
 `"_all" : {"enabled" : false}`  prevents ES from making all fields searchable.
 If you do want all text to be searchable, put this to true. Note that this will
 enable free text searches to match the text in `lexiconName` and `lexiconOrder`.
 
-`"all_text", "all_xml"` These are used instead of _all in Språkbanken’s version.
+`"all_text", "all_xml"` These are used instead of `_all` in Språkbanken’s version.
 Each field in the mapping below specifies whether its content should be copied to
 one of those. The difference between the two is the analyzers used; text copied to
 all_text is tokenized as normal, while the text copied to all_xml is tokenized as
-xml. Simply leave out these if you enabled _all above.
+xml. Simply leave out these if you enabled `_all` above.
 
 The rest of the content is only depending on your data’s type structure. If your
 data is simple, just write down the types of it yourself. If it is more complex, you
@@ -337,12 +337,11 @@ could let ES do the job for you, by inputting all data to ES and then extracting
 automatically generated mapping. To do this, run one of the commands:
 without Docker:
 
-`python upload_offline.py --getmapping > config/newmappingconf.json`
+`python cli.py getmapping config/newmappingconf.json`
 
 with Docker:
 
-`docker-compose run --rm karp python upload_offline.py --writemapping \
-config/newmappingconf.json`
+`docker-compose run --rm karp python cli.py getmapping config/newmappingconf.json`
 
 This will give you the file `newmappingconf.json`, which you can use as your `mappingconf_<yourmode>.json`.
 Modify the settings mentioned above as needed.
@@ -426,18 +425,18 @@ If you don’t know yet what field names you want to put here, simply put
 ## Inputting data to the system
 ### Creating metadata
 To generate metadata for the backend, first you must create `config/mappings/fieldmappings_<RESOURCE>.json` (see [config/mappings/fieldmappings_default.json](/config/mappings/fieldmappings_default.json) and [config/mappings/fieldmappings_panacea.json.panacea](../blob/master/config/mappings/fieldmappings_panacea.json.panacea) for examples) as describe in [here](#Field-mappings).
-Then run in a virtual environment `python offline.py --create_metadata` to create `config/fieldmappings.json` with all fieldmappings that a user can use.
+~~Then run in a virtual environment `python cli.py create_metadata` to create `config/fieldmappings.json` with all fieldmappings that a user can use.~~ (Not needed since *version 5.8.0*)
 
 ### create_mode & publish_mode
 1. Your lexical resource must be in json-format as [above](#Input-Format).
 2. Verify that `lexiconName` and `lexiconOrder` is present and correct in every lexical entry.
-3. Place your data file `RESOURCE.json` in the directory specified in `lexiconconf.json`. 
+3. Place your data file `RESOURCE.json` in the directory specified in `lexiconconf.json`.
   * **example:** ```json "testlex": { ... "path": data/testlex/` ... }```
 4. Run `source venv/bin/activate`
-5. Run `python offline.py --create_mode RESOURCE SUFFIX`. This will import all lexical entries from `<path-in-lexiconf.json-for RESOURCE>/RESOURCE.json` to the backend.
-  * **example:** `python offline.py --create_mode testlex 20181003` imports from `data/testlex/testlex.json`.
-6. Run `python offline.py --publish_mode RESOURCE SUFFIX`. This will point the alias `RESOURCE` to `RESOURCE_SUFFIX` so that searches with `mode=RESOURCE` will be directed to `RESOURCE_SUFFIX`.
-  * **example:** `python offline.py --publish_mode testlex 20181003`
+5. Run `python cli.py create_mode RESOURCE SUFFIX`. This will import all lexical entries from `<path-in-lexiconf.json-for RESOURCE>/RESOURCE.json` to the backend.
+  * **example:** `python cli.py create_mode testlex 20181003` imports from `data/testlex/testlex.json`.
+6. Run `python cli.py publish_mode RESOURCE SUFFIX`. This will point the alias `RESOURCE` to `RESOURCE_SUFFIX` so that searches with `mode=RESOURCE` will be directed to `RESOURCE_SUFFIX`. Will also update all modes that have `RESOURCE` in their `groups`-list.
+  * **example:** `python cli.py publish_mode testlex 20181003`
 7. Restart the server.
 
 

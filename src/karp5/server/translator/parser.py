@@ -11,7 +11,7 @@ from flask import request
 
 import karp5.server.translator.elasticObjects as elasticObjects
 
-import karp5.server.translator.parsererror as PErr
+from . import errors
 from karp5.config import mgr as conf_mgr
 
 
@@ -72,7 +72,7 @@ def parse(settings=None, isfilter=False):
         return search(p_ex, filters, fields, isfilter=isfilter,
                       highlight=highlight, usefilter=usefilter)
     else:
-        raise PErr.QueryError("Search command not recognized: %s.\
+        raise errors.QueryError("Search command not recognized: %s.\
                                Available options: simple, extended"
                               % (command)
                              )
@@ -95,7 +95,7 @@ def parse_extra(settings):
                  'date', 'statsize']
     for k in list(request.args.keys()):
         if k not in available:
-            raise PErr.QueryError("Option not recognized: %s.\
+            raise errors.QueryError("Option not recognized: %s.\
                                    Available options: %s"
                                   % (k, ','.join(available)))
 
@@ -126,7 +126,7 @@ def parse_extra(settings):
     if not ok_lex:
         # if no lexicon is set, ES will search all lexicons,
         # included protected ones
-        raise PErr.AuthenticationError("You are not allowed to search any" +
+        raise errors.AuthenticationError("You are not allowed to search any" +
                                        " of the requested lexicons")
 
     # the below line is used by checklexiconhistory and checksuggestions
@@ -238,7 +238,7 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
         allpaths.extend(info.get("fields"))
         if len(info.get("fields")) > 1:
             # a field may correspond to several paths, not ok for nested queries
-            raise PErr.QueryError("Cannot construct nested query from multiple fields.\
+            raise errors.QueryError("Cannot construct nested query from multiple fields.\
                                    You attempt to search all of %s."
                                   % (','.join(info.get("fields"))))
         todo[info.get("fields")[0]] = newexps

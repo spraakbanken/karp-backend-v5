@@ -238,6 +238,14 @@ class ConfigManager(object):
 
         return list(lexiconlist)
 
+    def get_modes_that_include_mode(self, mode):
+        modes = set()
+        modes.add(mode)
+        for name, info in self.modes.items():
+            if mode in info.get("groups", []):
+                modes.add(name)
+        return list(modes)
+
     def get_lexicon_mode(self, lexicon):
         try:
             return self.lexicons[lexicon]["mode"]
@@ -245,6 +253,19 @@ class ConfigManager(object):
             # TODO what to return
             _logger.warning("Lexicon %s not in conf" % lexicon)
             return ""
+
+    def get_mapping(self, index):
+        filepath = "mappings/mappingconf_{}.json".format(index)
+        try:
+            with open(os.path.join(self.configdir, filepath)) as fp:
+                return fp.read()
+        except:
+            raise KarpConfigException(
+                "Can't find mappingconf for index '{}'".format(index)
+            )
+
+    # absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
+    # standardmode = C.config['SETUP']['STANDARDMODE']
 
     # absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
     # standardmode = C.config['SETUP']['STANDARDMODE']
@@ -285,7 +306,7 @@ class ConfigManager(object):
     def lookup_multiple(self, field, mode):
         return self.lookup_multiple_spec(field, mode)[0]
 
-    def get_value(self, field, mode, own_fields=""):
+    def get_value(self, field, mode, own_fields=None):
         if own_fields:
             use_fields = own_fields
         else:
@@ -297,9 +318,7 @@ class ConfigManager(object):
         elif group is not None:
             return self.get_value(group.group(1), mode, own_fields=own_fields)
         else:
-            import parsererror as PErr
-
             msg = "Could not find field %s for mode %s, %s" % (field, mode, mappings)
             _logger.debug(msg)
-            raise PErr.QueryError(msg, debug_msg=msg + "\n%s" % mappings)
+            raise KarpConfigException(msg, debug_msg=msg + "\n%s" % mappings)
 

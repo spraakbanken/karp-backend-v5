@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from builtins import object
 import json
 import logging
-import karp5.server.translator.parsererror as PErr
+from . import errors
 
 # TODO isfilter is (probably) not used anymore, delete from code
 
@@ -130,7 +130,7 @@ class Operator(object):
         no_opers = len(operands)
         _logger.debug('operator %s ', self.operator)
         if no_opers > self.max_operands or no_opers < self.min_operands:
-            raise PErr.QueryError('Wrong number of operands given. \
+            raise errors.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
                                   % (self.min_operands, self.max_operands))
 
@@ -282,6 +282,6 @@ class Operator(object):
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
             #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
         else:
-            raise PErr.QueryError('Operator "%s" not recognized.\
+            raise errors.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'
                                   % (op, ','.join(operators)))
