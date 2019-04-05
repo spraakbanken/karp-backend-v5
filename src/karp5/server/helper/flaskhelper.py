@@ -5,8 +5,8 @@ from elasticsearch import ConnectionError
 from flask import make_response, request, current_app
 from functools import update_wrapper
 
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
 import karp5.server.update as update
 from karp5 import create_app
 
@@ -115,7 +115,7 @@ def init_errorhandler(app):
             data = request.data
             data = data.decode('utf8')
             auth = request.authorization
-            e_type = 'Predicted' if isinstance(error, eh.KarpException) else 'Unpredicted'
+            e_type = 'Predicted' if isinstance(error, errors.KarpException) else 'Unpredicted'
 
             _logger.debug('Error on url %s' % request.full_path)
             user = 'unknown'
@@ -131,7 +131,7 @@ def init_errorhandler(app):
             if isinstance(error, ConnectionError):
                 _logger.debug(update.handle_update_error(error, data, user, ''))
 
-            if isinstance(error, eh.KarpException):
+            if isinstance(error, errors.KarpException):
                 # Log full error message if available
                 if error.debug_msg:
                     _logger.debug(error.debug_msg)
@@ -151,14 +151,13 @@ def init_errorhandler(app):
             # and send email to admin
             import time
             import traceback
-            logdir = configM.config['DEBUG']['LOGDIR']
-            dbconf = configM.config['DB']
+            logdir = conf_mgr.app_config.LOG_DIR
             trace = traceback.format_exc()
             date = time.strftime('%Y-%m-%d %H:%M:%S')
             msg = 'Cannot print log file: %s, %s' % (date, trace)
             title = 'Karp urgent logging error'
-            if dbconf['admin_emails']:
+            if conf_mgr.app_config.ADMIN_EMAILS:
                 import dbhandler.emailsender as email
-                email.send_notification(dbconf['admin_emails'], title, msg)
+                email.send_notification(conf_mgr.app_config.ADMIN_EMAILS, title, msg)
             open(logdir+'KARPERR'+time.strftime("%Y%m%d"), 'a').write(msg)
             return "Oops, something went wrong\n", 500

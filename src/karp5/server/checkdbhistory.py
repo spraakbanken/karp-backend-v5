@@ -1,7 +1,7 @@
 from flask import jsonify
 import logging
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
 from karp5.server.auth import validate_user
 
@@ -24,20 +24,20 @@ def checkuserhistory():
         auth, permitted = validate_user()
         user = helpers.get_user()
     except AttributeError:
-        raise eh.KarpGeneralError('No user name provided', 'checkuserhistory')
+        raise errors.KarpGeneralError('No user name provided', 'checkuserhistory')
     try:
         size = helpers.get_size(default=10, settings={'allowed': permitted})
         from karp5.dbhandler.dbhandler import dbselect
         updates = []
         for lexicon in permitted:
             # add updates from lexicons that are kept in sql
-            if configM.get_lexicon_sql(lexicon):
+            if conf_mgr.get_lexicon_sql(lexicon):
                 updates.extend(dbselect(lexicon, user=user, max_hits=size))
 
         return jsonify({'updates': updates})
     except Exception as e:
         _logger.exception(e)
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
 
 def checklexiconhistory(lexicon, date):
@@ -45,8 +45,8 @@ def checklexiconhistory(lexicon, date):
     try:
         auth, permitted = validate_user()
         if lexicon not in permitted:
-            raise eh.KarpAuthenticationError('You are not allowed to update lexicon %s' % lexicon)
-        mode = configM.get_lexicon_mode(lexicon)
+            raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s' % lexicon)
+        mode = conf_mgr.get_lexicon_mode(lexicon)
         settings = {"allowed": permitted, "mode": mode}
         helpers.get_querysettings(settings)
         size = settings.get('size', 10)
@@ -57,7 +57,7 @@ def checklexiconhistory(lexicon, date):
                         'updates': dbselect(lexicon, status=status,
                                             from_date=date, max_hits=size)})
     except Exception as e:
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
 
 def comparejson(lexicon, _id, fromdate='', todate=''):
@@ -65,7 +65,7 @@ def comparejson(lexicon, _id, fromdate='', todate=''):
     import karp5.server.translator.jsondiff as jsondiff
     auth, permitted = validate_user()
     if lexicon not in permitted:
-        raise eh.KarpAuthenticationError('You are not allowed to update')
+        raise errors.KarpAuthenticationError('You are not allowed to update')
 
     try:
         if not todate:
@@ -78,7 +78,7 @@ def comparejson(lexicon, _id, fromdate='', todate=''):
     # TODO catch the error here and print it to the log.
     # It is probably not really sql that raises the exception
     except Exception:
-        raise eh.KarpDbError('Could not find any entry from %s' % todate)
+        raise errors.KarpDbError('Could not find any entry from %s' % todate)
 
     try:
         if not fromdate:
@@ -92,5 +92,5 @@ def comparejson(lexicon, _id, fromdate='', todate=''):
     # TODO catch the error here and print it to the log.
     # It is probably not really sql that raises the exception
     except Exception:
-        raise eh.KarpDbError('Could not find any entry from %s' % fromdate)
+        raise errors.KarpDbError('Could not find any entry from %s' % fromdate)
     return jsonify({'diff': jsondiff.compare(fromjson, tojson)})

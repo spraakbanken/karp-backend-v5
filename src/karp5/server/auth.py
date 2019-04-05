@@ -2,8 +2,8 @@ from flask import request, session
 from json import loads
 import md5
 import logging
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
 import urllib
 from urllib2 import urlopen, HTTPError
 
@@ -24,7 +24,7 @@ def check_user(force_lookup=False):
     auth = request.authorization
 
     postdata = {"include_open_resources": "true"}
-    server = configM.config['AUTH']['AUTH_RESOURCES']
+    server = conf_mgr.app_config.AUTH_RESOURCES
     user, pw = "", ''
     if auth is not None:
         # if the user has provided log in details, check them against
@@ -33,13 +33,13 @@ def check_user(force_lookup=False):
         try:
             user, pw = auth.username, auth.password
         except TypeError:
-            raise eh.KarpAuthenticationError("Incorrect username or password.",
+            raise errors.KarpAuthenticationError("Incorrect username or password.",
                                              "Make sure that they are properly encoded")
         postdata["username"] = user
         postdata["password"] = pw
-        secret = configM.config['AUTH']['AUTH_SECRET']
+        secret = conf_mgr.app_config.AUTH_SECRET
         postdata["checksum"] = md5.new(user + pw + secret).hexdigest()
-        server = configM.config['AUTH']['AUTH_SERVER']
+        server = conf_mgr.app_config.AUTH_SERVER
 
     try:
         _logger.debug("Auth server: " + server)
@@ -48,12 +48,12 @@ def check_user(force_lookup=False):
         auth_response = loads(contents)
     except HTTPError as e:
         _logger.error(e)
-        raise eh.KarpAuthenticationError("Could not contact authentication server.")
+        raise errors.KarpAuthenticationError("Could not contact authentication server.")
     except ValueError:
-        raise eh.KarpAuthenticationError("Invalid response from authentication server.")
+        raise errors.KarpAuthenticationError("Invalid response from authentication server.")
     except Exception as e:
         _logger.error(e)
-        raise eh.KarpAuthenticationError("Unexpected error during authentication.")
+        raise errors.KarpAuthenticationError("Unexpected error during authentication.")
 
     lexitems = auth_response.get("permitted_resources", {})
     session['lexicon_list'] = lexitems.get("lexica", {})

@@ -7,8 +7,8 @@ from elasticsearch import helpers as eshelpers
 from elasticsearch import exceptions as esExceptions
 from flask import request, jsonify
 from json import dumps
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
 import karp5.server.auth as auth
 import karp5.server.helper.helpers as helpers
 import karp5.server.translator.validatejson as validate
@@ -38,7 +38,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
 
         authdict, permitted = auth.validate_user()
         if lexiconName not in permitted:
-            raise eh.KarpAuthenticationError('You are not allowed to modify '
+            raise errors.KarpAuthenticationError('You are not allowed to modify '
                                              'the lexicon %s, only %s'
                                              % (lexiconName, permitted))
 
@@ -55,14 +55,14 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
             _logger.debug('updated db %s %s', db_loaded, db_error)
 
         if db_error:
-            raise eh.KarpDbError(db_error)
+            raise errors.KarpDbError(db_error)
 
     except eshelpers.BulkIndexError as e:
         # BulkIndexException is thrown for other parse errors
         # This exception has errors instead of error
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = [er['create']['error'] for er in e.errors]
-        raise eh.KarpElasticSearchError("Error during deletion %s.\n"
+        raise errors.KarpElasticSearchError("Error during deletion %s.\n"
                                         % '\n'.join(err))
 
     except (esExceptions.TransportError, esExceptions.RequestError) as e:
@@ -70,7 +70,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         # for invalid (empty) objects
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = [e.error]
-        raise eh.KarpElasticSearchError('Error during deletion. '
+        raise errors.KarpElasticSearchError('Error during deletion. '
                                         'Message: %s.\n'
                                         % '\n'.join(err))
 
@@ -78,7 +78,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = ['Oops, an unpredicted error', str(e),
                'Document not deleted']
-        raise eh.KarpGeneralError('Document not deleted',
+        raise errors.KarpGeneralError('Document not deleted',
                                   debug_msg=' '.join(err))
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans}
@@ -118,14 +118,14 @@ def update_doc(lexicon, _id, data=None, live=True):
         data = helpers.read_data()
 
     try:
-        index, typ = configM.get_lexicon_index(lexicon)
-        es = configM.elastic(lexicon=lexicon)
+        index, typ = conf_mgr.get_lexicon_index(lexicon)
+        es = conf_mgr.elastic(lexicon=lexicon)
         origin = es.get(index=index, doc_type=typ, id=_id)
     except Exception as e:
         _logger.warning("Looking for entry at the wrong place:")
         _logger.exception(e)
         msg = "The entry %s in lexicon %s was not found" % (_id, lexicon)
-        raise eh.KarpElasticSearchError(msg, debug_msg=msg+" in lexicon "+lexicon)
+        raise errors.KarpElasticSearchError(msg, debug_msg=msg+" in lexicon "+lexicon)
 
     if 'lexiconName' in origin['_source']:
         lexiconName = origin['_source']['lexiconName']
@@ -138,7 +138,7 @@ def update_doc(lexicon, _id, data=None, live=True):
     msg = data["message"]
 
     if lexicon not in permitted:
-        raise eh.KarpAuthenticationError('You are not allowed to modify the '
+        raise errors.KarpAuthenticationError('You are not allowed to modify the '
                                          'lexicon %s, only %s'
                                          % (lexicon, permitted),
                                          status_code=403)
@@ -162,11 +162,11 @@ def update_doc(lexicon, _id, data=None, live=True):
         _logger.exception(e)
         _logger.debug('index: %s, type: %s, id: %s', index, typ, _id)
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
-        raise eh.KarpElasticSearchError("Error during update. Message: %s.\n"
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
                                         % str(e))
     except Exception as e:
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
-        raise eh.KarpElasticSearchError("Unexpected error during update.")
+        raise errors.KarpElasticSearchError("Unexpected error during update.")
 
     db_loaded, db_error = update_db(_id, data_doc, user, msg, lexiconName,
                                     status='changed', date=date,
@@ -219,7 +219,7 @@ def add_multi_doc(lexicon, index=''):
     authdict, permitted = auth.validate_user()
     if lexicon not in permitted:
         errstr = 'You are not allowed to modify the lexicon %s'
-        raise eh.KarpAuthenticationError(errstr % lexicon,
+        raise errors.KarpAuthenticationError(errstr % lexicon,
                                          status_code=403)
     user = helpers.get_user()
     try:
@@ -245,7 +245,7 @@ def add_multi_doc(lexicon, index=''):
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, 'add')
-        raise eh.KarpElasticSearchError("Error during update. Message: %s.\n"
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
                                         % str(e))
 
     db_loaded, db_error = db.update_bulk(lexicon, sql_bulk)
@@ -276,7 +276,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
 
     # lexiconOrder = data_doc.get("lexiconOrder", None)
     if not lexiconName:
-        raise eh.KarpParsingError("The field lexiconName is empty, "
+        raise errors.KarpParsingError("The field lexiconName is empty, "
                                   "although it is required.")
 
     if suggestion:
@@ -289,7 +289,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
         authdict, permitted = auth.validate_user()
         if lexiconName not in permitted:
             errstr = 'You are not allowed to modify the lexicon %s'
-            raise eh.KarpAuthenticationError(errstr % lexiconName,
+            raise errors.KarpAuthenticationError(errstr % lexiconName,
                                              status_code=403)
 
         orgin_id = ''  # not a suggestion
@@ -313,10 +313,10 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, 'add')
-        raise eh.KarpElasticSearchError("Error during update. Message: %s.\n"
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
                                         % str(e))
     except Exception as e:
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans,
                'suggestion': suggestion, 'id': _id}

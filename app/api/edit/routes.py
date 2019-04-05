@@ -10,7 +10,7 @@ from flask import jsonify, request, session
 #import karp5.server.searching as searching
 #import karp5.server.suggestions as suggestions
 #import karp5.server.update as update
-#import karp5.server.helper.configmanager as configM
+#from karp5.config import mgr as conf_mgr
 #import karp5
 import logging
 from app.search import bp
@@ -195,14 +195,14 @@ def export2(lexicon, divsize=5000):
     @bp.route()
     def modes():
         jsonmodes = {}
-        for mode, info in configM.searchconfig.items():
+        for mode, info in conf_mgr.modes.items():
             jsonmodes[mode] = info.get('groups', {})
         return jsonify(jsonmodes)
 
     @bp.route()
     def groups():
         modes = {}
-        for name, val in configM.lexiconconfig.items():
+        for name, val in conf_mgr.lexicons.items():
             if name == "default":
                 continue
             if val['mode'] in modes:
@@ -222,7 +222,7 @@ def export2(lexicon, divsize=5000):
     @bp.route()
     def order():
         orderlist = []
-        for name, val in configM.lexiconconfig.conf.items():
+        for name, val in conf_mgr.lexicons.conf.items():
             orderlist.append((val['order'], '%s (%s)' % (name, val[0])))
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist
@@ -237,12 +237,12 @@ def export2(lexicon, divsize=5000):
 
         logging.debug('index page')
 
-        KARP_API_URL = configM.setupconfig.get('BACKEND_URL', 'https://ws.spraakbanken.gu.se/ws/karp/v5')
+        KARP_API_URL = conf_mgr.app_config.BACKEND_URL
         KARP_VERSION = "5"
         STYLES_CSS = 'static/api.css'
-        logging.debug("abs path: %s", configM.setupconfig['ABSOLUTE_PATH'])
+        logging.debug("abs path: %s", conf_mgr.app_config.ABSOLUTE_PATH)
 
-        # doc_dir = os.path.join(configM.setupconfig['ABSOLUTE_PATH'], 'src', 'html')
+        # doc_dir = os.path.join(conf_mgr.app_config.ABSOLUTE_PATH, 'src', 'html')
         # doc_file = 'api.md'
         #
         # with app.open_resource(os.path.join(doc_dir, doc_file)) as doc:

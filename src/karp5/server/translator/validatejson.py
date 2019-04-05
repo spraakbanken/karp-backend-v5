@@ -1,14 +1,14 @@
 # coding: utf-8
-#import karp5.server.helper.configmanager as configM
+#from karp5.config import mgr as conf_mgr
 import copy
-from .. import errorhandler as Err
 import json
 from re import findall
 import sys
 import unicodedata
 
 from karp5.config import mgr as conf_mgr
-# lexiconconf = configM.lexiconconfig
+from karp5 import errors
+# lexiconconf = conf_mgr.lexicons
 
 
 def validate_json(doc, lexicon):
@@ -60,7 +60,7 @@ def validate_xml(xml, lexicon):
         for tag, attrs in findall('<\/?\s*(\S*?)(\s+.*?)?>', xml):
             if tag not in conf_mgr.lexicons.get(lexicon).get('usedtags', []):
                 # raise Exception('Data contains unapproved tags: %s' % tag)
-                raise Err.KarpParsingError('Data contains unapproved tags: %s'
+                raise errors.KarpParsingError('Data contains unapproved tags: %s'
                                            % tag)
     elif isinstance(xml, list):
         for i, x in enumerate(xml):

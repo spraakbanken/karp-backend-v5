@@ -1,12 +1,12 @@
 from elasticsearch import exceptions as esExceptions
-import karp5.server.errorhandler as eh
+from karp5 import errors
 from karp5.dbhandler.dbhandler import dbselect
 from flask import request, jsonify
 from json import loads
 import logging
 from karp5.server.auth import validate_user
 import karp5.server.helper.helpers as helpers
-import karp5.server.helper.configmanager as configM
+from karp5.config import mgr as conf_mgr
 import karp5.server.update as update
 
 
@@ -30,7 +30,7 @@ def checksuggestions():
     updates = []
     for lexicon in lexicons:
         # add updates from lexicons that are kept in sql
-        if configM.get_lexicon_sql(lexicon):
+        if conf_mgr.get_lexicon_sql(lexicon):
             updates.extend(dbselect(lexicon, suggestion=True, status=status,
                                     max_hits=size))
 
@@ -44,11 +44,11 @@ def acceptsuggestion(lexicon, _id):
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
-        raise eh.KarpElasticSearchError("Error during update. Document not saved.",
+        raise errors.KarpElasticSearchError("Error during update. Document not saved.",
                                         debug_msg=str(e))
     except Exception as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
 
 def acceptmodified(lexicon, _id):
@@ -64,24 +64,24 @@ def acceptmodified(lexicon, _id):
         _logger.exception(e)
         update.handle_update_error(e, {"id": _id, "data": data},
                                    helpers.get_user(), 'accept modified')
-        raise eh.KarpElasticSearchError("Error during update. Document not saved.",
+        raise errors.KarpElasticSearchError("Error during update. Document not saved.",
                                         debug_msg=str(e))
     except Exception as e:
         _logger.exception(e)
         update.handle_update_error(e, {"id": _id, "data": data},
                                    helpers.get_user(), 'accept modified')
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
 
 def savesuggestion(lexicon, _id, status='accepted', source=''):
-    sugg_index, typ = configM.get_lexicon_suggindex(lexicon)
-    es = configM.elastic(lexicon=lexicon)
+    sugg_index, typ = conf_mgr.get_lexicon_suggindex(lexicon)
+    es = conf_mgr.elastic(lexicon=lexicon)
     suggestion = es.get(index=sugg_index, doc_type=typ, id=_id)
     auth, permitted = validate_user()
     set_lexicon = suggestion["_source"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, 'rejectsuggestion', _id)
     if lexicon not in permitted:
-        raise eh.KarpAuthenticationError('You are not allowed to update lexicon %s'
+        raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s'
                                          % lexicon)
 
     origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
@@ -120,20 +120,20 @@ def rejectsuggestion(lexicon, _id):
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
     except Exception as e:
         # if error occurs here, the suggestion is not in sql
-        raise eh.KarpDbError('Rejection not found',
+        raise errors.KarpDbError('Rejection not found',
                              'Rejection not found: %s' % str(e))
     auth, permitted = validate_user()
     set_lexicon = origin["doc"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, 'rejectsuggestion', _id)
     if lexicon not in permitted:
-        raise eh.KarpAuthenticationError('You are not allowed to update lexicon %s'
+        raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s'
                                          % lexicon)
     try:
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
         # delete from suggestion index
         # the user log in is checked in delete_entry
         # delete_entry raises exception if ES fails
-        sugg_index, typ = configM.get_lexicon_suggindex(lexicon)
+        sugg_index, typ = conf_mgr.get_lexicon_suggindex(lexicon)
 
         ans = update.delete_entry(lexicon, _id, sql=False, live=False,
                                   suggestion=True)
@@ -150,11 +150,11 @@ def rejectsuggestion(lexicon, _id):
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'reject')
-        raise eh.KarpElasticSearchError("Error during update. Document not saved.",
+        raise errors.KarpElasticSearchError("Error during update. Document not saved.",
                                         debug_msg=str(e))
     except Exception as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'reject')
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))
 
 
 def checksuggestion(lexicon, _id):
@@ -163,4 +163,4 @@ def checksuggestion(lexicon, _id):
         return jsonify({'updates': dbselect(lexicon, suggestion=True,
                         _id=_id, max_hits=1)})
     except Exception as e:
-        raise eh.KarpGeneralError(str(e))
+        raise errors.KarpGeneralError(str(e))

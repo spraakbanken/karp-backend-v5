@@ -2,15 +2,17 @@ import json
 import logging
 import os
 import re
+import copy
 
 from elasticsearch import Elasticsearch
 
 import six
 
 # import karp5.server.helper.configpaths as C
-import karp5.server.errorhandler as eh
-# from karp5.server.translator import fieldmapping as F
+from karp5 import errors
+# from karp5.server.translator
 from karp5.instance_info import get_instance_path
+from .errors import KarpConfigException
 
 
 _logger = logging.getLogger('karp5')
@@ -27,9 +29,22 @@ def set_defaults(data):
                     data_val[def_key] = def_val
 
 
-configdir = os.path.join(get_instance_path(), 'config')
+# configdir = os.path.join(get_instance_path(), 'config')
+
+def complement_dict(adict, bdict):
+    " Adds values from bdict into adict unless the key is already there "
+    for key, val in bdict.items():
+        if key not in adict:
+            adict[key] = val
 
 
+def merge_dict(adict, bdict):
+    " Merges bdict into adict by taking the union of the vaule lists "
+    for key, val in bdict.items():
+        if key in adict:
+            adict[key] = list(set(adict[key]) | set(val))
+        else:
+            adict[key] = val
 
 
 class ConfigManager(object):
@@ -40,26 +55,57 @@ class ConfigManager(object):
         self.field = {}
         self.defaultfields = {}
         self.app_config = None
+        self.configdir = os.path.join(get_instance_path(), 'config')
         self.load_config()
 
     def load_config(self):
-        with open(os.path.join(configdir, 'modes.json')) as fp:
+        with open(os.path.join(self.configdir, 'modes.json')) as fp:
             self.modes = json.load(fp)
         set_defaults(self.modes)
 
-        with open(os.path.join(configdir, 'lexiconconf.json')) as fp:
+        with open(os.path.join(self.configdir, 'lexiconconf.json')) as fp:
 	        self.lexicons = json.load(fp)
         set_defaults(self.lexicons)
 
-        with open(os.path.join(configdir, 'config.json')) as fp:
+        with open(os.path.join(self.configdir, 'config.json')) as fp:
 	        self.config = json.load(fp)
 
-        with open(os.path.join(configdir, 'mappings/fieldmappings_default.json')) as fp:
+        with open(os.path.join(self.configdir, 'mappings/fieldmappings_default.json')) as fp:
 	        self.defaultfields = json.load(fp)
 
-        with open(os.path.join(configdir, 'fieldmappings.json')) as fp:
-            self.fields = json.load(fp)
-        
+        # with open(os.path.join(self.configdir, 'fieldmappings.json')) as fp:
+        #     self.fields = json.load(fp)
+        self.fields = self.read_fieldmappings()
+
+    def read_fieldmappings(self):
+        fields = {}
+        for mode in self.modes.keys():
+            fields[mode] = self.read_fieldmappings_mode(mode)
+        return fields
+
+    def read_fieldmappings_mode(self, mode):
+        " Open a mode's config file and combine them "
+        default_fields = copy.deepcopy(self.defaultfields)
+        # step through the group members if the mode is an aliasmode
+        # or use it's own config file if it's a indexmode
+        all_fields = {}
+        print("create mode '{}'".format(mode))
+        for index in self.modes[mode].get('groups', [mode]):
+            try:
+                print("reading fieldmappings for index '{}'".format(index))
+                with open(os.path.join(
+                    self.configdir, 'mappings/fieldmappings_{}.json'.format(index))
+                ) as fp:
+                    fields = json.load(fp)
+                merge_dict(all_fields, fields)
+            except IOError:
+                msg = "Couldn't find fieldmappings for mode '{}'".format(index)
+                print(msg)
+                raise KarpConfigException(msg)
+
+        complement_dict(all_fields, default_fields)
+        return all_fields
+
     def override_elastic_url(self, elastic_url):
         for mode, mode_settings in six.viewitems(self.modes):
             mode_settings['elastic_url'] = elastic_url
@@ -88,8 +134,8 @@ class ConfigManager(object):
             _logger.error(msg+": ")
             _logger.exception(e)
             if failonerror:
-                raise eh.KarpGeneralError(msg)
-            return 
+                raise errors.KarpGeneralError(msg)
+            return
 
 
 #" Default fields. Remember to add 'anything' to each index mapping "
@@ -107,7 +153,7 @@ class ConfigManager(object):
             func = getattr(classmodule, funcname)
             return func
         except Exception as e:
-            _logger.debug('Could not find %s in %s', funcname, searchconfig[mode]['src'])
+            _logger.debug('Could not find %s in %s', funcname, self.modes[mode]['src'])
             _logger.debug(e)
             return default
 
@@ -130,7 +176,7 @@ class ConfigManager(object):
         # looks up field in modes.json, eg "autocomplete"
         # returns the json path
         fields = self.searchconf(mode, field)
-        return sum([self..lookup_multiple(f, mode) for f in fields], [])
+        return sum([self.lookup_multiple(f, mode) for f in self.fields], [])
 
 
     def all_searchfield(self, mode):
@@ -192,7 +238,7 @@ class ConfigManager(object):
     def get_lexiconlist(self, mode):
         lexiconlist = set()
         grouplist = [mode]
-        modeconf = self.searchconfig.get(mode, {})
+        modeconf = self.modes.get(mode, {})
         for group in modeconf.get('groups', []):
             grouplist.append(group)
         for lex, lexconf in self.lexicons.items():
@@ -202,9 +248,9 @@ class ConfigManager(object):
         return list(lexiconlist)
 
 
-    def get_lexicon_mode(lexicon):
+    def get_lexicon_mode(self, lexicon):
         try:
-            return C.lexiconconfig[lexicon]['mode']
+            return self.lexicons[lexicon]['mode']
         except Exception:
             # TODO what to return
             _logger.warning("Lexicon %s not in conf" % lexicon)
@@ -214,15 +260,17 @@ class ConfigManager(object):
 
 
 
-absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
-standardmode = C.config['SETUP']['STANDARDMODE']
+# absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
+# standardmode = C.config['SETUP']['STANDARDMODE']
 
 
-    def lookup(self, field, mode=standardmode, own_fields={}):
+    # def lookup(self, field, mode=standardmode, own_fields={}):
+    def lookup(self, field, mode, own_fields={}):
         return self.lookup_spec(field, mode, own_fields=own_fields)[0]
 
 
-    def lookup_spec(self, field, mode=standardmode, own_fields={}):
+    # def lookup_spec(self, field, mode=standardmode, own_fields={}):
+    def lookup_spec(self, field, mode, own_fields={}):
         try:
             val = self.get_value(field, mode, own_fields=own_fields)
             if type(val) is dict:
@@ -233,10 +281,11 @@ standardmode = C.config['SETUP']['STANDARDMODE']
             msg = "Field %s not found in mode %s" % (field, mode)
             _logger.error(msg+": ")
             _logger.exception(e)
-            raise eh.KarpGeneralError(msg)
+            raise errors.KarpGeneralError(msg)
 
 
-    def lookup_multiple_spec(self, field, mode=standardmode):
+    # def lookup_multiple_spec(self, field, mode=standardmode):
+    def lookup_multiple_spec(self, field, mode):
         try:
             val = self.get_value(field, mode)
             if type(val) is dict:
@@ -247,10 +296,11 @@ standardmode = C.config['SETUP']['STANDARDMODE']
             msg = "Field %s not found in mode %s" % (field, mode)
             _logger.error(msg+": ")
             _logger.exception(e)
-            raise eh.KarpGeneralError(msg)
+            raise errors.KarpGeneralError(msg)
 
 
-    def lookup_multiple(self, field, mode=standardmode):
+    # def lookup_multiple(self, field, mode=standardmode):
+    def lookup_multiple(self, field, mode):
         return self.lookup_multiple_spec(field, mode)[0]
 
 
@@ -264,7 +314,7 @@ standardmode = C.config['SETUP']['STANDARDMODE']
         if field in mappings:
             return mappings[field]
         elif group is not None:
-            return get_value(group.group(1), mode, own_fields=own_fields)
+            return self.get_value(group.group(1), mode, own_fields=own_fields)
         else:
             import parsererror as PErr
             msg = ("Could not find field %s for mode %s, %s"

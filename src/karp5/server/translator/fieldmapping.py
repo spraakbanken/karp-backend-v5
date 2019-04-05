@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import os
-import karp5.server.errorhandler as eh
+from karp5 import errors
 import karp5.server.helper.configpaths as C
 from karp5.instance_info import get_instance_path
 
@@ -34,7 +34,7 @@ def lookup_spec(field, mode=standardmode, own_fields={}):
         msg = "Field %s not found in mode %s" % (field, mode)
         _logger.error(msg+": ")
         _logger.exception(e)
-        raise eh.KarpGeneralError(msg)
+        raise errors.KarpGeneralError(msg)
 
 
 def lookup_multiple_spec(field, mode=standardmode):
@@ -48,7 +48,7 @@ def lookup_multiple_spec(field, mode=standardmode):
         msg = "Field %s not found in mode %s" % (field, mode)
         _logger.error(msg+": ")
         _logger.exception(e)
-        raise eh.KarpGeneralError(msg)
+        raise errors.KarpGeneralError(msg)
 
 
 def lookup_multiple(field, mode=standardmode):

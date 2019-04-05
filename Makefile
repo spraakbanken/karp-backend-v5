@@ -1,4 +1,4 @@
-default: test
+default: test clean clean-pyc
 
 venv: venv/made
 
@@ -16,8 +16,12 @@ venv/made-dev: setup.py
 dev-run: venv
 	. ./venv/bin/activate; python run.py 8081
 
-test: venv-dev
+test: venv-dev clean-pyc
 	./venv/bin/pytest --cov=src --cov-report=term-missing tests
+
+clean: clean-pyc
+clean-pyc:
+	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
 	. ./venv/bin/activate; pip-compile

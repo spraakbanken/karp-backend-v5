@@ -3,7 +3,7 @@ import six
 import logging
 
 from email.mime.text import MIMEText
-import karp5.server.helper.configmanager as configM
+from karp5.config import mgr as conf_mgr
 # Sends emails from the adress specified in dbconf.py
 
 _logger = logging.getLogger('karp5')
@@ -11,7 +11,7 @@ _logger = logging.getLogger('karp5')
 
 def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
-    sender_email = configM.config['DB']['SENDER_EMAIL']
+    sender_email = conf_mgr.app_config.SENDER_EMAIL
     try:
         if isinstance(message, six.text_type):
             message = message.encode('utf-8')
@@ -26,8 +26,8 @@ def send_notification(email, subject, message):
             emaillist = [email]
         msg['To'] = emailstring
         smtp_server = 'localhost'
-        if 'SMTP_SERVER' in configM.config['DB']:
-            smtp_server = configM.config['DB']['SMTP_SERVER']
+        if conf_mgr.app_config.SMTP_SERVER:
+            smtp_server = conf_mgr.app_config.SMTP_SERVER
         _logger.debug('Using smtp server: {}'.format(smtp_server))
         s = smtplib.SMTP(smtp_server)
         s.sendmail(sender_email, emaillist, msg.as_string())

@@ -15,11 +15,11 @@
 #     sys.path.append(project_dir)
 # 
 # from src.main_sb import app as real_application, load_urls
-# import karp5.server.helper.configmanager as configM
+# from karp5.config import mgr as conf_mgr
 # 
 # load_urls()
 # 
 # 
 # def application(env, resp):
-#     env['SCRIPT_NAME'] = configM.setupconfig['SCRIPT_PATH']
+#     env['SCRIPT_NAME'] = conf_mgr.app_config.SCRIPT_PATH
 #     return real_application(env, resp)

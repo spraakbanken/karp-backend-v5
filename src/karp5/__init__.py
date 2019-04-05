@@ -13,7 +13,7 @@ from .instance_info import get_instance_path
 from flask import Flask
 
 from karp5.config import Config, mgr as conf_mgr
-from karp5.server.helper import configmanager
+# from karp5.server.helper import configmanager
 
 
 __version__ = '5.8.0'
@@ -26,12 +26,12 @@ def create_app(config_class = Config):
 
     #configmanager.set_app_config(config_class)
     conf_mgr.app_config = config_class
-    
+
     print('app.config = {}'.format(app.config))
 
     if app.config['ELASTICSEARCH_URL']:
         from karp5.server.helper import configmanager
-        configmanager.override_elastic_url(app.config['ELASTICSEARCH_URL'])
+        # configmanager.override_elastic_url(app.config['ELASTICSEARCH_URL'])
         conf_mgr.override_elastic_url(app.config['ELASTICSEARCH_URL'])
 
     from karp5.server.helper import flaskhelper
