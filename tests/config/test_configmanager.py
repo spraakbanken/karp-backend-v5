@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import six
 
 from karp5 import config 

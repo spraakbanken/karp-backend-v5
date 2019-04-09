@@ -2,6 +2,7 @@
 """ The backend, redirects url calls to the appropriate modules.
     Is also responsible for which ES node to query.
 """
+from __future__ import unicode_literals
 
 from flask import jsonify, request, session
 import karp5.server.checkdbhistory as checkdbhistory
@@ -76,11 +77,6 @@ def init(route):
     @route('<lexicon>')
     def export(lexicon):
         return searching.export(lexicon)
-
-    # TODO remove For seeing the posted data formated
-    @route('<lexicon>/<divsize>')
-    def export2(lexicon, divsize=5000):
-        return searching.export2(lexicon, divsize)
 
     # For deleting a lexical entry from elastic and sql
     @route('<lexicon>/<_id>')
@@ -197,14 +193,14 @@ def init(route):
     @route()
     def modes():
         jsonmodes = {}
-        for mode, info in configM.searchconfig.items():
+        for mode, info in list(configM.searchconfig.items()):
             jsonmodes[mode] = info.get('groups', {})
         return jsonify(jsonmodes)
 
     @route()
     def groups():
         modes = {}
-        for name, val in configM.lexiconconfig.items():
+        for name, val in list(configM.lexiconconfig.items()):
             if name == "default":
                 continue
             if val['mode'] in modes:
@@ -212,7 +208,7 @@ def init(route):
             else:
                 modes[val['mode']] = ['%s (%s)' % (name, val['order'])]
         olist = ''
-        for mode, kids in modes.items():
+        for mode, kids in list(modes.items()):
             olist += ('<li>%s<ul>%s</ul></li>'
                       % (mode, '\n'.join('<li>%s</li>' % kid for kid in kids)))
         return '<ul> %s </ul>' % olist
@@ -224,7 +220,7 @@ def init(route):
     @route()
     def order():
         orderlist = []
-        for name, val in configM.lexiconconfig.conf.items():
+        for name, val in list(configM.lexiconconfig.conf.items()):
             orderlist.append((val['order'], '%s (%s)' % (name, val[0])))
         olist = '\n'.join('<li>%d: %s</li>' % on for on in sorted(orderlist))
         return '<ul> %s </ul>' % olist

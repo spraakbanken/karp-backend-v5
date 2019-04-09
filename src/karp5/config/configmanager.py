@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import object
 import json
 import logging
 import os
@@ -33,7 +35,7 @@ configdir = os.path.join(get_instance_path(), 'config')
 
 class ConfigManager(object):
     def __init__(self):
-        self.moded = {}
+        self.modes = {}
         self.config = {}
         self.lexicons = {}
         self.defaultfields = {}
@@ -191,7 +193,7 @@ def get_lexiconlist(mode):
     modeconf = searchconfig.get(mode, {})
     for group in modeconf.get('groups', []):
         grouplist.append(group)
-    for lex, lexconf in C.lexiconconfig.items():
+    for lex, lexconf in list(C.lexiconconfig.items()):
         if lexconf.get('mode', '') in grouplist:
             lexiconlist.add(lex)
 

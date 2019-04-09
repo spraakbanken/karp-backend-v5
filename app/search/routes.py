@@ -2,6 +2,7 @@
 """ The backend, redirects url calls to the appropriate modules.
     Is also responsible for which ES node to query.
 """
+from __future__ import unicode_literals
 
 from flask import jsonify, request, session
 #from karp5.server.helper.flaskhelper import app

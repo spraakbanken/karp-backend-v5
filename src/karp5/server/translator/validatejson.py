@@ -112,10 +112,10 @@ def compare(orig, obj):
 
 if __name__ == '__main__':
     for fil in sys.argv[1:]:
-        print 'read', fil
+        print('read', fil)
         objs = json.loads(open(fil).read())
         for i, obj in enumerate(objs):
             orig = copy.deepcopy(obj)
             validate_json(obj, 'saldo')
             compare(orig, obj)
-        print '%d objects tested, OK' % (i+1)
+        print('%d objects tested, OK' % (i+1))

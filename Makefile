@@ -2,25 +2,31 @@ default: test
 
 venv: venv/made
 
-venv-dev: venv venv/made-dev
+install-dev: venv venv/req-dev.installed
+install: venv venv/req.installed
 
-venv/made: requirements.txt
-	test -d venv || virtualenv --python python2.7 venv
-	. ./venv/bin/activate; pip install pip-tools; pip install -Ur $<
+venv/made: 
+	test -d venv || python -m venv venv
+	venv/bin/python -m pip install pip-tools
 	touch $@
 
-venv/made-dev: setup.py
-	. ./venv/bin/activate; pip install -e .[dev]
+venv/req.installed: requirements.txt
+	venv/bin/python -m pip install -Ur $<
 	touch $@
 
-dev-run: venv
-	. ./venv/bin/activate; python run.py 8081
+venv/req-dev.installed: setup.py
+	venv/bin/python -m pip install -e .[dev]
+	touch $@
 
-test: venv-dev
-	./venv/bin/pytest --cov=src --cov-report=term-missing tests
+dev-run: install-dev
+	venv/bin/python run.py
+
+test: install-dev
+	venv/bin/python -m pytest --cov=src --cov-report=term-missing tests
+	# venv/bin/python -m pytest tests
 
 prepare-release: venv setup.py
-	. ./venv/bin/activate; pip-compile
+	venv/bin/activate; pip-compile
 
 bump-version-patch:
 	bumpversion patch
