@@ -1,6 +1,7 @@
-from .doc_converter import DocConverter  # noqa: F401
-from .doc_converter import doc_to_es  # noqa: F401
-from .doc_converter import doc_to_sql  # noqa: F401
+from __future__ import unicode_literals
+from .doc_converter import DocConverter
+from .doc_converter import doc_to_es
+from .doc_converter import doc_to_sql
 
 from .autoupdates import auto_update  # noqa: F401
 from .autoupdates import auto_update_child  # noqa: F401

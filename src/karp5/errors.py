@@ -2,6 +2,7 @@
     or the auth server.
     Errors of type KarpException will be shown to the user
 """
+from __future__ import unicode_literals
 
 
 class KarpException(Exception):

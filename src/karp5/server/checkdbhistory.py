@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import str
 from flask import jsonify
 import logging
 from karp5 import errors

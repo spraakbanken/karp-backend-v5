@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 
 def walk(d, path):
@@ -24,5 +25,5 @@ def walk_exception(d, path):
 def walk2(d, path):
     try:
         return walk_exception(d, path)
-    except AttributeError, IndexError:
+    except AttributeError as IndexError:
         return None

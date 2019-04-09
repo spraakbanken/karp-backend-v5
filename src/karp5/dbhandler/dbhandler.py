@@ -3,6 +3,8 @@
 Connect to the sql data base and interact with it.
 Emails the admins (config/config.json) if an error occurs.
 """
+from __future__ import unicode_literals
+from builtins import str
 import datetime
 import json
 import logging
@@ -244,7 +246,7 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, suggestion=True)
-        if isinstance(msg, unicode):
+        if isinstance(msg, str):
             msg = msg.encode('utf-8')
         conn = engine.connect()
         operands = []

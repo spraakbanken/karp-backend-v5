@@ -1,11 +1,20 @@
-from flask import request, session
-import json
-import hashlib
-import logging
-from karp5 import errors
-from karp5.config import mgr as conf_mgr
-import urllib
-from urllib2 import urlopen, HTTPError
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+
+import json  # noqa: E402
+import hashlib  # noqa: E402
+import logging  # noqa: E402
+
+from urllib.request import urlopen  # noqa: E402
+from urllib.error import HTTPError  # noqa: E402
+import urllib.parse  # noqa: E402
+
+
+from flask import request, session  # noqa: E402
+
+from karp5 import errors  # noqa: E402
+from karp5.config import mgr as conf_mgr  # noqa: E402
 
 
 _logger = logging.getLogger('karp5')
@@ -43,7 +52,7 @@ def check_user(force_lookup=False):
 
     try:
         _logger.debug("Auth server: " + server)
-        contents = urlopen(server, urllib.urlencode(postdata)).read()
+        contents = urlopen(server, urllib.parse.urlencode(postdata)).read()
         # _logger.debug("Auth answer: "+str(contents))
         auth_response = json.loads(contents)
     except HTTPError as e:
@@ -82,7 +91,7 @@ def validate_user(mode="write"):
     auth_response = user_auth['authenticated']
 
     allowed = []
-    for lex, val in user_auth['lexicon_list'].items():
+    for lex, val in list(user_auth['lexicon_list'].items()):
         if val[mode]:
             allowed.append(lex)
 

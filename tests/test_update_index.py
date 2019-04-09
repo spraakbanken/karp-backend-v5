@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import io
 import json
 from karp5.document import DocConverter

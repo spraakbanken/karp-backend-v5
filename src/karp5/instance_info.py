@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 
 if os.environ.get('KARP5_INSTANCE_PATH'):
