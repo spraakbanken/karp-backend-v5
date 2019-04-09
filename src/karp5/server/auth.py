@@ -1,6 +1,6 @@
 from flask import request, session
 from json import loads
-import md5
+import hashlib
 import logging
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
@@ -38,7 +38,7 @@ def check_user(force_lookup=False):
         postdata["username"] = user
         postdata["password"] = pw
         secret = conf_mgr.app_config.AUTH_SECRET
-        postdata["checksum"] = md5.new(user + pw + secret).hexdigest()
+        postdata["checksum"] = hashlib.md5(user + pw + secret).hexdigest()
         server = conf_mgr.app_config.AUTH_SERVER
 
     try:
