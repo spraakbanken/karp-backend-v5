@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import logging
 import re
@@ -67,7 +69,7 @@ def get_value(field, mode, own_fields=''):
     elif group is not None:
         return get_value(group.group(1), mode, own_fields=own_fields)
     else:
-        import parsererror as PErr
+        from . import parsererror as PErr
         msg = ("Could not find field %s for mode %s, %s"
                % (field, mode, mappings))
         _logger.debug(msg)

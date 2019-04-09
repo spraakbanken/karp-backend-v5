@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 DEBUG = True
 SECRET_KEY = 'super-secret-key'
 

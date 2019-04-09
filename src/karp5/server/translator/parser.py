@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """ Responsible for the translation from the query api to elastic queries """
+from __future__ import unicode_literals
+from builtins import range
 import logging
 import re
 
@@ -91,7 +93,7 @@ def parse_extra(settings):
                  'show', 'show_all', 'status', 'index', 'cardinality',
                  'highlight', 'format', 'export', 'mode', 'center', 'multi',
                  'date', 'statsize']
-    for k in request.args.keys():
+    for k in list(request.args.keys()):
         if k not in available:
             raise PErr.QueryError("Option not recognized: %s.\
                                    Available options: %s"
@@ -269,7 +271,7 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
 
     # Finally, append all nested queries.
     # Exclude queries already used inside others
-    for ix in set(sum(tmp.values(), [])):
+    for ix in set(sum(list(tmp.values()), [])):
         if nesteds[ix]:
             _logger.debug('add nested %s: %s', ix, nesteds[ix])
             exps.append(nesteds[ix])
@@ -552,7 +554,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
             to_add_exist["aggs"] = to_add
             to_add_missing["aggs"] = to_add
 
-        for key, val in bucket_settings.items():
+        for key, val in list(bucket_settings.items()):
             to_add_exist[terms][key] = val
             if key == "order":
                 to_add_missing["missing"][key] = val
@@ -578,7 +580,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     else:
         agg = to_add
 
-    for key, val in q.items():
+    for key, val in list(q.items()):
         agg["q_statistics"][key] = val
 
     return {"aggs": agg}, more
@@ -613,7 +615,7 @@ def adapt_query(size, _from, es, query, kwargs):
         # Construct an empty query to ES, to get an return object
         # and the total number of hits
         q_kwargs = {'size': 0, 'from_': 0}
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             if k == 'query':
                 q_kwargs['body'] = v
             elif k not in ['size', 'from_']:

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import dotenv
 dotenv.load_dotenv(dotenv_path='.env', verbose=True)
 

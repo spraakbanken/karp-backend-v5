@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import object
 import logging
 import datetime
 
@@ -35,7 +37,7 @@ class ConverterMeta(type):
 
 
 @six.add_metaclass(ConverterMeta)
-class DocConverter:
+class DocConverter(object):
     LEXICONS = None
 
     @classmethod

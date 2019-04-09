@@ -1,11 +1,15 @@
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
 from flask import request, session
 from json import loads
-import md5
+import hashlib
 import logging
 import karp5.server.errorhandler as eh
 import karp5.server.helper.configmanager as configM
-import urllib
-from urllib2 import urlopen, HTTPError
+import urllib.request, urllib.parse, urllib.error
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 
 _logger = logging.getLogger('karp5')
@@ -38,12 +42,12 @@ def check_user(force_lookup=False):
         postdata["username"] = user
         postdata["password"] = pw
         secret = configM.config['AUTH']['AUTH_SECRET']
-        postdata["checksum"] = md5.new(user + pw + secret).hexdigest()
+        postdata["checksum"] = hashlib.md5(user + pw + secret).hexdigest()
         server = configM.config['AUTH']['AUTH_SERVER']
 
     try:
         _logger.debug("Auth server: " + server)
-        contents = urlopen(server, urllib.urlencode(postdata)).read()
+        contents = urlopen(server, urllib.parse.urlencode(postdata)).read()
         # _logger.debug("Auth answer: "+str(contents))
         auth_response = loads(contents)
     except HTTPError as e:
@@ -82,7 +86,7 @@ def validate_user(mode="write"):
     auth_response = user_auth['authenticated']
 
     allowed = []
-    for lex, val in user_auth['lexicon_list'].items():
+    for lex, val in list(user_auth['lexicon_list'].items()):
         if val[mode]:
             allowed.append(lex)
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import str
 from flask import request
 from json import loads
 import logging

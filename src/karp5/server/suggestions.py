@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from builtins import str
 from elasticsearch import exceptions as esExceptions
 import karp5.server.errorhandler as eh
 from karp5.dbhandler.dbhandler import dbselect
