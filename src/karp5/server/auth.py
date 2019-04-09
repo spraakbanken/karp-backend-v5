@@ -2,14 +2,20 @@ from __future__ import unicode_literals
 from future import standard_library
 
 standard_library.install_aliases()
-from flask import request, session
-import json
-import hashlib
-import logging
-from karp5 import errors
-from karp5.config import mgr as conf_mgr
-import urllib
-from urllib2 import urlopen, HTTPError
+
+import json  # noqa: E402
+import hashlib  # noqa: E402
+import logging  # noqa: E402
+
+from urllib.request import urlopen  # noqa: E402
+from urllib.error import HTTPError  # noqa: E402
+import urllib.parse  # noqa: E402
+
+
+from flask import request, session  # noqa: E402
+
+from karp5 import errors  # noqa: E402
+from karp5.config import mgr as conf_mgr  # noqa: E402
 
 
 _logger = logging.getLogger("karp5")

@@ -36,6 +36,7 @@ setup(
         "pymysql",
         "markdown",
         "python-dotenv",
+        "future",
     ],
     extras_require={
         "dev": [
