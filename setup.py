@@ -42,6 +42,8 @@ setup(
         'dev': [
             'pytest',
             'pytest-cov',
+            # 'elasticsearch_test-py',
+            # 'urllib3',
         ]
     },
     include_package_data=True,
