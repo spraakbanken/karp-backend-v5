@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import json
 
 def get_json(client, path, status=(200,300)):

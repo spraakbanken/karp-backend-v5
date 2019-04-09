@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from builtins import object
 import json
 import logging
 from . import errors
@@ -8,7 +10,7 @@ from . import errors
 _logger = logging.getLogger('karp5')
 
 
-class Operator:
+class Operator(object):
     """ A class for representing complete and incomplet elasticsearch objects
         Construct an object by giving te expressiontype and the operator.
         Complete it by giving it field name(s) and operand(s) using (one or

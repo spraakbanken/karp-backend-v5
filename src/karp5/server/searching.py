@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """ Methods for querying the data base """
+from __future__ import unicode_literals
+# from builtins import chr
+from builtins import str
+# from builtins import range
 import copy
 import elasticsearch
 import logging
 import re
-from flask import request, jsonify, Response, stream_with_context, copy_current_request_context
+from flask import request, jsonify, Response, stream_with_context
 from itertools import chain
-from json import loads, dumps
+import json
 
 import karp5.dbhandler.dbhandler as db
 from karp5 import errors
@@ -17,12 +21,13 @@ import karp5.server.helper.helpers as helpers
 from karp5.server.translator import parser
 from karp5.server.translator.errors import AuthenticationError, QueryError
 
-from gevent.threadpool import ThreadPool
-from gevent.queue import Queue, Empty
-import functools
-import sys
+# from gevent.threadpool import ThreadPool
+# from gevent.queue import Queue, Empty
+# import functools
+# import sys
 # import time
 
+from karp5 import util
 
 _logger = logging.getLogger('karp5')
 
@@ -332,7 +337,7 @@ def statlist():
         ans = es.search(index=index, body=elasticq,
                         search_type="query_then_fetch", size=0)
         tables = []
-        for key, val in ans['aggregations']['q_statistics'].items():
+        for key, val in list(ans['aggregations']['q_statistics'].items()):
             if key.startswith('STAT_'):
                 tables.extend(generate_table(val, []))
         # the length of tables might be longer than size, so truncate it
@@ -373,7 +378,7 @@ def generate_table(dictionary, table):
     name = dictionary.get('key', '')
     end = True
     tables = []
-    for key, val in dictionary.items():
+    for key, val in list(dictionary.items()):
         if key.startswith('STAT_'):
             end = False
             tables.extend(generate_table(val, table + [name]))
@@ -398,7 +403,7 @@ def formatpost():
     request.get_data()
     data = request.data
     try:
-        data = loads(data)
+        data = json.loads(data)
     except ValueError as e:
         raise errors.KarpParsingError(str(e))
 
@@ -516,7 +521,7 @@ def clean_highlight(ans):
     stop_offset = 9  # The number of extra tokens added by the <em> tags
     for n, hit in enumerate(ans.get('hits', {}).get('hits', [])):
         # _logger.debug('CLEAN hit %s\n\n\n' % hit)
-        for field, texts in hit.get('highlight', {}).items():
+        for field, texts in list(hit.get('highlight', {}).items()):
             # _logger.debug('CLEAN texts %s: %s' % (field, texts))
             if field == 'lexiconName':
                 del ans['hits']['hits'][n]['highlight'][field]
@@ -561,11 +566,9 @@ def testquery():
         start = settings['start'] if 'start' in settings\
             else settings['page'] * settings['size']
         elasticq = parser.parse()
-        return dumps(elasticq) + dumps({'sort': sort, '_from': start,
-                                        'size': settings['size'],
-                                        'version': 'true'
-                                        }
-                                       )
+        return json.dumps(elasticq) + json.dumps({'sort': sort, '_from': start,
+                                                  'size': settings['size'],
+                                                  'version': 'true'})
     except Exception as e:  # catch *all* exceptions
         # TODO only catch relevant exceptions
         _logger.exception(e)
@@ -630,7 +633,8 @@ def get_context(lexicon):
     origentry_sort = [key for key in centerentry['sort'] if key is not None][0]
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
-    sortvalue = control_escape(origentry_sort)
+    # TODO test this!
+    sortvalue = util.escape_control(origentry_sort)
     _logger.debug(u'Orig entry escaped key %s', sortvalue)
 
     # Construct queries to ES
@@ -702,22 +706,6 @@ def go_to_sortkey(hits, center_id):
     return hits[n:]
 
 
-# Replace with a less hacky function? originally from:
-# https://stackoverflow.com/questions/9778550/which-is-the-correct-way-to-encode-escape-characters-in-python-2-without-killing
-def control_escape(s):
-    """ Escapes control characters so that they can be parsed by a json parser.
-    Eg. \u0001 => \\u0001
-    Note that u'\u0001'.encode('unicode_escape') will encode the string as
-    '\\x01', which do not work for json. Hence the .replace('\\x', '\u00').
-    """
-    # the set of characters migth need to be extended
-    if type(s) is not str and type(s) is not unicode:
-        s = str(s)
-    control_chars = [unichr(c) for c in range(0x20)]
-    return u''.join([c.encode('unicode_escape').replace('\\x', '\u00')
-                     if c in control_chars else c for c in s])
-
-
 def export(lexicon):
     # TODO can user with only read permissions export all the lexicon?
     # (eg saol)
@@ -735,7 +723,7 @@ def export(lexicon):
         from datetime import datetime
         # parse the date as inclusive (including the whole selected day)
         date = dateP.parse(date, dateP.parserinfo(yearfirst=True),
-                           default=datetime(1999, 01, 01, 23, 59))
+                           default=datetime(1999, 0o1, 0o1, 23, 59))
 
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
@@ -750,7 +738,7 @@ def export(lexicon):
         else:
             to_keep[_id] = entry
 
-    ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
+    ans = [val['doc'] for val in list(to_keep.values()) if val['status'] != 'removed']
     size = settings['size']
     if type(size) is int:
         ans = ans[:size]
@@ -776,206 +764,10 @@ def export(lexicon):
                 _logger.debug('chunk %s - %s' % (start, stop))
                 if start > 1:
                     yield ','
-                yield ','.join([dumps(obj) for obj in ans[start:stop]])
-                # yield dumps(ans[start:stop])
+                yield ','.join([json.dumps(obj) for obj in ans[start:stop]])
+                # yield json.dumps(ans[start:stop])
                 start = stop
                 stop += divsize
             yield ']}'
         _logger.debug('streaming entries')
         return Response(stream_with_context(gen()))
-
-
-# from korp
-def prevent_timeout(generator):
-    """Decorator for long-running functions that might otherwise timeout."""
-    @functools.wraps(generator)
-    def decorated(args=None, *pargs, **kwargs):
-
-        def f(queue):
-            for response in generator(args, *pargs, **kwargs):
-                queue.put(response)
-            # print 'put DONE'
-            queue.put("DONE")
-
-        timeout = 10
-        q = Queue()
-
-        @copy_current_request_context
-        def error_catcher(g, *pargs, **kwargs):
-            try:
-                g(*pargs, **kwargs)
-            except Exception:
-                q.put(sys.exc_info())
-
-        pool = ThreadPool(1)
-        pool.spawn(error_catcher, f, q)
-
-        while True:
-            try:
-                msg = q.get(block=True, timeout=timeout)
-                if msg == "DONE":
-                    # print 'got DONE'
-                    break
-                elif isinstance(msg, tuple):
-                    raise Exception(msg)
-                else:
-                    yield msg
-            except Empty:
-                yield {}
-
-    return decorated
-
-
-def main_handler(generator):
-    @functools.wraps(generator)  # Copy original function's information, needed by Flask
-    def decorated(args=None, *pargs, **kwargs):
-        # Function is called externally
-
-        def incremental_json(ff):
-            """Incrementally yield result as JSON."""
-            yield "{\n"
-
-            try:
-                for response in ff:
-                    if not response:
-                        # Yield whitespace to prevent timeout
-                        # print 'prevent timeout'
-                        yield " \n"
-                    else:
-                        # print 'yielding result'
-                        yield response  # dumps(response)[1:-1] + ",\n"
-            except GeneratorExit:
-                raise
-            except Exception:
-                raise
-            # print 'main done'
-            yield "\n"
-
-        def full_json(ff):
-            """Yield full JSON at end, but keep returning newlines to prevent timeout."""
-            result = {}
-
-            try:
-                for response in ff:
-                    if not response:
-                        # print 'prevent timeout'
-                        # Yield whitespace to prevent timeout
-                        yield " \n"
-                    else:
-                        # print 'update result'
-                        result.update(response)
-            except GeneratorExit:
-                raise
-            except Exception:
-                raise
-
-            # result = dumps(result)
-            # print 'last yield'
-            yield result
-            # print 'main done'
-
-        # Incremental response
-        return Response(stream_with_context(incremental_json(generator(args, *pargs, **kwargs))),
-                        mimetype="application/json")
-    return decorated
-
-
-@main_handler
-@prevent_timeout
-def export2(lexicon, divsize=5000):
-    # TODO can user with only read permissions export all the lexicon?
-    # (eg saol)
-    auth, permitted = validate_user(mode="read")
-    if lexicon not in permitted:
-        raise errors.KarpAuthenticationError('You are not allowed to search the '
-                                             'lexicon %s' % lexicon)
-
-    settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
-    parser.parse_extra(settings)
-    date = settings.get('date', '')
-    mode = settings.get('mode', '')
-    if date:
-        import dateutil.parser as dateP
-        from datetime import datetime
-        # parse the date as inclusive (including the whole selected day)
-        date = dateP.parse(date, dateP.parserinfo(yearfirst=True),
-                           default=datetime(1999, 01, 01, 23, 59))
-
-    # def get_data(inp):
-    # time.sleep(10)
-    to_keep = {}
-    engine, db_entry = db.get_engine(lexicon, echo=False)
-    size = settings['size']
-    # print 'exporting %s entries from %s ' % (size, lexicon)
-    for entry in db.dbselect(lexicon, engine=engine, db_entry=db_entry,
-                             max_hits=-1, to_date=date):
-        _id = entry['id']
-        if _id in to_keep:
-            last = to_keep[_id]['date']
-            if last < entry['date']:
-                to_keep[_id] = entry
-        else:
-            to_keep[_id] = entry
-
-    ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
-    # print 'shorten list?'
-    if size != float('inf') and size < len(ans):
-        # print 'done, %s < %s' % (size, len(ans))
-        ans = ans[:settings['size']]
-    # inp['out'] = ans
-    # print 'I am done!'
-    # return
-
-    if settings.get('format', ''):
-        # ans = {}
-        # get_data(ans)
-        # ans = ans['out']
-        # print 'exporting %s entries' % len(ans)
-        toformat = settings.get('format')
-        index, typ = conf_mgr.get_mode_index(mode)
-        msg = 'Unkown %s %s for mode %s' % ('format', toformat, mode)
-        format_posts = conf_mgr.extra_src(mode, 'exportformat', helpers.notdefined(msg))
-        lmf, err = format_posts(ans, lexicon, mode, toformat)
-        yield Response(lmf, mimetype='text/xml')
-
-    else:
-        # import threading
-        # import time
-        # print 'divsize %s' % divsize
-        divsize = int(divsize)
-        # def gen():
-        # ans = {}
-        # t = threading.Thread(target=get_data, args=[ans])
-        # t.start()
-        # yield '{"%s": [' % lexicon
-        yield '"%s": [' % lexicon
-        # while t.is_alive():
-        #     yield(' ')
-        #     _logger.debug('sleep')
-        #     time.sleep(1)
-        #     _logger.debug('wake up')
-
-        # print 'thread finished %s' % t.is_alive()
-        # ans = ans['out']
-        # print 'exporting %s entries' % len(ans)
-        start, stop = 0, divsize
-        # print 'streaming entries'
-        while start < len(ans):
-            # print 'chunk %s - %s' % (start, stop)
-            if start > 1:
-                yield ',\n'
-            # print 'preparing a res'
-            try:
-                res = ','.join([dumps(obj) for obj in ans[start:stop]])
-                # print 'yielding a res'
-                yield res
-                yield '\n'
-            except Exception:
-                # print 'exception here! % - %s' % start, stop
-                raise
-            # yield dumps(ans[start:stop])
-            start = stop
-            stop += divsize
-        # print 'done'
-        yield ']}\n'
-        # return Response(stream_with_context(gen()))

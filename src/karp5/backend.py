@@ -2,6 +2,7 @@
 """ The backend, redirects url calls to the appropriate modules.
     Is also responsible for which ES node to query.
 """
+from __future__ import unicode_literals
 
 from flask import jsonify, session
 import karp5.server.checkdbhistory as checkdbhistory
@@ -76,11 +77,6 @@ def init(route):
     @route('<lexicon>')
     def export(lexicon):
         return searching.export(lexicon)
-
-    # TODO remove For seeing the posted data formated
-    @route('<lexicon>/<divsize>')
-    def export2(lexicon, divsize=5000):
-        return searching.export2(lexicon, divsize)
 
     # For deleting a lexical entry from elastic and sql
     @route('<lexicon>/<_id>')
@@ -212,7 +208,7 @@ def init(route):
             else:
                 modes[val['mode']] = ['%s (%s)' % (name, val['order'])]
         olist = ''
-        for mode, kids in modes.items():
+        for mode, kids in list(modes.items()):
             olist += ('<li>%s<ul>%s</ul></li>'
                       % (mode, '\n'.join('<li>%s</li>' % kid for kid in kids)))
         return '<ul> %s </ul>' % olist

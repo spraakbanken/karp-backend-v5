@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 # import this to start up the logging, always have this line at the top of the file
 
 __version__ = '5.10.11'

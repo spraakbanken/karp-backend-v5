@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import codecs
 import json
 
@@ -59,7 +60,7 @@ for entry in first_version:
     if add:
         second_version[lemma] = entry
 
-panacea = [i for i in second_version.values()]
+panacea = [i for i in list(second_version.values())]
 
 # Dump json to file
 with codecs.open("panacea.json", "w", encoding="UTF-8") as f:

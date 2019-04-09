@@ -2,6 +2,7 @@
     that can be sent to elasticsearch
     Input: json structures that might be of type string ('{"hej" : "hu"}')
 """
+from __future__ import unicode_literals
 import json
 
 from karp5.document import doc_to_es
@@ -41,9 +42,9 @@ def bulkify_sql(data, bulk_info={}):
     itype = bulk_info.get('type', _type)
     return [{'_index': index, '_type': itype, '_id': _id,
              '_source': item['doc']}
-            for _id, item in data.items() if item['status'] != 'removed']
+            for _id, item in list(data.items()) if item['status'] != 'removed']
     result = []
-    for _id, item in data.items():
+    for _id, item in list(data.items()):
         if item['status'] != 'removed':
             data_doc = item['doc']
             es_doc = doc_to_es(data_doc, data_doc['lexiconName'], 'bulk')
