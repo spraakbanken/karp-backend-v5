@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+import datetime
 import json
 import sys
 import os
