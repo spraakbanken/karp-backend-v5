@@ -10,20 +10,19 @@ import dotenv
 dotenv.load_dotenv(dotenv_path='.env', verbose=True)
 
 import karp5
-#from gevent.pywsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 
-def main_wsgi():
-    try:
-        port = int(sys.argv[1])
-    except (IndexError, ValueError):
-        sys.exit("Usage %s <port>" % sys.argv[0])
-    app = karp5.create_app()
-    WSGIServer(('0.0.0.0', port), app).serve_forever()
 
-def main_debug():
-    app = karp5.create_app()
-    app.run()
 
 if __name__ == '__main__':
-    main_debug()
-    
+    arg = sys.argv[1]
+    app = karp5.create_app()
+    if arg == 'dev':
+        app.run(debug=True, port=8081)
+    else:
+        try:
+            port = int(arg)
+        except (IndexError, ValueError):
+            sys.exit("Usage %s <port>" % sys.argv[0])
+
+        WSGIServer(('0.0.0.0', port), app).serve_forever()

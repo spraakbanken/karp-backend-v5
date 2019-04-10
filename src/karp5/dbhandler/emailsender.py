@@ -13,6 +13,11 @@ _logger = logging.getLogger('karp5')
 
 def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
+    if not conf_mgr.app_config.SENDER_EMAIL or not conf_mgr.app_config.SMTP_SERVER:
+        _logger.warning('No email configured.')
+        _logger.warning(' To: {}'.format(email))
+        _logger.warning(' Subject: {}'.format(subject))
+        _logger.warning(' Message: {}'.format(message))
     sender_email = conf_mgr.app_config.SENDER_EMAIL
     try:
         if isinstance(message, six.text_type):

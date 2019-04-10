@@ -19,11 +19,11 @@ _logger = logging.getLogger('karp5')
 
 
 def get_mode():
-    return request.args.get('mode', configM.standardmode)
+    return request.args.get('mode', conf_mgr.app_config.STANDARDMODE)
 
 
 def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, 'mode': configM.standardmode}
+    settings = {"allowed": permitted, 'mode': conf_mgr.app_config.STANDARDMODE}
     settings.update(in_settings)
     return settings
 
@@ -39,9 +39,8 @@ def parse(settings=None, isfilter=False):
     if settings is None:
         settings = {}
     # isfilter is used for minientries and some queries to statistics
-    parsed = request.args
     # only one query is allowed
-    query = parsed.get('q', ['']) or parsed.get('query')
+    query = request.args.get('q', ['']) or request.args.get('query')
     #query = query.decode('utf8')  # use utf8, same as lexiconlist
     p_extra = parse_extra(settings)
     command, query = query.split('||', 1)

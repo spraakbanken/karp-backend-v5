@@ -18,8 +18,11 @@ venv/req-dev.installed: setup.py
 	venv/bin/python -m pip install -e .[dev]
 	touch $@
 
+run: install
+	venv/bin/python run.py 8081
+
 dev-run: install-dev
-	venv/bin/python run.py
+	venv/bin/python run.py dev
 
 test: install-dev clean-pyc
 	venv/bin/python -m pytest --cov=src --cov-report=term-missing tests
