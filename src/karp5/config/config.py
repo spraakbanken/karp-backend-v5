@@ -46,6 +46,8 @@ with open(os.path.join(get_instance_path(), "config/config.json")) as fp:
 
 
 class Config(object):
+    DEBUG = False
+    TESTING = False
     LOG_LEVEL = getattr(
         logging, _config["DEBUG"]["DEBUGLEVEL"].upper(), logging.WARNING
     )
@@ -76,3 +78,4 @@ class Config(object):
     DATABASE_BASEURL = (
         "mysql+pymysql://{}/".format(_config["DB"]["DBPASS"]) + "{}?charset=utf8"
     )
+    STANDARDMODE = _config["SETUP"]["STANDARDMODE"]

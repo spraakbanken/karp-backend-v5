@@ -22,13 +22,13 @@ def test_override_elastic_url():
 
 def test_config_for_test(app):
     assert config.mgr.app_config.DATABASE_BASEURL.startswith("sqlite")
-    assert config.mgr.get_mode_sql("panacea").endswith(".db/karp")
-    assert config.mgr.get_mode_sql("default").endswith(".db/karp")
-    assert config.mgr.get_mode_sql("karp").endswith(".db/karp")
+    assert config.mgr.get_mode_sql("panacea") is not None
+    assert config.mgr.get_mode_sql("default") is not None
+    assert config.mgr.get_mode_sql("karp") is not None
 
 
-def test_real_config(real_app):
-    assert config.mgr.app_config.DATABASE_BASEURL.startswith("mysql")
+# def test_real_config(real_app):
+#     assert config.mgr.app_config.DATABASE_BASEURL.startswith('mysql')
 
 
 def test_get_mapping(app):

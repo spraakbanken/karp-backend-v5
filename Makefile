@@ -14,12 +14,11 @@ venv/req.installed: requirements.txt
 	venv/bin/python -m pip install -Ur $<
 	touch $@
 
-venv/req-dev.installed: setup.py
-	venv/bin/python -m pip install -e .[dev]
-	touch $@
+run: venv
+	venv/bin/python run.py 8081
 
-dev-run: install-dev
-	venv/bin/python run.py
+dev-run: venv-dev
+	venv/bin/python run.py dev
 
 test: venv-dev clean-pyc
 	./venv/bin/pytest --cov=src --cov-report=term-missing tests

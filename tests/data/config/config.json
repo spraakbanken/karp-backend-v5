@@ -1,7 +1,7 @@
 {
   "AUTH": {
-    "AUTH_RESOURCES" : "http://wsauth:80/app/resources",
-    "AUTH_SERVER" : "http://wsauth:80/app/authenticate",
+    "AUTH_RESOURCES" : "http://localhost:5001/resources",
+    "AUTH_SERVER" : "http://localhost:5001/authenticate",
     "AUTH_SECRET" : "secret"
   },
   "DB": {
@@ -13,7 +13,7 @@
     "DEBUGLEVEL": "DEBUG",
     "DEBUG_TO_STDERR":  true,
     "LOGDIR":  "log/",
-    "LOGFMT": "%(asctime)s - %(levelname)s: %(message)s",
+    "LOGFMT": "%(asctime)s %(remote_addr)s requested %(url)s\n- %(levelname)s in %(module)s: %(message)s",
     "DATEFMT": "%Y-%m-%d %H:%M:%S"
   },
   "SETUP":{

@@ -136,9 +136,9 @@ class ConfigManager(object):
             return self.modes[mode][field]
         except Exception as e:
             if mode not in searchconfig:
-                msg = "Mode %s not found" % mode
+                msg = "Mode '%s' not found" % mode
             else:
-                msg = "Config field %s not found in mode %s" % (field, mode)
+                msg = "Config field '%s' not found in mode '%s'" % (field, mode)
             _logger.error(msg + ": ")
             _logger.exception(e)
             if failonerror:
@@ -178,8 +178,10 @@ class ConfigManager(object):
     def searchfield(self, mode, field):
         # looks up field in modes.json, eg "autocomplete"
         # returns the json path
+        _logger.info("Looking for '{}' in '{}'".format(field, mode))
         fields = self.searchconf(mode, field)
-        return sum([self.lookup_multiple(f, mode) for f in self.fields], [])
+        _logger.info("Found '{}' => '{}'".format(field, fields))
+        return sum([self.lookup_multiple(f, mode) for f in fields], [])
 
     def all_searchfield(self, mode):
         # returns the json path of the field anything
@@ -283,7 +285,7 @@ class ConfigManager(object):
             else:
                 return (val[0],)
         except Exception as e:
-            msg = "Field %s not found in mode %s" % (field, mode)
+            msg = "Field '%s' not found in mode '%s'" % (field, mode)
             _logger.error(msg + ": ")
             _logger.exception(e)
             raise errors.KarpGeneralError(msg)
@@ -297,13 +299,14 @@ class ConfigManager(object):
             else:
                 return (val, "")
         except Exception as e:
-            msg = "Field %s not found in mode %s" % (field, mode)
+            msg = "Field '%s' not found in mode '%s'" % (field, mode)
             _logger.error(msg + ": ")
             _logger.exception(e)
             raise errors.KarpGeneralError(msg)
 
     # def lookup_multiple(self, field, mode=standardmode):
     def lookup_multiple(self, field, mode):
+        _logger.info("Lookup '{}' in '{}'".format(field, mode))
         return self.lookup_multiple_spec(field, mode)[0]
 
     def get_value(self, field, mode, own_fields=None):
@@ -312,13 +315,18 @@ class ConfigManager(object):
         else:
             use_fields = self.fields
         mappings = use_fields.get(mode, {})
+        _logger.info("mappings = {}".format(mappings))
         group = re.search("(.*)((.bucket)|(.search)|(.sort))$", field)
         if field in mappings:
             return mappings[field]
         elif group is not None:
             return self.get_value(group.group(1), mode, own_fields=own_fields)
         else:
-            msg = "Could not find field %s for mode %s, %s" % (field, mode, mappings)
+            msg = "Could not find field '%s' for mode '%s', '%s'" % (
+                field,
+                mode,
+                mappings,
+            )
             _logger.debug(msg)
             raise KarpConfigException(msg, debug_msg=msg + "\n%s" % mappings)
 
