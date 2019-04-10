@@ -1,5 +1,5 @@
 from flask import request, session
-from json import loads
+import json
 import hashlib
 import logging
 from karp5 import errors
@@ -45,7 +45,7 @@ def check_user(force_lookup=False):
         _logger.debug("Auth server: " + server)
         contents = urlopen(server, urllib.urlencode(postdata)).read()
         # _logger.debug("Auth answer: "+str(contents))
-        auth_response = loads(contents)
+        auth_response = json.loads(contents)
     except HTTPError as e:
         _logger.error(e)
         raise errors.KarpAuthenticationError("Could not contact authentication server.")

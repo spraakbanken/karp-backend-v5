@@ -20,10 +20,19 @@ def get_json(client, path):
     ('extended||and|baseform_en|regexp|s.*t', 'panacea', 313),
     ('extended||and|pos|equals|Vb||not|baseform|startswith|ab', 'panacea', 1612),
 ])
-def test_query(client_w_panacea, q, mode, n_hits):
-    query = '/query?q={q}&mode={mode}'.format(q=q, mode=mode)
+def test_querycount(client_w_panacea, q, mode, n_hits):
+    query = '/querycount?q={q}&mode={mode}'.format(q=q, mode=mode)
     result = get_json(client_w_panacea, query)
 
-    assert 'hits' in result
-    assert 'total' in result['hits']
-    assert result['hits']['total'] == n_hits
+    assert 'distribution' in result
+    if n_hits == 0:
+        assert len(result['distribution']) == 0
+    else:
+        assert result['distribution'][0]['doc_count'] == n_hits
+        assert len(result['distribution']) == 1
+        assert len(result['distribution'][0]['lexiconName']['buckets']) == 1
+
+    assert 'query' in result
+    assert 'hits' in result['query']
+    assert 'total' in result['query']['hits']
+    assert result['query']['hits']['total'] == n_hits

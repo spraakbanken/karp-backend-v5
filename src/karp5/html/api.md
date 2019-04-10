@@ -63,7 +63,7 @@ frontend.
 **Example:** search all entries with a word form that is "blomma" or
 "äpple" and that has no part of speech tag:
 
-* `q=extended||and|pos|missing||and||wf|equals|blomma|äpple`
+* `q=extended||and|pos|missing||and|wf|equals|blomma|äpple`
 
 
 # Operators
