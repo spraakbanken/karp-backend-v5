@@ -3,8 +3,8 @@ from builtins import str
 from flask import request
 from json import loads
 import logging
-import karp5.server.errorhandler as eh
-import karp5.server.helper.configmanager as configM
+from karp5 import errors
+from karp5.config import mgr as conf_mgr
 
 
 _logger = logging.getLogger('karp5')
@@ -33,22 +33,22 @@ def check_lexiconName(lexicon, entry_lexicon, _id, action):
         msg = 'The entry does not belong in lexicon %s' % lexicon
         debug = ('Attemped to %s %s from %s, instead of %s'
                  % (action, _id, lexicon, entry_lexicon))
-        raise eh.KarpElasticSearchError(msg, debug_msg=debug)
+        raise errors.KarpElasticSearchError(msg, debug_msg=debug)
 
 
 def get_update_index(lexicon, suggestion=False):
     index = ''
     try:
         if suggestion:
-            index, typ = configM.get_lexicon_suggindex(lexicon)
+            index, typ = conf_mgr.get_lexicon_suggindex(lexicon)
         else:
-            index, typ = configM.get_lexicon_index(lexicon)
-        return configM.elastic(lexicon=lexicon), index, typ
+            index, typ = conf_mgr.get_lexicon_index(lexicon)
+        return conf_mgr.elastic(lexicon=lexicon), index, typ
 
     except Exception as e:
         _logger.exception(e)
         msg = "No writable mode for lexicon %s was found" % lexicon
-        raise eh.KarpElasticSearchError(msg, debug_msg=msg+", index: "+index)
+        raise errors.KarpElasticSearchError(msg, debug_msg=msg+", index: "+index)
 
 
 def read_data():
@@ -59,17 +59,17 @@ def read_data():
         request.get_data()
         data = loads(request.data)
     except ValueError as e:
-        raise eh.KarpParsingError(str(e))
+        raise errors.KarpParsingError(str(e))
     if 'message' not in data:
         # fail if message is not there
-        raise eh.KarpGeneralError('Input data not ok')
+        raise errors.KarpGeneralError('Input data not ok')
     if not data:
         errstr = "The source is empty. Empty documents not allowed"
-        raise eh.KarpParsingError(errstr)
+        raise errors.KarpParsingError(errstr)
     return data
 
 
 def notdefined(msg):
     def f(*args, **kwargs):
-        raise eh.KarpQueryError(msg)
+        raise errors.KarpQueryError(msg)
     return f

@@ -1,4 +1,4 @@
-default: test
+default: test clean clean-pyc
 
 venv: venv/made
 
@@ -21,9 +21,13 @@ venv/req-dev.installed: setup.py
 dev-run: install-dev
 	venv/bin/python run.py
 
-test: install-dev
+test: install-dev clean-pyc
 	venv/bin/python -m pytest --cov=src --cov-report=term-missing tests
 	# venv/bin/python -m pytest tests
+
+clean: clean-pyc
+clean-pyc:
+	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
 	venv/bin/activate; pip-compile

@@ -10,12 +10,12 @@ import json
 import logging
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
-import karp5.server.helper.configmanager as configM
+
+from karp5.config import mgr as conf_mgr
 
 
 _logger = logging.getLogger('karp5')
 
-DBCONF = configM.config['DB']
 
 
 @compiles(sql.VARCHAR, 'mysql')
@@ -31,9 +31,9 @@ STATUS_SUGG = sql.types.Enum("waiting", "accepted",
 
 def get_engine(lexicon, mode='', suggestion=False, echo=True):
     if mode:
-        dburl = configM.get_mode_sql(mode)
+        dburl = conf_mgr.get_mode_sql(mode)
     else:
-        dburl = configM.get_lexicon_sql(lexicon)
+        dburl = conf_mgr.get_lexicon_sql(lexicon)
     print("dburl = {}".format(dburl))
     if not dburl:
         raise SQLNull('%s/%s' % (lexicon, mode))
@@ -270,13 +270,13 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
 
 def handle_error(e, user, msg, doc):
     mail_sent = 'No warnings sent by email'
-    if DBCONF['ADMIN_EMAILS']:
+    if conf_mgr.app_config.ADMIN_EMAILS:
         import karp5.dbhandler.emailsender as sender
         report = 'User: %s, msg: %s. \nDoc:\n%s' % (user, msg, doc)
         msg = 'Karp-b failure, %s.\n%s\n%s'\
               % (datetime.datetime.now(), e, report)
-        sender.send_notification(DBCONF['ADMIN_EMAILS'], 'Karp failure', msg)
-        mail_sent = 'Warning sent to %s' % ', '.join(DBCONF['ADMIN_EMAILS'])
+        sender.send_notification(conf_mgr.app_config.ADMIN_EMAILS, 'Karp failure', msg)
+        mail_sent = 'Warning sent to %s' % ', '.join(conf_mgr.app_config.ADMIN_EMAILS)
     return '%s. %s' % (str(e), mail_sent)
 
 

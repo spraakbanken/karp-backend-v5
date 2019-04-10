@@ -10,7 +10,7 @@ from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
 
 import karp5.dbhandler.dbhandler as db
-import karp5.server.helper.configmanager as configM
+from karp5.config import mgr as conf_mgr
 from karp5.util import json_iter
 from karp5 import document
 
@@ -21,12 +21,7 @@ _logger = logging.getLogger('karp5')
 # helpers
 # ==============================================
 
-def get_mapping(index):
-    filepath = 'config/mappings/mappingconf_%s.json' % index
-    try:
-        return open(filepath).read()
-    except:
-        return None
+
 
 
 def make_indexname(index, suffix):
@@ -141,14 +136,14 @@ def recover(alias, suffix, lexicon, create_new=True):
     import karp5.server.translator.bulkify as bulk
     # if not lexicon:
     #     lexicon = conf.keys()
-    mapping = get_mapping(alias)
     index = make_indexname(alias, suffix)
-    typ = configM.get_mode_type(alias)
+    typ = conf_mgr.get_mode_type(alias)
     print('Save %s to %s' % (lexicon or 'all', index))
 
-    es = configM.elastic(alias)
+    es = conf_mgr.elastic(alias)
     if create_new:
         # Create the index
+        mapping = conf_mgr.get_mapping(alias)
         ans = es.indices.create(index=index, body=mapping, request_timeout=30)
         print ans
 
@@ -174,7 +169,7 @@ def recover_add(index, suffix, lexicon):
         Adds the specified lexicons to an existing index
     """
     import karp5.server.translator.bulkify as bulk
-    es = configM.elastic(index)
+    es = conf_mgr.elastic(index)
     print 'Save %s to %s' % (lexicon, index)
 
     to_keep = get_entries_to_keep_from_sql(lexicon)
@@ -225,53 +220,42 @@ def parse_config(name, info, default):
     return info['mode'], data, info.get('order'), fformat
 
 
-def make_parents(group):
-    # a group is its own parent
-    # (bliss should publish bliss170208, etc)
-    parents = [group]
-    for name, info in configM.searchconfig.items():
-        if group in info.get('groups', []):
-            parents.append(name)
-    return parents
-
-
 def publish_mode(mode, suffix):
-    modes = make_parents(mode)
     index = make_indexname(mode, suffix)
     add_actions = []
     rem_actions = []
-    for alias in modes:
+    for alias in conf_mgr.get_modes_that_include_mode(mode):
         add_actions.append(
             '{"add" : {"index": "%s", "alias": "%s"}}' % (index, alias)
         )
         rem_actions.append(
             '{"remove": {"index":"%s_*", "alias":"%s"}}' % (mode, alias)
         )
-    print('remove {}'.format(rem_actions))    
-    print('add {}'.format(add_actions))    
+    print('remove {}'.format(rem_actions))
+    print('add {}'.format(add_actions))
     try:
-                print('remove old aliases')
-                es.indices.update_aliases(
-                    '{"actions" : [%s]}' % ','.join(rem_actions),
-                    request_timeout=30
-                )
-            except Exception:
-                print('No previous aliased indices, could not do remove any')
-                print(rem_actions)
-            return es.indices.update_aliases(
-                '{"actions" : [%s]}' % ','.join(add_actions),
-                request_timeout=30
-            )
+        print('remove old aliases')
+        es.indices.update_aliases(
+            '{"actions" : [%s]}' % ','.join(rem_actions),
+            request_timeout=30
+        )
+    except Exception:
+        print('No previous aliased indices, could not do remove any')
+        print(rem_actions)
+        return es.indices.update_aliases(
+            '{"actions" : [%s]}' % ','.join(add_actions),
+            request_timeout=30
+        )
 
 
 def publish_group(group, suffix):
     # TODO for some reason, this sometimes removes siblings
     # of the group from an mode. Eg. publish_group(saldo)
     # may lead to 'saldogroup' not containing 'external'.
-    es = configM.elastic(group)
+    es = conf_mgr.elastic(group)
     print group, suffix
-    if not configM.searchconfig.get(group)['is_index']:
-        for subgroup in configM.searchconfig.get(group)['groups']:
+    if not conf_mgr.modes.get(group)['is_index']:
+        for subgroup in conf_mgr.modes.get(group)['groups']:
             publish_group(subgroup, suffix)
 
     else:
@@ -279,7 +263,7 @@ def publish_group(group, suffix):
         print "Publish %s as %s" % (name, group)
         add_actions = []
         rem_actions = []
-        for parent in make_parents(group):
+        for parent in conf_mgr.get_modes_that_include_mode(group):
             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}'
                                % (name, parent))
             rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}'
@@ -297,8 +281,8 @@ def publish_group(group, suffix):
 
 
 def create_empty_index(name, suffix, with_id=False):
-    es = configM.elastic(name)
-    data = get_mapping(name)
+    es = conf_mgr.elastic(name)
+    data = conf_mgr.get_mapping(name)
     newname = make_indexname(name, suffix)
     try:
         ans = es.indices.create(index=newname, body=data, request_timeout=30)
@@ -309,15 +293,15 @@ def create_empty_index(name, suffix, with_id=False):
 
 
 def create_mode(alias, suffix, with_id=False):
-    es = configM.elastic(alias)
-    if configM.searchconfig[alias]['is_index']:
+    es = conf_mgr.elastic(alias)
+    if conf_mgr.modes[alias]['is_index']:
         to_create = [alias]
     else:
-        to_create = configM.searchconfig.get(alias)['groups']
+        to_create = conf_mgr.modes.get(alias)['groups']
 
-    typ = configM.searchconfig[alias]['type']
+    typ = conf_mgr.modes[alias]['type']
     for index in to_create:
-        data = get_mapping(index)
+        data = conf_mgr.get_mapping(index)
         newname = make_indexname(index, suffix)
         try:
             ans = es.indices.create(index=newname, body=data, request_timeout=30)
@@ -326,7 +310,7 @@ def create_mode(alias, suffix, with_id=False):
             raise Exception('Could not create index')
         print ans
         try:
-            lexicons = configM.get_lexiconlist(index)
+            lexicons = conf_mgr.get_lexiconlist(index)
             load(lexicons, newname, typ, es, with_id=with_id)
         except Exception as e:
             # delete the index if things did not go well
@@ -338,10 +322,10 @@ def create_mode(alias, suffix, with_id=False):
 
 
 def add_lexicon(to_add_name, to_add_file, alias, suffix):
-    es = configM.elastic(alias)
-    data = get_mapping(alias)
+    es = conf_mgr.elastic(alias)
+    data = conf_mgr.get_mapping(alias)
     indexname = make_indexname(alias, suffix)
-    typ = configM.searchconfig[alias]['type']
+    typ = conf_mgr.modes[alias]['type']
     try:
         ans = es.indices.create(index=indexname, body=data, request_timeout=30)
         print ans
@@ -350,7 +334,7 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
         raise
     try:
         inpdata = open(to_add_file, 'r').read()
-        sql = configM.get_mode_sql(alias)
+        sql = conf_mgr.get_mode_sql(alias)
         upload('json', to_add_name, '', inpdata, es, indexname, typ, sql=sql)
         # do this last to get the avoid version conflicts (in case some user is
         # updating the index during this process)
@@ -373,7 +357,7 @@ def internalize_lexicon(mode, to_add):
         be run at any time
     """
     ok = 0
-    es = configM.elastic(mode)
+    es = conf_mgr.elastic(mode)
     for lex in to_add:
         print 'Internalize', lex
         # Go through each lexicon separately
@@ -407,11 +391,11 @@ def internalize_lexicon(mode, to_add):
 def load(to_upload, index, typ, es, with_id=False):
     print 'Upload to %s' % index, ','.join(to_upload)
     try:
-        for name, info in configM.lexiconconfig.items():
+        for name, info in conf_mgr.lexicons.items():
             if name in to_upload or not to_upload:
-                default = configM.lexiconconfig.get('default', {})
+                default = conf_mgr.lexicons.get('default', {})
                 group, data, order, form = parse_config(name, info, default)
-                sql = configM.searchconfig[group]['sql']
+                sql = conf_mgr.modes[group]['sql']
                 print 'Upload %s. To sql? %s' % (name, sql)
                 upload(form, name, order, data, es, index, typ, sql=sql,
                        with_id=with_id)
@@ -434,12 +418,11 @@ def reindex_alias(alias, target_suffix, create_index=True):
 
 
 def reindex_help(alias, source_index, target_index, create_index=True):
-    # TODO This function doesn't call doc_to_es
     print 'Reindex from %s to %s' % (source_index, target_index)
-    es = configM.elastic(alias)
+    es = conf_mgr.elastic(alias)
     if create_index:
         print 'create %s' % target_index
-        data = get_mapping(alias)
+        data = conf_mgr.get_mapping(alias)
         ans = es.indices.create(index=target_index, body=data, request_timeout=30)
         print 'Created index', ans
 
@@ -472,7 +455,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
 
 
 def publish_all(suffix):
-    for alias, aliasconf in configM.searchconfig.items():
+    for alias, aliasconf in conf_mgr.modes.items():
         # Only publish if it is a group, meta-aliases will point to the correct
         # subaliases anyway.
         if aliasconf['is_index']:
@@ -482,10 +465,10 @@ def publish_all(suffix):
 def make_structure():
     add_actions = []
     # TODO does not work, what is confelastic?
-    for alias, aliasconf in configM.searchconfig.items():
+    for alias, aliasconf in conf_mgr.modes.items():
         # Only publish if it is a group, meta-aliases will point to the correct
         # subaliases anyway.
-        es = configM.elastic(alias)
+        es = conf_mgr.elastic(alias)
         if not aliasconf.get("is_index"):
             # if it is a mode (not just an index), remove the old pointers
             add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
@@ -498,15 +481,15 @@ def make_structure():
 
 def delete_all():
     # delete all indices
-    for alias, aliasconf in configM.searchconfig.items():
-        es = configM.elastic(alias)
+    for alias, aliasconf in conf_mgr.modes.items():
+        es = conf_mgr.elastic(alias)
         try:
             es.indices.delete('*')
         except:
             print 'could not delete es data form mode %s' % alias
         try:
             # delete all our lexicons in sql
-            for name in configM.get_lexiconlist(alias):
+            for name in conf_mgr.get_lexiconlist(alias):
                 db.deletebulk(lexicon=name)
         except:
             print 'could not delete sql data form mode %s' % alias
@@ -515,7 +498,7 @@ def delete_all():
 
 def delete_mode(mode):
     # delete all indices
-    es = configM.elastic(mode)
+    es = conf_mgr.elastic(mode)
     try:
         #print 'delete', '%s*' % mode
         es.indices.delete('%s*' % mode)
@@ -523,7 +506,7 @@ def delete_mode(mode):
         print 'could not delete es data form mode %s' % mode
     try:
         # delete all our lexicons in sql
-        for name in configM.get_lexiconlist(mode):
+        for name in conf_mgr.get_lexiconlist(mode):
             db.deletebulk(lexicon=name)
     except:
         print 'could not delete sql data form mode %s' % mode

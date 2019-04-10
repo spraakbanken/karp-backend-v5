@@ -396,7 +396,7 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
 
   \verb|all_fields|: specifies which fields should be used for free text search (simple search).
              Set this to \\
-             \verb|all_fields = F.lookup_multiple("anything")|
+             \verb|all_fields = conf_mgr.lookup_multiple("anything")|
              %ES will keep a copy of all text from the fields of your choice
              %(you will set this in the \verb|mappingconf.json|)
              %in one or more designated fields, usually referred to as \verb|_all|.
@@ -422,22 +422,22 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
           The field names in all settings in \verb|searchconf.py| should always
           be - or evaluate to - the json paths in your lexical entries.
           You can use the function
-          \verb|F.lookup| and the keys from \verb|fieldmappings.py|:\\
-          \verb|sort_by = [F.lookup(pos)]| \\
+          \verb|conf_mgr.lookup| and the keys from \verb|fieldmappings.py|:\\
+          \verb|sort_by = [conf_mgr.lookup(pos)]| \\
           to achieve this, or simply put the whole json path: \\
           \verb|sort_by = ["Entry.partOfSpeech"]|.\\
           %Whenever referring to a json field, you can use the \textit{key}
           %names (as in \verb|fieldmappings.py|) or the actual json path to the
           %field.
-          Note that the function \verb|F.lookup| only picks the first path in case of
+          Note that the function \verb|conf_mgr.lookup| only picks the first path in case of
           an one-to-many mapping. If \\
           {\verb|"pos" : ["Entry.partOfSpeech", "Entry.simplePartOfSpeech",|\\}
           {\verb|         "Entry.translatedPartOfSpeech"]|\\}
           then\\
-          \verb|[F.lookup(pos)] = "Entry.partOfSpeech"| \\
+          \verb|[conf_mgr.lookup(pos)] = "Entry.partOfSpeech"| \\
           %multiple
           %If you use the \textit{key} names of the fields, use the syntax
-          %\verb|F.lookup("pos")|.
+          %\verb|conf_mgr.lookup("pos")|.
           %It is recommended to use the json path
           %whenever you have mapped multiple values to one key.
 
@@ -458,7 +458,7 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
 %"pos" : ["Entry.partOfSpeech"]
 %
 %# (searchconf.py) ok to use the key names
-% sort_by = [F.lookup(pos)]
+% sort_by = [conf_mgr.lookup(pos)]
 %     \end{verbatim}}\\
 
 
@@ -479,10 +479,10 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
  % simply run one of the commands below (you might want to do a back-up of the current mappingconf.json)\\
 %
 %  without Docker:\\
-%  \verb|python upload_offline.py --getmapping > config/mappingconf.json|\\
+%  \verb|python cli.py getmapping config/mappingconf.json|\\
 %  with Docker:\\
-%  \verb|docker-compose run --rm karp python upload_offline.py --getmapping \|\\
-%  \verb|                   > config/mappingconf.json|\\
+%  \verb|docker-compose run --rm karp python cli.py getmapping \|\\
+%  \verb|                   config/mappingconf.json|\\
 %  instead.
 %  This will replace your old mapping with a new version.
 %  Open the file and find the line containing
@@ -558,9 +558,9 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
    then extracting the automatically generated mapping.
    To do this, run one of the commands:\\
    without Docker:\\
-   \verb|python upload_offline.py --getmapping > config/newmappingconf.json|\\
+   \verb|python cli.py getmapping config/newmappingconf.json|\\
    with Docker:\\
-  \verb|docker-compose run --rm karp python upload_offline.py --writemapping \|\\
+  \verb|docker-compose run --rm karp python cli.py getmapping \|\\
   \verb|                     config/newmappingconf.json|\\
    This will give you the file \verb|newmappingconf.json|, which you can use
    as your \verb|mappingconf.py|. Modify the settings mentioned above as needed.
@@ -594,7 +594,7 @@ permissions) and the \verb|AUTH_RESOURCES| (that provides list of all open resou
 },
 "category": {
     "copy_to" : "all_text",
-    "type": "string", 
+    "type": "string",
     "analyzer" : "full_name"
 },
 "blissID": {
@@ -672,10 +672,10 @@ To upload data, the first thing you need to do is to come up with a suitable
 \verb|config/setup.py|.  A suggestion is to put the
 current date in the name. If we choose the index name \verb|karp151103|, run
 \begin{verbatim}
-python upload_offline.py --create_load karp151103
+python cli.py create_load karp151103
 \end{verbatim}
 or, if using Docker:\\
-\verb|docker-compose run --rm karp python upload_offline.py --create_load karp151103|\\
+\verb|docker-compose run --rm karp python cli.py create_load karp151103|\\
 
 This will upload all lexicons listed in \verb|config/lexiconconf.py| to the databases.
 If your interested in the details on why we upload the data to another index
@@ -692,7 +692,7 @@ above. Also make sure your mapping covers them. To do the upload, execute the be
 \verb|newlexcionnameN|
 are the names of all new lexicons, ie. the ones that have not previously been uploaded.
 \begin{verbatim}
-python upload_offline.py --add_lexicon newindex151115 newlexicon1 newlexicon2 ...
+python cli.py add_lexicon newindex151115 newlexicon1 newlexicon2 ...
 \end{verbatim}
 %
 All of your lexicons will now be searchable in the new index.
@@ -739,10 +739,10 @@ for example \verb|karp151104|.
 Run one of the commands:
 
 \textbf{[A]}:
-\verb|python upload_offline.py --publishnew newindex|
+\verb|python cli.py publishnew newindex|
 
 \textbf{[B]}:
-\verb|python upload_offline.py --reload newindex|\\
+\verb|python cli.py reload newindex|\\
 Again, prefix the commands above with
 \verb|docker-compose run --rm karp|
 if you are using Docker.
@@ -753,9 +753,9 @@ be searchable by your users, but could be used as a back-up in case you find
 errors in the new data and want to "undo" your changes. In some  cases, you
 still want to delete the old indexes.
 Do that by running\\
-\verb|python upload_offline.py --deleteindex oldindex|\\
+\verb|python cli.py deleteindex oldindex|\\
 or, with Docker:\\
-\verb|docker-compose run --rm karp python upload_offline.py --deleteindex oldindex|
+\verb|docker-compose run --rm karp python cli.py deleteindex oldindex|
 where \verb|oldindex| is the index to be deleted. Note that \verb|oldindex|
 should never be equal to the index alias in \verb|setup.py|!
 
@@ -875,7 +875,7 @@ See the indices that you have created:\\
 
 \section{Fresh restart}
 If you want to start over and remove all lexicons you've added so far, run the command
-\verb|python upload_offline.py --delete_all|\\
+\verb|python cli.py delete_all|\\
 This will delete \textit{all} ES indices, and remove all lexicons in your
 configuration file \\
 \verb|config/lexiconconf.py| from the SQL database.

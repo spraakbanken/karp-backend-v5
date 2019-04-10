@@ -104,11 +104,12 @@ def import_mode(mode, suffix):
     print('Upload successful')
 
 @cli.command('publish_mode')
-@click.argument('group')
+@click.argument('mode')
 @click.argument('suffix')
-def publish_mode(group, suffix):
-    upload.publish_group(group, suffix)
-    print('Upload successful')
+def publish_mode(mode, suffix):
+    """Publish MODE to all modes that contain MODE."""
+    upload.publish_mode(mode, suffix)
+    print("Published '{mode}_{suffix}' successfully to '{mode}'".format(mode=mode, suffix=suffix))
 
 @cli.command('reindex_alias')
 @click.argument('index')
