@@ -13,8 +13,11 @@ venv/made-dev: setup.py
 	. ./venv/bin/activate; pip install -e .[dev]
 	touch $@
 
-dev-run: venv
-	. ./venv/bin/activate; python run.py 8081
+run: venv
+	venv/bin/python run.py 8081
+
+dev-run: venv-dev
+	venv/bin/python run.py dev
 
 test: venv-dev clean-pyc
 	./venv/bin/pytest --cov=src --cov-report=term-missing tests

@@ -45,6 +45,8 @@ with open(os.path.join(get_instance_path(), 'config/config.json')) as fp:
 
 
 class Config(object):
+    DEBUG = False
+    TESTING = False
     LOG_LEVEL = getattr(logging, _config['DEBUG']['DEBUGLEVEL'].upper(), logging.WARNING)
     # LOG_LEVEL = debug_str_to_int(_config['DEBUG']['DEBUGLEVEL'])
     LOG_FMT = _config['DEBUG'].get('LOGFMT')
@@ -72,3 +74,4 @@ class Config(object):
             _config['DB']['DBPASS']
         ) + '{}?charset=utf8'
     )
+    STANDARDMODE = _config['SETUP']['STANDARDMODE']

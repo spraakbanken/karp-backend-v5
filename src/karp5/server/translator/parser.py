@@ -17,11 +17,11 @@ _logger = logging.getLogger('karp5')
 
 
 def get_mode():
-    return request.args.get('mode', configM.standardmode)
+    return request.args.get('mode', conf_mgr.app_config.STANDARDMODE)
 
 
 def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, 'mode': configM.standardmode}
+    settings = {"allowed": permitted, 'mode': conf_mgr.app_config.STANDARDMODE}
     settings.update(in_settings)
     return settings
 

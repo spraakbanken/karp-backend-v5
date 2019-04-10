@@ -15,7 +15,7 @@ from karp5.util import json_iter
 from karp5 import document
 
 
-_logger = logging.getLogger('karp5')
+_logger = logging.getLogger('karp5cli')
 
 # ==============================================
 # helpers
@@ -233,6 +233,9 @@ def publish_mode(mode, suffix):
         )
     print('remove {}'.format(rem_actions))
     print('add {}'.format(add_actions))
+
+    es = conf_mgr.elastic(mode)
+
     try:
         print('remove old aliases')
         es.indices.update_aliases(

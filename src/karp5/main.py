@@ -3,7 +3,7 @@ import karp5
 
 def main():
     app = karp5.create_app()
-    app.run()
+    app.run(port=8081, debug=True)
 
 if __name__ == '__main__':
     main()

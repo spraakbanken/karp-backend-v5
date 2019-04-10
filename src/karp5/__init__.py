@@ -10,13 +10,23 @@ from .instance_info import get_instance_path
 
 
 
-from flask import Flask
+from flask import Flask, request
 
 from karp5.config import Config, mgr as conf_mgr
 
 
 __version__ = '5.8.0'
 __name = 'karp5'
+
+
+class RequestFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None):
+        logging.Formatter.__init__(self, fmt, datefmt)
+
+    def format(self, record):
+        record.url = request.url
+        record.remote_addr = request.remote_addr
+        return logging.Formatter.format(self, record)
 
 
 def create_app(config_class = Config):
@@ -39,9 +49,12 @@ def create_app(config_class = Config):
     print('app.debug = {}'.format(app.debug))
     print('app.testing = {}'.format(app.testing))
     if not app.debug and not app.testing:
+        print('Setting up loggers')
         logger = logging.getLogger('karp5')
         logger.setLevel(app.config['LOG_LEVEL'])
-        formatter = logging.Formatter(
+        print('log_fmt = {}'.format(app.config['LOG_FMT']))
+        print('log_datefmt = {}'.format(app.config['LOG_DATEFMT']))
+        formatter = RequestFormatter(
             fmt = app.config['LOG_FMT'],
             datefmt = app.config['LOG_DATEFMT']
         )
@@ -49,6 +62,7 @@ def create_app(config_class = Config):
         if app.config['LOG_TO_STDERR']:
             stream_handler = logging.StreamHandler()
             stream_handler.setLevel(app.config['LOG_LEVEL'])
+            stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
         else:
             log_dir = app.config['LOG_DIR']
@@ -62,6 +76,7 @@ def create_app(config_class = Config):
                 backupCount=0
             )
             file_handler.setLevel(app.config['LOG_LEVEL'])
+            file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
     return app
