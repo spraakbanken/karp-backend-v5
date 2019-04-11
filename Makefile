@@ -27,7 +27,7 @@ run: install
 dev-run: install-dev
 	${PYTHON} run.py dev
 
-test: venv-dev clean-pyc
+test: install-dev clean-pyc
 	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests
 
 clean: clean-pyc
