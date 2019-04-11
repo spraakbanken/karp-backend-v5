@@ -72,7 +72,7 @@ def test_create_empty_index(cli_w_es):
 
     assert r.exit_code == 0
 
-    _test_index_exists(mode, suffix, 0)
+    _test_index_exists(mode, suffix, '0')
     _test_n_hits_equals(mk_indexname(mode, suffix), 0)
 
 
@@ -85,7 +85,7 @@ def test_create_reindex_alias(cli_w_panacea):
 
     assert r.exit_code == 0
 
-    _test_index_exists(mode, suffix, n_hits)
+    _test_index_exists(mode, suffix, str(n_hits))
 
     r = cli_w_panacea.publish_mode(mode, suffix)
     assert r.exit_code == 0
@@ -126,7 +126,12 @@ def test_copy_mode_w_query(cli_w_panacea):
     source_n_hits = 6609
     target_n_hits = 1677
     query = '{ "query": { "term": { "pos": "Vb" } } }'
-    ok, errors = upload.copy_alias_to_new_index(source_mode, target_mode, target_suffix)
+    ok, errors = upload.copy_alias_to_new_index(
+        source_mode,
+        target_mode,
+        target_suffix,
+        query=query
+    )
 
     assert ok
 
