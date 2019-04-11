@@ -42,7 +42,7 @@ setup(
         'dev': [
             'pytest',
             'pytest-cov',
-            # 'elasticsearch_test-py',
+            'elasticsearch_test-py',
             # 'urllib3',
         ]
     },
