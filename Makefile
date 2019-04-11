@@ -1,33 +1,41 @@
-default: test clean clean-pyc
+default: test clean clean-pyc run dev-run
 
-venv: venv/made
+VENV_NAME = venv
+PYTHON = ${VENV_NAME}/bin/python
 
-venv-dev: venv venv/made-dev
+venv: ${VENV_NAME}/made
 
-venv/made: requirements.txt
+install: venv ${VENV_NAME}/req.installed
+install-dev: venv ${VENV_NAME}/req-dev.installed
+
+${VENV_NAME}/made:
 	test -d venv || virtualenv --python python2.7 venv
-	. ./venv/bin/activate; pip install pip-tools; pip install -Ur $<
-	touch $@
+	${PYTHON} -m pip install pip-tools
+	@touch $@
 
-venv/made-dev: setup.py
-	. ./venv/bin/activate; pip install -e .[dev]
-	touch $@
+${VENV_NAME}/req.installed: requirements.txt
+	${PYTHON} -m pip install -Ur $<
+	@touch $@
 
-run: venv
-	venv/bin/python run.py 8081
+${VENV_NAME}/req-dev.installed: setup.py
+	${PYTHON} -m pip install -e .[dev]
+	@touch $@
 
-dev-run: venv-dev
-	venv/bin/python run.py dev
+run: install
+	${PYTHON} run.py 8081
+
+dev-run: install-dev
+	${PYTHON} run.py dev
 
 test: venv-dev clean-pyc
-	./venv/bin/pytest --cov=src --cov-report=term-missing tests
+	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests
 
 clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
-	. ./venv/bin/activate; pip-compile
+	. ./${VENV_NAME}/bin/activate; pip-compile
 
 bump-version-patch:
 	bumpversion patch
