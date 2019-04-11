@@ -1,4 +1,6 @@
-default: test clean clean-pyc run dev-run
+.phony: test clean clean-pyc run dev-run
+
+.default: test
 
 VENV_NAME = venv
 PYTHON = ${VENV_NAME}/bin/python

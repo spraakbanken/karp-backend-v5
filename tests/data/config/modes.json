@@ -17,6 +17,11 @@
         "is_index": true,
         "indexalias": "panacea"
     },
+    "panacea_links": {
+         "is_index": true,
+         "groups": ["panacea"],
+         "indexalias": "panacea_links"
+     },
    "karp": {
         "is_index": false,
         "groups": ["panacea"],

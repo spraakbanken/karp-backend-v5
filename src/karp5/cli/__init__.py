@@ -59,6 +59,10 @@ def setup_cli(config=karp5.Config):
         file_handler.setLevel(config.LOG_LEVEL)
         logger.addHandler(file_handler)
 
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.WARNING)
+        logger.addHandler(stream_handler)
+
 
 @click.group()
 @click.version_option(karp5.get_version(), prog_name="karp5")

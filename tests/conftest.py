@@ -75,6 +75,9 @@ class CliTestRunner(object):
     def publish_mode(self, mode, suffix):
         return self.runner.invoke(self.cli, ['publish_mode', mode, suffix])
 
+    def reindex_alias(self, mode, suffix):
+        return self.runner.invoke(self.cli, ['reindex_alias', mode, suffix])
+
 
 @pytest.fixture(scope='session')
 def cli():
