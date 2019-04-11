@@ -5,6 +5,10 @@ venv3
 /data
 !/data/panacea
 
+# test files #
+##############
+.coverage
+
 # environment #
 ###############
 .env
