@@ -41,7 +41,7 @@ def test_get_mapping(app):
 
 
 @pytest.mark.parametrize('mode,facit',[
-    ('panacea', ['panacea', 'karp'])
+    ('panacea', ['panacea', 'karp', 'panacea_links'])
 ])
 def test_get_modes_that_include_mode(app, mode, facit):
     modes = config.mgr.get_modes_that_include_mode(mode)

@@ -62,4 +62,4 @@ def create_saolp():
 # if __name__ == '__main__':
 #     #create_sequence_index('saol', 508133)
 #     for _id in get_id_sequence('saol', 5):
-#         print _id
+#         print(_id)
