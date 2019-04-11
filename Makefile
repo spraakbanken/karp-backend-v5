@@ -1,15 +1,15 @@
-default: test clean clean-pyc
+default: test clean clean-pyc run dev-run
 
-VENV_NAME = venv3
+VENV_NAME = venv
 PYTHON = ${VENV_NAME}/bin/python
 
 venv: ${VENV_NAME}/made
 
-install-dev: venv ${VENV_NAME}/req-dev.installed
 install: venv ${VENV_NAME}/req.installed
+install-dev: venv ${VENV_NAME}/req-dev.installed
 
 ${VENV_NAME}/made:
-	test -d ${VENV_NAME} || python -m venv ${VENV_NAME}
+	test -d venv || virtualenv --python python2.7 venv
 	${PYTHON} -m pip install pip-tools
 	@touch $@
 
@@ -27,9 +27,8 @@ run: install
 dev-run: install-dev
 	${PYTHON} run.py dev
 
-test: install-dev clean-pyc
+test: venv-dev clean-pyc
 	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests
-	# ${PYTHON} -m pytest tests
 
 clean: clean-pyc
 clean-pyc:
