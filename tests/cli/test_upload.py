@@ -127,7 +127,7 @@ def test_copy_mode_w_query(cli_w_panacea):
     target_suffix = "test_upload_04"
     source_n_hits = 6609
     target_n_hits = 1677
-    query = {"query": {"match": {"pos": "Vb"}}}
+    query = {"query": {"match": {"pos_german": "Vb"}}}
     # query = es_dsl.Q('match', pos='Vb')
     _test_n_hits_equals(source_mode, source_n_hits)
     ok, errors = upload.copy_alias_to_new_index(
