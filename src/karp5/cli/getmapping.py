@@ -3,7 +3,8 @@ import logging
 import os
 
 from karp5.config import mgr as conf_mgr
-import upload_offline as upload
+from . import upload_offline as upload
+
 
 _mapping = 'kastmapp.json'
 

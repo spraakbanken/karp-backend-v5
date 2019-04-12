@@ -27,7 +27,7 @@ setup(
     #     'karp5.server.translator'
     # ],
     install_requires=[
-        'elasticsearch>=6.1.0,<6.2.0',
+        'elasticsearch>=6.1.0,<7.0.0',
         'elasticsearch-dsl>=6.0.0,<7.0.0',
         'Flask',
         'SQLAlchemy',
