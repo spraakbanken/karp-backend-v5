@@ -3,7 +3,7 @@
 .default: test
 
 ifeq (${VIRTUAL_ENV},)
-  VENV_NAME = .venv
+  VENV_NAME = venv
   VENV_BIN = ${VENV_NAME}/bin
 else
   VENV_NAME = ${VIRTUAL_ENV}
@@ -19,16 +19,13 @@ endif
 
 PYTHON = ${VENV_BIN}/python
 
-VENV_NAME = venv
-PYTHON = ${VENV_NAME}/bin/python
-
 venv: ${VENV_NAME}/made
 
 install: venv ${VENV_NAME}/req.installed
 install-dev: venv ${VENV_NAME}/req-dev.installed
 
 ${VENV_NAME}/made:
-	test -d venv || virtualenv --python python2.7 venv
+	test -d ${VENV_NAME} || virtualenv --python python2.7 ${VENV_NAME}
 	${VENV_ACTIVATE}; pip install pip-tools
 	@touch $@
 
