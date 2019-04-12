@@ -144,3 +144,26 @@ def test_copy_mode_w_query(cli_w_panacea):
     _test_alias_contains_index(target_mode, mk_indexname(target_mode, target_suffix))
     _test_n_hits_equals(source_mode, n_hits)
     _test_n_hits_equals(target_mode, n_hits)
+
+
+def do_update(lex, doc):
+    doc['lex'] = lex
+    return doc
+
+
+def update_doc(m, doc):
+    doc['x'] = do_update(m, doc['x'])
+    return doc
+
+
+def test_update_docs():
+    mode = 'mode'
+    docs = ({'id': i, 'x': {'v': i**2}}
+            for i in range(10))
+    upd = (update_doc(mode, x) for x in docs)
+
+    for i, u in enumerate(upd):
+        assert u['id'] == i
+        assert u['x']['v'] == i**2
+        assert u['x']['lex'] == mode
+
