@@ -6,6 +6,7 @@ except ImportError:
     # Python 2
     from urllib import urlopen
 
+import elasticsearch_dsl as es_dsl
 import pytest
 
 from karp5.cli import upload_offline as upload
@@ -125,7 +126,8 @@ def test_copy_mode_w_query(cli_w_panacea):
     target_suffix = 'test_upload_04'
     source_n_hits = 6609
     target_n_hits = 1677
-    query = '{ "query": { "term": { "pos": "Vb" } } }'
+    # query = '{ "query": { "term": { "pos": "Vb" } } }'
+    query = es_dsl.Q('match', pos='Vb')
     ok, errors = upload.copy_alias_to_new_index(
         source_mode,
         target_mode,

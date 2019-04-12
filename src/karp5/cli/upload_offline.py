@@ -8,6 +8,7 @@ import six
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
+import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
@@ -16,7 +17,7 @@ from karp5 import document
 from karp5.util.debug import print_err
 
 
-_logger = logging.getLogger('karp5cli')
+_logger = logging.getLogger('karp5')
 
 # ==============================================
 # helpers
@@ -423,18 +424,18 @@ def copy_alias_to_new_index(
     query=None
 ):
     _logger.debug("Copying from")
-    es_source = conf_mgr.elastic(source_mode)
+    es_source = es_dsl.Search(
+        using=conf_mgr.elastic(source_mode),
+        index=source_mode
+    )
     es_target = conf_mgr.elastic(target_mode)
     target_index = make_indexname(target_mode, target_suffix)
     if create_index:
         _create_index(target_mode, target_index)
 
-    es_source_kwargs = {
-        'index': source_mode
-    }
     if query:
-        es_source_kwargs['query'] = query
-    source_docs = es_helpers.scan(es_source, **es_source_kwargs)
+        es_source = es_source.query(query)
+    source_docs = es_source.scan()
 
     update_docs = (update_source_field(target_mode, doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
