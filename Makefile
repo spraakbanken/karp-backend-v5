@@ -1,5 +1,22 @@
 default: test clean clean-pyc run dev-run
 
+ifeq (${VIRTUAL_ENV},)
+  VENV_NAME = .venv
+  VENV_BIN = ${VENV_NAME}/bin
+else
+  VENV_NAME = ${VIRTUAL_ENV}
+  VENV_BIN = ${VENV_NAME}/bin
+endif
+${info Using ${VENV_NAME}}
+
+ifeq (${VIRTUAL_ENV},)
+  VENV_ACTIVATE = . ${VENV_BIN}/activate
+else
+  VENV_ACTIVATE = true
+endif
+
+PYTHON = ${VENV_BIN}/python
+
 VENV_NAME = venv
 PYTHON = ${VENV_NAME}/bin/python
 
@@ -10,15 +27,15 @@ install-dev: venv ${VENV_NAME}/req-dev.installed
 
 ${VENV_NAME}/made:
 	test -d venv || virtualenv --python python2.7 venv
-	${PYTHON} -m pip install pip-tools
+	${VENV_ACTIVATE}; pip install pip-tools
 	@touch $@
 
 ${VENV_NAME}/req.installed: requirements.txt
-	${PYTHON} -m pip install -Ur $<
+	${VENV_ACTIVATE}; pip install -Ur $<
 	@touch $@
 
 ${VENV_NAME}/req-dev.installed: setup.py
-	${PYTHON} -m pip install -e .[dev]
+	${VENV_ACTIVATE}; pip install -e .[dev]
 	@touch $@
 
 run: install
@@ -35,7 +52,7 @@ clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
-	. ./${VENV_NAME}/bin/activate; pip-compile
+	${VENV_ACTIVATE}; pip-compile
 
 bump-version-patch:
 	bumpversion patch
