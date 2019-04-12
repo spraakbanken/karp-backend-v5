@@ -131,7 +131,7 @@ def test_copy_mode_w_query(cli_w_panacea):
     query = {
         'query': {
             "match": {
-                "pos": "Vb"
+                "pos_german": "Vb"
             }
         }
     }
