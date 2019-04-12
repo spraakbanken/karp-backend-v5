@@ -120,7 +120,9 @@ def publish_mode(mode, suffix):
 @click.argument('target_suffix')
 def reindex_alias(index, target_suffix):
     # target_suffix = argv[3]
-    upload.reindex_alias(index, target_suffix)
+    ret = upload.reindex_alias(index, target_suffix)
+    if not ret:
+        raise click.ClickException('Something went wrong')
 
 @cli.command('getmapping')
 @click.argument('alias')

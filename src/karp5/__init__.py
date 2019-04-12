@@ -65,7 +65,7 @@ def create_app(config_class = Config):
         fmt='[%(asctime)s] %(req_remote_addr)s %(req_method)s %(req_url)s %(message)s',
         datefmt=app.config['LOG_DATEFMT']
     )
-    if app.debug or app.testing or app.config['LOG_TO_STDERR']:
+    if app.debug or app.config['LOG_TO_STDERR']:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(app.config['LOG_LEVEL'])
         stream_handler.setFormatter(formatter)
@@ -102,7 +102,8 @@ def create_app(config_class = Config):
     def after_request(response):
         """ Logging after every request. """
         request_logger.info(response.status)
-    
+        return response
+
     return app
 
 
