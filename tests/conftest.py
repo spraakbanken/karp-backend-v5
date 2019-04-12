@@ -80,7 +80,7 @@ class CliTestRunner(object):
 
 @pytest.fixture(scope='session')
 def cli():
-    setup_cli(TestConfig)
+    # setup_cli(TestConfig)
     cli = CliTestRunner(karp5_cli)
     return cli
 

@@ -8,6 +8,7 @@ import six
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
+import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
@@ -16,7 +17,7 @@ from karp5 import document
 from karp5.util.debug import print_err
 
 
-_logger = logging.getLogger('karp5cli')
+_logger = logging.getLogger('karp5')
 
 # ==============================================
 # helpers
@@ -429,14 +430,24 @@ def copy_alias_to_new_index(
     if create_index:
         _create_index(target_mode, target_index)
 
-    es_source_kwargs = {
+    source_kwargs = {
         'index': source_mode
     }
     if query:
-        es_source_kwargs['query'] = query
-    source_docs = es_helpers.scan(es_source, **es_source_kwargs)
+        source_kwargs['query'] = query
+    source_docs = es_helpers.scan(
+        es_source,
+        index=source_mode,
+        query=query
+    )
 
-    update_docs = (update_source_field(target_mode, doc) for doc in source_docs)
+    def update_doc(doc):
+        """ Apply doc_to_es to doc. """
+        doc['_source'] = document.doc_to_es(doc['_source'], target_mode, 'update')
+        doc['_index'] = target_index
+        return doc
+
+    update_docs = (update_doc(doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
     errors = []
     for ok, item in es_helpers.streaming_bulk(es_target, update_docs, index=target_index):
@@ -463,12 +474,12 @@ def copy_alias_to_new_index(
 def reindex(alias, source_suffix, target_suffix, create_index=True):
     source_index = make_indexname(alias, source_suffix)
     target_index = make_indexname(alias, target_suffix)
-    reindex_help(alias, source_index, target_index, create_index=create_index)
+    return reindex_help(alias, source_index, target_index, create_index=create_index)
 
 
 def reindex_alias(alias, target_suffix, create_index=True):
     target_index = make_indexname(alias, target_suffix)
-    reindex_help(alias, alias, target_index, create_index=create_index)
+    return reindex_help(alias, alias, target_index, create_index=create_index)
 
 
 def reindex_help(alias, source_index, target_index, create_index=True):
@@ -479,7 +490,13 @@ def reindex_help(alias, source_index, target_index, create_index=True):
 
     source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
 
-    update_docs = (update_source_field(alias, doc) for doc in source_docs)
+    def update_doc(doc):
+        """ Apply doc_to_es to doc. """
+        doc['_source'] = document.doc_to_es(doc['_source'], alias, 'update')
+        doc['_index'] = target_index
+        return doc
+
+    update_docs = (update_doc(doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
     errors = []
     for ok, item in es_helpers.streaming_bulk(es, update_docs, index=target_index):
@@ -488,17 +505,20 @@ def reindex_help(alias, source_index, target_index, create_index=True):
             errors.append(item)
         else:
             success += 1
+            print('ok = {},item = {}'.format(ok, item))
         total += 1
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
     if success == total:
-        print('Done! Reindexed {} entries'.format(total))
+        _logger.info('Done! Reindexed {} entries'.format(total))
+        return True
     else:
-        print('Something went wrong!')
-        print('  - Successfully reindexed: {}'.format(success))
-        print('  - Failed to reindex: {}'.format(failed))
-        print('This are the failing entries:')
-        print(errors)
+        _logger.warning('Something went wrong!')
+        _logger.warning('  - Successfully reindexed: {}'.format(success))
+        _logger.warning('  - Failed to reindex: {}'.format(failed))
+        _logger.warning('This are the failing entries:')
+        _logger.warning(errors)
+        return False
 
 
 def publish_all(suffix):

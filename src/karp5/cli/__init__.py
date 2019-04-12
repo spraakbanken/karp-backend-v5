@@ -35,7 +35,7 @@ def print_usage(script_name):
 
 
 def setup_cli(config = karp5.Config):
-    logger = logging.getLogger('karp5cli')
+    logger = logging.getLogger('karp5')
     logger.setLevel(config.LOG_LEVEL)
     formatter = logging.Formatter(
         fmt = config.LOG_FMT,
@@ -120,7 +120,9 @@ def publish_mode(mode, suffix):
 @click.argument('target_suffix')
 def reindex_alias(index, target_suffix):
     # target_suffix = argv[3]
-    upload.reindex_alias(index, target_suffix)
+    ret = upload.reindex_alias(index, target_suffix)
+    if not ret:
+        raise click.ClickException('Something went wrong')
 
 @cli.command('getmapping')
 @click.argument('alias')
