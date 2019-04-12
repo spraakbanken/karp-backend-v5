@@ -26,7 +26,7 @@ _tempfile = tempfile.NamedTemporaryFile(suffix='.db')
 
 class TestConfig(Config):
     TESTING = True
-    LOG_LEVEL = logging.WARNING
+    LOG_LEVEL = logging.DEBUG
     DATABASE_BASEURL = 'sqlite://'
     ELASTICSEARCH_URL='localhost:9201'
 
@@ -81,7 +81,7 @@ class CliTestRunner(object):
 
 @pytest.fixture(scope='session')
 def cli():
-    setup_cli(TestConfig)
+    # setup_cli(TestConfig)
     cli = CliTestRunner(karp5_cli)
     return cli
 
