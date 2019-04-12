@@ -26,7 +26,7 @@ _tempfile = tempfile.NamedTemporaryFile(suffix='.db')
 
 class TestConfig(Config):
     TESTING = True
-    LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.WARNING
     DATABASE_BASEURL = 'sqlite://'
     ELASTICSEARCH_URL='localhost:9201'
 

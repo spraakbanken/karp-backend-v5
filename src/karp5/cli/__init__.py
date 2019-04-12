@@ -37,7 +37,7 @@ def print_usage(script_name):
 
 
 def setup_cli(config=karp5.Config):
-    logger = logging.getLogger("karp5cli")
+    logger = logging.getLogger("karp5")
     logger.setLevel(config.LOG_LEVEL)
     formatter = logging.Formatter(fmt=config.LOG_FMT, datefmt=config.LOG_DATEFMT)
 

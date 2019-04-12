@@ -49,6 +49,9 @@ dev-run: install-dev
 test: install-dev clean-pyc
 	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests
 
+test-log: install-dev clean-pyc
+	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests > pytest.log
+
 clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
