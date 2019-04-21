@@ -109,6 +109,7 @@ def publish_mode(mode, suffix):
     ))
 
 
+
 @cli.command('reindex_alias')
 @click.argument('index')
 @click.argument('target_suffix')
