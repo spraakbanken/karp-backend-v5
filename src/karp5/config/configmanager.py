@@ -16,6 +16,7 @@ from karp5 import errors
 # from karp5.server.translator
 from karp5.instance_info import get_instance_path
 from .errors import KarpConfigException
+from karp5.util.debug import print_err
 
 
 _logger = logging.getLogger("karp5")
@@ -51,6 +52,20 @@ def merge_dict(adict, bdict):
             adict[key] = val
 
 
+def load_from_file(
+        path,
+        default={}
+    ):
+    try:
+        with open(path) as fp:
+            return json.load(fp)
+    except Exception as e:
+        print_err("Error when loading '{}':".format(path))
+        print_err(e)
+
+    return default
+
+
 class ConfigManager(object):
     def __init__(self):
         self.modes = {}
@@ -63,21 +78,23 @@ class ConfigManager(object):
         self.load_config()
 
     def load_config(self):
-        with open(os.path.join(self.configdir, "modes.json")) as fp:
-            self.modes = json.load(fp)
+        self.modes = load_from_file(
+            os.path.join(self.configdir, 'modes.json')
+        )
         set_defaults(self.modes)
 
-        with open(os.path.join(self.configdir, "lexiconconf.json")) as fp:
-            self.lexicons = json.load(fp)
+	self.lexicons = load_from_file(
+            os.path.join(self.configdir, 'lexiconconf.json')
+        )
         set_defaults(self.lexicons)
 
-        with open(os.path.join(self.configdir, "config.json")) as fp:
-            self.config = json.load(fp)
+	self.config = load_from_file(
+            os.path.join(self.configdir, 'config.json')
+        )
 
-        with open(
-            os.path.join(self.configdir, "mappings/fieldmappings_default.json")
-        ) as fp:
-            self.defaultfields = json.load(fp)
+	self.defaultfields = load_from_file(
+            os.path.join(self.configdir, 'mappings/fieldmappings_default.json')
+        )
 
         # with open(os.path.join(self.configdir, 'fieldmappings.json')) as fp:
         #     self.fields = json.load(fp)
