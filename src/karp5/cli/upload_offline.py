@@ -14,6 +14,7 @@ import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
 from karp5.util import json_iter
 from karp5 import document
+from karp5 import index
 from karp5.util.debug import print_err
 
 
@@ -40,19 +41,6 @@ def update_source_field(mode, doc):
     """ Apply doc_to_es to doc. """
     doc['_source'] = document.doc_to_es(doc['_source'], mode, 'update')
     return doc
-
-
-def _create_index(mode, index):
-    """ Create a new Elasticsearch index. """
-
-    es = conf_mgr.elastic(mode)
-    data = conf_mgr.get_mapping(mode)
-    try:
-        ans = es.indices.create(index=index, body=data, request_timeout=30)
-    except esExceptions.TransportError as e:
-        _logger.exception(e)
-        raise Exception('Could not create index')
-    print(ans)
 
 
 def upload(informat, name, order, data, elastic, index, typ, sql=False,
@@ -164,7 +152,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = conf_mgr.elastic(alias)
     if create_new:
         # Create the index
-        _create_index(alias, index)
+        index.create_index(alias, index)
 
     to_keep = get_entries_to_keep_from_sql(lexicon)
     print(len(to_keep), 'entries to keep')
@@ -304,7 +292,7 @@ def publish_group(group, suffix):
 
 
 def create_empty_index(mode, suffix):
-    _create_index(mode, make_indexname(mode, suffix))
+    index.create_index(mode, make_indexname(mode, suffix))
 
 
 
@@ -320,7 +308,7 @@ def create_mode(alias, suffix, with_id=False):
     typ = conf_mgr.modes[alias]['type']
     for index in to_create:
         newname = make_indexname(index, suffix)
-        _create_index(alias, newname)
+        index.create_index(alias, newname)
         try:
             lexicons = conf_mgr.get_lexiconlist(index)
             load(lexicons, newname, typ, es, with_id=with_id)
@@ -428,13 +416,8 @@ def copy_alias_to_new_index(
     es_target = conf_mgr.elastic(target_mode)
     target_index = make_indexname(target_mode, target_suffix)
     if create_index:
-        _create_index(target_mode, target_index)
+        index.create_index(target_mode, target_index)
 
-    source_kwargs = {
-        'index': source_mode
-    }
-    if query:
-        source_kwargs['query'] = query
     source_docs = es_helpers.scan(
         es_source,
         index=source_mode,
@@ -486,7 +469,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     print('Reindex from %s to %s' % (source_index, target_index))
     es = conf_mgr.elastic(alias)
     if create_index:
-        _create_index(alias, target_index)
+        index.create_index(alias, target_index)
 
     source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
 

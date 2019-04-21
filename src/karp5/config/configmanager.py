@@ -195,7 +195,11 @@ class ConfigManager(object):
         return self.searchconf(mode, 'format_query')(field, op)
 
 
-    def elasticnodes(self, mode='', lexicon=''):
+    def elasticnodes(
+            self,
+            mode=None,
+            lexicon=None
+    ):
         if not mode:
             mode = self.get_lexicon_mode(lexicon)
         return self.searchconf(mode, 'elastic_url')

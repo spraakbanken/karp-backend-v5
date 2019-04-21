@@ -86,12 +86,14 @@ def create_metadata():
     outpath = 'config/fieldmappings.json'
     metadata.print_all(outpath)
 
+
 @cli.command('create_mode')
 @click.argument('mode')
 @click.argument('suffix')
 def create_mode(mode, suffix):
     upload.create_mode(mode, suffix)
     print('Upload successful')
+
 
 @cli.command('create_empty_index')
 @click.argument('mode')
@@ -100,12 +102,14 @@ def create_empty_index(mode, suffix):
     upload.create_empty_index(mode, suffix)
     print('Index created successfully')
 
+
 @cli.command('import_mode')
 @click.argument('mode')
 @click.argument('suffix')
 def import_mode(mode, suffix):
     upload.create_mode(mode, suffix, with_id=True)
     print('Upload successful')
+
 
 @cli.command('publish_mode')
 @click.argument('mode')
@@ -115,6 +119,7 @@ def publish_mode(mode, suffix):
     upload.publish_mode(mode, suffix)
     print("Published '{mode}_{suffix}' successfully to '{mode}'".format(mode=mode, suffix=suffix))
 
+
 @cli.command('reindex_alias')
 @click.argument('index')
 @click.argument('target_suffix')
@@ -123,6 +128,11 @@ def reindex_alias(index, target_suffix):
     ret = upload.reindex_alias(index, target_suffix)
     if not ret:
         raise click.ClickException('Something went wrong')
+
+
+@cli.command('copy_alias')
+@click.
+
 
 @cli.command('getmapping')
 @click.argument('alias')
