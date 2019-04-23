@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import copy
+import sys
 
 from elasticsearch import Elasticsearch
 
@@ -169,8 +170,11 @@ class ConfigManager(object):
         import importlib
 
         # If importing fails, try with a different path.
-        _logger.debug("look for %s in %s" % (funcname, mode))
-        _logger.debug("file: %s" % self.modes[mode]["src"])
+        _logger.debug('look for %s in %s' % (funcname, mode))
+        if mode not in self.modes:
+            _logger.debug("Can't find mode '{}' in modes".format(mode))
+        _logger.debug('sys.path = {}'.format(sys.path))
+        _logger.debug('file: %s' % self.modes[mode]['src'])
         try:
             classmodule = importlib.import_module(self.modes[mode]["src"])
             _logger.debug("\n\ngo look in %s\n\n" % classmodule)
