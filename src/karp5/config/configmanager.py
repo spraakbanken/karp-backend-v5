@@ -72,7 +72,16 @@ class ConfigManager(object):
         self.defaultfields = {}
         self.app_config = None
         self.configdir = os.path.join(get_instance_path(), 'config')
+        self._extra_src = {}
         self.load_config()
+
+    def add_extra_src(self, mode, func):
+        mode_fun_map = self._extra_src.get(mode, {})
+        if func.__name__ in mode_fun_map:
+            print("WARNING! Function '{}' is already registered for mode '{}'. Overwritting...".format(func.__name__, mode))
+
+        mode_fun_map[func.__name__] = func
+        self._extra_src[mode] = mode_fun_map
 
     def load_config(self):
         self.modes = load_from_file(
@@ -163,6 +172,19 @@ class ConfigManager(object):
 
 
     def extra_src(self, mode, funcname, default):
+        # Try in new way first
+        mode_fun_map = self._extra_src.get(mode)
+        if mode_fun_map:
+            func = mode_fun_map.get(funcname)
+            if func:
+                _logger.debug("Found function '{}' for mode '{}'".format(funcname, mode))
+                return func
+            else:
+                _logger.debug("Didn't find function '{}' for mode '{}'".format(funcname, mode))
+        else:
+            _logger.debug("Didn't find a function_map for mode '{}'".format(mode))
+
+        # Then use old way
         import importlib
         # If importing fails, try with a different path.
         _logger.debug('look for %s in %s' % (funcname, mode))
