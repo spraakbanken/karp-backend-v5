@@ -16,7 +16,7 @@ from flask import Flask, request
 from karp5.config import Config, mgr as conf_mgr
 
 
-__version__ = "5.9.2"
+__version__ = "5.10.0"
 __name = "karp5"
 
 
