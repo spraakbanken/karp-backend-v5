@@ -71,3 +71,17 @@ Possible workarounds:
  - set a bigger shard_size (27 000 works for saldo), but this might break your ES cluster.
  - have smaller indices (one lexicon per index) but this does not help for big lexicons or statistics over many lexicons.
  - don't allow deeper subaggregations than 2. Chaning the `size` won't help.
+
+
+Elasticsearch
+=============
+If saving stops working because of `Database Exception: Error during update. Message: TransportError(403, u'cluster_block_exception', u'blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];').`, you need to unlock the relevant ES index.
+
+### This is how you do it:
+Repeat for every combination of `host` and `port` that is relevant for you. But you only need to do it once per cluster.
+
+- Check if any index is locked: `curl <host>:<port>/_all/_settings/index.blocks*`
+ - If all is open, Elasticsearch answers with `{}`
+ - else it answers with `{<index>: { "settings": { "index": { "blocks": {"read_only_allow_delete": "true"} } } }, ... }`
+- To unlock all locked indices on a `host` and `port`:
+ - `curl -X PUT <host>:<port>/_all/_settings -H 'Content-Type: application' -d '{"index.blocks.read_only_allow_delete": null}'`
