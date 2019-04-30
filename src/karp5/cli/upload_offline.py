@@ -420,6 +420,7 @@ def copy_alias_to_new_index(
     source_mode,
     target_mode,
     target_suffix,
+    filter_func=None,
     create_index=True,
     query=None
 ):
@@ -447,6 +448,8 @@ def copy_alias_to_new_index(
         doc['_index'] = target_index
         return doc
 
+    if filter_func:
+        source_docs = (filter_func(doc) for doc in source_docs)
     update_docs = (update_doc(doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
     errors = []
