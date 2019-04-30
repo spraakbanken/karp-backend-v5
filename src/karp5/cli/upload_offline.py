@@ -416,10 +416,28 @@ def load(to_upload, index, typ, es, with_id=False):
         raise
 
 
+def apply_filter(it, filter_func, field=None):
+    """
+    Apply the given func to every object in it.
+
+    param: it The iterable.
+    param: filter_func The func to apply. Must return an iterable.
+    param:
+    """
+    if not field:
+        field = '_source'
+    filtered = []
+    for i in it:
+        for x in filter_func(i):
+            filtered.append(x)
+    return filtered
+
+
 def copy_alias_to_new_index(
     source_mode,
     target_mode,
     target_suffix,
+    filter_func=None,
     create_index=True,
     query=None
 ):
@@ -435,11 +453,15 @@ def copy_alias_to_new_index(
     }
     if query:
         source_kwargs['query'] = query
+
     source_docs = es_helpers.scan(
         es_source,
         index=source_mode,
         query=query
     )
+
+    if filter_func:
+        source_docs = apply_filter(source_docs, filter_func)
 
     def update_doc(doc):
         """ Apply doc_to_es to doc. """
