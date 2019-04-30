@@ -54,7 +54,7 @@ clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
-	${VENV_ACTIVATE}; pip-compile
+	${VENV_ACTIVATE}; pip-compile --output-file=requirements.txt setup.py
 
 bump-version-patch:
 	bumpversion patch
