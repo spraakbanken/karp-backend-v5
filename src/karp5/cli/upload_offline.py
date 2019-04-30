@@ -428,7 +428,7 @@ def apply_filter(it, filter_func, field=None):
         field = '_source'
     filtered = []
     for i in it:
-        for x in filter_func(i[field]):
+        for x in filter_func(i[field], i['_id']):
             filtered.append({ field: x})
     return filtered
 
