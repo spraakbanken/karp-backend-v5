@@ -6,6 +6,10 @@ try:
 except ImportError:
     # Python 2
     from urllib import urlopen
+try:
+    from itertools import zip_longest
+except ImportError:
+    from itertools import izip_longest as zip_longest
 
 import elasticsearch_dsl as es_dsl
 import pytest
@@ -146,3 +150,54 @@ def test_copy_mode_w_query(cli_w_panacea):
     _test_n_hits_equals(source_mode, source_n_hits)
     _test_n_hits_equals(mk_indexname(target_mode, target_suffix), target_n_hits)
     _test_n_hits_equals(target_mode, source_n_hits + target_n_hits)
+
+
+def mock_copy_alias(gen, lex, filter_func=None):
+    source_docs = gen
+    if filter_func:
+        def apply_filter(g, filter):
+            for doc in g:
+                for filtered in filter(doc):
+                    yield filtered
+        filtered_docs = (filter_func(doc) for doc in source_docs)
+        filtered_docs = (doc for doc in filtered_docs)
+        source_docs = apply_filter(source_docs, filter_func)
+
+    def update_doc(doc):
+        doc['lexicon'] = lex
+        return doc
+
+    updated_docs = (update_doc(doc) for doc in source_docs)
+
+    return updated_docs
+
+
+def gen_data(n):
+    for i in range(n):
+        yield { 'id': i}
+
+
+def filter_even(doc):
+    if doc['id'] % 2 == 0:
+        yield doc
+        c = doc.copy()
+        c['link'] = c['id']
+        c['id'] = -c['id']
+        yield c
+
+
+@pytest.mark.parametrize('gen,lex,filter_func,expected', [
+    (gen_data(10), 'lex', None, gen_data(10)),
+    (gen_data(10), 'lex', filter_even, gen_data(10)),
+])
+def test_copy_generator(gen, lex, filter_func, expected):
+    docs = mock_copy_alias(gen, lex, filter_func)
+
+    if filter_func:
+        expected = (filter_func(doc) for doc in expected)
+    for x, f in zip_longest(docs, expected):
+        assert x is not None
+        assert f is not None
+
+        assert x['id'] == f['id']
+        assert x['lexicon'] == lex
