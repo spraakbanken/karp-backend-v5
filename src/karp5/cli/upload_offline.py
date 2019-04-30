@@ -420,16 +420,16 @@ def apply_filter(it, filter_func, field=None):
     """
     Apply the given func to every object in it.
 
-    param: it The iterable.
-    param: filter_func The func to apply. Must return an iterable.
-    param:
+    :param it: The iterable.
+    :param filter_func: The func to apply. Must return an iterable.
+    :param field: str
     """
     if not field:
         field = '_source'
     filtered = []
     for i in it:
-        for x in filter_func(i):
-            filtered.append(x)
+        for x in filter_func(i[field]):
+            filtered.append({ field: x})
     return filtered
 
 
@@ -441,10 +441,15 @@ def copy_alias_to_new_index(
     create_index=True,
     query=None
 ):
-    _logger.debug("Copying from")
     es_source = conf_mgr.elastic(source_mode)
     es_target = conf_mgr.elastic(target_mode)
     target_index = make_indexname(target_mode, target_suffix)
+    _logger.debug(
+        "Copying from '{source_mode}' to '{target_index}'".format(
+            source_mode=source_mode,
+            target_index=target_index
+        )
+    )
     if create_index:
         _create_index(target_mode, target_index)
 
@@ -472,24 +477,22 @@ def copy_alias_to_new_index(
     if filter_func:
         source_docs = (filter_func(doc) for doc in source_docs)
     update_docs = (update_doc(doc) for doc in source_docs)
-    success, failed, total = 0, 0, 0
+    success = 0
     errors = []
     for ok, item in es_helpers.streaming_bulk(es_target, update_docs, index=target_index):
         if not ok:
-            failed += 1
             errors.append(item)
         else:
             success += 1
-        total += 1
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
-    if success == total:
-        print('Done! Reindexed {} entries'.format(total))
+    if len(errors) == 0:
+        print('Done! Reindexed {} entries'.format(success))
         return True, None
     else:
         print('Something went wrong!')
         print('  - Successfully reindexed: {}'.format(success))
-        print('  - Failed to reindex: {}'.format(failed))
+        print('  - Failed to reindex: {}'.format(len(errors)))
         print('This are the failing entries:')
         print(errors)
         return False, errors
