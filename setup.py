@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name="karp5",
-    version="5.10.2",
+    version="5.10.3",
     description="Backend for Karp",
     author="Språkbanken at the University of Gothenburg",
     maintainer="Språkbanken",
