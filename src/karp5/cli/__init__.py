@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import logging
 import logging.handlers
 import os
-import sys
 
 import click
 
@@ -14,29 +13,9 @@ from karp5.cli import getmapping as gm
 
 _logger = logging.getLogger("karp5")
 
-usage = """
-|SCRIPT| --create_metadata
-    Generate 'config/fieldmappings.json' from the 'config/mappings/fieldmappings_*.json' files.
-
-|SCRIPT| --create_mode MODE SUFFIX
-|SCRIPT| --create_empty_index MODE SUFFIX
-|SCRIPT| --import_mode MODE SUFFIX
-|SCRIPT| --publish_mode MODE SUFFIX
-|SCRIPT| --reindex_alias MODE SUFFIX
-|SCRIPT| --getmapping ALIAS OUTFILE
-|SCRIPT| --internalize_lexicon MODE LEXICON1 [LEXICON2 LEXICON3 ... LEXICONM]
-|SCRIPT| --printlatestversion MODE [OUTFILE]
-|SCRIPT| --exportlatestversion MODE [OUTFILE]
-|SCRIPT| --version
-    Prints the version and exits.
-"""
-
-
-def print_usage(script_name):
-    print(usage.replace("|SCRIPT|", script_name))
-
 
 def setup_cli(config=karp5.Config):
+    print("Setting up logging")
     logger = logging.getLogger("karp5")
     logger.setLevel(config.LOG_LEVEL)
     formatter = logging.Formatter(fmt=config.LOG_FMT, datefmt=config.LOG_DATEFMT)
@@ -44,6 +23,7 @@ def setup_cli(config=karp5.Config):
     if config.TESTING or config.DEBUG or config.LOG_TO_STDERR:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(config.LOG_LEVEL)
+        stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
     else:
         log_dir = config.LOG_DIR
@@ -57,26 +37,29 @@ def setup_cli(config=karp5.Config):
             backupCount=0,
         )
         file_handler.setLevel(config.LOG_LEVEL)
+        file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.WARNING)
+        stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
 
 
 @click.group()
 @click.version_option(karp5.get_version(), prog_name="karp5")
 def cli():
-    pass
-    # setup_cli()
-
-    # return cli
+    setup_cli()
 
 
-# def register_commands(cli):
 @cli.command("create_metadata", short_help="Generate fieldmappings.")
 def create_metadata():
-    """Generate 'config/fieldmappings.json' from the 'config/mappings/fieldmappings_*.json' files."""
+    """
+    Generate 'config/fieldmappings.json'.
+
+    Generate from the 'config/mappings/fieldmappings_*.json' files.
+    NOTE: Not needed since version 5.9.0
+    """
     outpath = "config/fieldmappings.json"
     metadata.print_all(outpath)
 
@@ -122,10 +105,9 @@ def publish_mode(mode, suffix):
 @click.argument("index")
 @click.argument("target_suffix")
 def reindex_alias(index, target_suffix):
-    # target_suffix = argv[3]
     ret = upload.reindex_alias(index, target_suffix)
     if not ret:
-        raise click.ClickException('Something went wrong')
+        raise click.ClickException("Something went wrong")
 
 
 @cli.command("getmapping")

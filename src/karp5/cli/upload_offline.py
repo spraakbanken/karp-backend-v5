@@ -8,7 +8,7 @@ import six
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
-import elasticsearch_dsl as es_dsl
+# import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
@@ -90,9 +90,9 @@ def upload(
         sql_bulk = []
         for res in es_helpers.streaming_bulk(elastic, data, request_timeout=60):
             # res is a tuple, res[0]==True
-            ansname = "index"  # if with_id else 'create' -- changed from ES2
-            _id = res[1].get(ansname).get("_id")
-            data_doc = data[ok].get("_source")
+            ansname = 'index'  # if with_id else 'create' -- changed from ES2
+            _id = res[1].get(ansname).get('_id')
+            data_doc = data[ok].get('_source')
             if not isinstance(data_doc, dict):
                 data_doc = json.loads(data_doc)
             sql_doc = document.doc_to_sql(data_doc, data_doc["lexiconName"], "bulk")
@@ -188,7 +188,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     data = bulk.bulkify_sql(to_keep, bulk_info={"index": index, "type": typ})
     try:
         ok, err = es_helpers.bulk(es, data, request_timeout=30)
-    except:
+    except Exception:
         print(data)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
@@ -337,15 +337,13 @@ def create_mode(alias, suffix, with_id=False):
         try:
             lexicons = conf_mgr.get_lexiconlist(index)
             load(lexicons, newname, typ, es, with_id=with_id)
-        except Exception as e:
+        except Exception:
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
             _logger.error(
-                "Any documentes uploaded to ES index %s are removed." % newname
+                "Any documentes uploaded to ES index %s are removed. ans = '%s'" % (newname, ans)
             )
-            _logger.error(
-                "If data was uploaded to SQL you will have to remove it manually."
-            )
+            _logger.error('If data was uploaded to SQL you will have to remove it manually.')
             raise
 
 
@@ -372,9 +370,11 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
         # print(ans)
-        print("Any documentes uploaded to ES index %s are removed." % indexname)
-        print("If data was uploaded to SQL you will have to remove it manually.")
-        _logger.error("Any documentes uploaded to ES index %s are removed." % indexname)
+        _logger.error(
+            'Any documentes uploaded to ES index %s are removed. ans=%s' % (indexname, ans)
+        )
+        _logger.error('If data was uploaded to SQL you will have to remove it manually.')
+        raise
 
 
 def internalize_lexicon(mode, to_add):
@@ -393,11 +393,11 @@ def internalize_lexicon(mode, to_add):
         ans = es_helpers.scan(
             es,
             query=query,
-            scroll=u"3m",
+            scroll=u'3m',
             raise_on_error=True,
             preserve_order=False,
             index=mode,
-            request_timeout=30,
+            request_timeout=30
         )
         sql_bulk = []
         for hit in ans:  # ans is an iterator of objects from in hits.hits
@@ -463,7 +463,7 @@ def apply_filter(it, filter_func, field=None):
     filtered = []
     for i in it:
         for x in filter_func(i[field], i['_id']):
-            filtered.append({ field: x})
+            filtered.append({field: x})
     return filtered
 
 
@@ -614,21 +614,22 @@ def make_structure():
     )
 
 
+
 def delete_all():
     # delete all indices
     for alias, aliasconf in conf_mgr.modes.items():
         es = conf_mgr.elastic(alias)
         try:
-            es.indices.delete("*")
-        except:
-            print("could not delete es data form mode %s" % alias)
+            es.indices.delete('*')
+        except Exception:
+            print('could not delete es data form mode %s' % alias)
         try:
             # delete all our lexicons in sql
             for name in conf_mgr.get_lexiconlist(alias):
                 db.deletebulk(lexicon=name)
-        except:
-            print("could not delete sql data form mode %s" % alias)
-    print("Successfully deleted all data")
+        except Exception:
+            print('could not delete sql data form mode %s' % alias)
+    print('Successfully deleted all data')
 
 
 def delete_mode(mode):
@@ -636,9 +637,9 @@ def delete_mode(mode):
     es = conf_mgr.elastic(mode)
     try:
         # print('delete', '%s*' % mode)
-        es.indices.delete("%s*" % mode)
-    except:
-        print("could not delete es data form mode %s" % mode)
+        es.indices.delete('%s*' % mode)
+    except Exception:
+        print('could not delete es data form mode %s' % mode)
     try:
         # delete all our lexicons in sql
         for name in conf_mgr.get_lexiconlist(mode):
@@ -646,4 +647,3 @@ def delete_mode(mode):
     except:
         print("could not delete sql data form mode %s" % mode)
     print("Successfully deleted all data")
-
