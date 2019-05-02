@@ -480,8 +480,6 @@ def copy_alias_to_new_index(
         doc['_index'] = target_index
         return doc
 
-    if filter_func:
-        source_docs = (filter_func(doc) for doc in source_docs)
     update_docs = (update_doc(doc) for doc in source_docs)
     success = 0
     errors = []
