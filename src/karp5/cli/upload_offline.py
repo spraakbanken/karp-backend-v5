@@ -496,10 +496,13 @@ def copy_alias_to_new_index(
     if filter_func:
         source_docs = apply_filter(source_docs, filter_func)
 
+    target_type = conf_mgr.get_mode_type(target_mode)
+
     def update_doc(doc):
         """ Apply doc_to_es to doc. """
         doc['_source'] = document.doc_to_es(doc['_source'], target_mode, 'update')
         doc['_index'] = target_index
+        doc['_type'] = target_type
         return doc
 
     update_docs = (update_doc(doc) for doc in source_docs)
