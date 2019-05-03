@@ -52,7 +52,7 @@ def merge_dict(adict, bdict):
 def load_from_file(
         path,
         default={}
-    ):
+        ):
     try:
         with open(path) as fp:
             return json.load(fp)
@@ -78,7 +78,12 @@ class ConfigManager(object):
     def add_extra_src(self, mode, func):
         mode_fun_map = self._extra_src.get(mode, {})
         if func.__name__ in mode_fun_map:
-            print("WARNING! Function '{}' is already registered for mode '{}'. Overwritting...".format(func.__name__, mode))
+            print("""WARNING!
+                Function '{}' is already registered for mode '{}'. Overwritting...""".format(
+                    func.__name__,
+                    mode
+                )
+            )
 
         mode_fun_map[func.__name__] = func
         self._extra_src[mode] = mode_fun_map
@@ -89,16 +94,16 @@ class ConfigManager(object):
         )
         set_defaults(self.modes)
 
-	self.lexicons = load_from_file(
+        self.lexicons = load_from_file(
             os.path.join(self.configdir, 'lexiconconf.json')
         )
         set_defaults(self.lexicons)
 
-	self.config = load_from_file(
+        self.config = load_from_file(
             os.path.join(self.configdir, 'config.json')
         )
 
-	self.defaultfields = load_from_file(
+        self.defaultfields = load_from_file(
             os.path.join(self.configdir, 'mappings/fieldmappings_default.json')
         )
 
@@ -114,6 +119,8 @@ class ConfigManager(object):
 
     def read_fieldmappings_mode(self, mode):
         " Open a mode's config file and combine them "
+        # " Default fields. Remember to add 'anything' to each index mapping "
+        # defaultfields = _configmanager.defaultfields
         default_fields = copy.deepcopy(self.defaultfields)
         # step through the group members if the mode is an aliasmode
         # or use it's own config file if it's a indexmode
@@ -156,7 +163,7 @@ class ConfigManager(object):
             _logger.debug('\n%s\n' % self.modes[mode])
             return self.modes[mode][field]
         except Exception as e:
-            if mode not in searchconfig:
+            if mode not in self.modes:
                 msg = "Mode '%s' not found" % mode
             else:
                 msg = "Config field '%s' not found in mode '%s'" % (field, mode)
@@ -165,11 +172,6 @@ class ConfigManager(object):
             if failonerror:
                 raise errors.KarpGeneralError(msg)
             return
-
-
-#" Default fields. Remember to add 'anything' to each index mapping "
-# defaultfields = _configmanager.defaultfields
-
 
     def extra_src(self, mode, funcname, default):
         # Try in new way first
@@ -202,11 +204,8 @@ class ConfigManager(object):
             _logger.debug(e)
             return default
 
-
     def elastic(self, mode='', lexicon=''):
         return Elasticsearch(self.elasticnodes(mode=mode, lexicon=lexicon))
-
-
 
     def searchonefield(self, mode, field):
         # looks up field in modes.json, eg "autocomplete"
@@ -216,7 +215,6 @@ class ConfigManager(object):
         # is probably handled elsewhere (searchconf or lookup_multiple)?
         return self.searchfield(mode, field)[0]
 
-
     def searchfield(self, mode, field):
         # looks up field in modes.json, eg "autocomplete"
         # returns the json path
@@ -225,26 +223,21 @@ class ConfigManager(object):
         _logger.info("Found '{}' => '{}'".format(field, fields))
         return sum([self.lookup_multiple(f, mode) for f in fields], [])
 
-
     def all_searchfield(self, mode):
         # returns the json path of the field anything
         _logger.debug('%LOOK FOR ANYTHING\n')
         return self.lookup_multiple('anything', mode)
 
-
     def mode_fields(self, mode):
         return self.modes.get(mode, {})
 
-
     def formatquery(self, mode, field, op):
         return self.searchconf(mode, 'format_query')(field, op)
-
 
     def elasticnodes(self, mode='', lexicon=''):
         if not mode:
             mode = self.get_lexicon_mode(lexicon)
         return self.searchconf(mode, 'elastic_url')
-
 
     def get_lexicon_suggindex(self, lexicon):
         mode = self.get_lexicon_mode(lexicon)
@@ -252,12 +245,10 @@ class ConfigManager(object):
         typ = self.searchconf(mode, 'type')
         return sugg_index, typ
 
-
     def get_group_suggindex(self, mode):
         sugg_index = self.searchconf(mode, 'suggestionalias')
         typ = self.searchconf(mode, 'type')
         return sugg_index, typ
-
 
     def get_lexicon_index(self, lexicon):
         mode = self.get_lexicon_mode(lexicon)
@@ -265,22 +256,17 @@ class ConfigManager(object):
         typ = self.searchconf(mode, 'type')
         return index, typ
 
-
     def get_mode_type(self, mode):
         return self.searchconf(mode, 'type')
-
 
     def get_mode_index(self, mode):
         index = self.searchconf(mode, 'indexalias')
         typ = self.searchconf(mode, 'type')
         return index, typ
 
-
-
     def get_lexicon_sql(self, lexicon):
         mode = self.get_lexicon_mode(lexicon)
         return self.get_mode_sql(mode)
-
 
     def get_lexiconlist(self, mode):
         lexiconlist = set()
@@ -315,26 +301,18 @@ class ConfigManager(object):
         try:
             with open(os.path.join(self.configdir, filepath)) as fp:
                 return fp.read()
-        except:
+        except Exception:
             raise KarpConfigException(
                 "Can't find mappingconf for index '{}'".format(index)
             )
 
-
-
-
-
-# absolute_path = C.config['SETUP']['ABSOLUTE_PATH']
-# standardmode = C.config['SETUP']['STANDARDMODE']
-
-
-    # def lookup(self, field, mode=standardmode, own_fields={}):
     def lookup(self, field, mode, own_fields={}):
+        # standardmode = C.config['SETUP']['STANDARDMODE']
+        # def lookup(self, field, mode=standardmode, own_fields={}):
         return self.lookup_spec(field, mode, own_fields=own_fields)[0]
 
-
-    # def lookup_spec(self, field, mode=standardmode, own_fields={}):
     def lookup_spec(self, field, mode, own_fields={}):
+        # def lookup_spec(self, field, mode=standardmode, own_fields={}):
         try:
             val = self.get_value(field, mode, own_fields=own_fields)
             if type(val) is dict:
@@ -347,9 +325,8 @@ class ConfigManager(object):
             _logger.exception(e)
             raise errors.KarpGeneralError(msg)
 
-
-    # def lookup_multiple_spec(self, field, mode=standardmode):
     def lookup_multiple_spec(self, field, mode):
+        # def lookup_multiple_spec(self, field, mode=standardmode):
         try:
             val = self.get_value(field, mode)
             if type(val) is dict:
@@ -362,12 +339,10 @@ class ConfigManager(object):
             _logger.exception(e)
             raise errors.KarpGeneralError(msg)
 
-
-    # def lookup_multiple(self, field, mode=standardmode):
     def lookup_multiple(self, field, mode):
+        # def lookup_multiple(self, field, mode=standardmode):
         _logger.info("Lookup '{}' in '{}'".format(field, mode))
         return self.lookup_multiple_spec(field, mode)[0]
-
 
     def get_value(self, field, mode, own_fields=None):
         if own_fields:
@@ -383,6 +358,6 @@ class ConfigManager(object):
             return self.get_value(group.group(1), mode, own_fields=own_fields)
         else:
             msg = ("Could not find field '%s' for mode '%s', '%s'"
-                    % (field, mode, mappings))
+                   % (field, mode, mappings))
             _logger.debug(msg)
             raise KarpConfigException(msg, debug_msg=msg+"\n%s" % mappings)
