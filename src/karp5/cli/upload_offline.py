@@ -487,12 +487,6 @@ def copy_alias_to_new_index(
     if create_index:
         _create_index(target_mode, target_index)
 
-    source_kwargs = {
-        'index': source_mode
-    }
-    if query:
-        source_kwargs['query'] = query
-
     source_docs = es_helpers.scan(
         es_source,
         index=source_mode,
