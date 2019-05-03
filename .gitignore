@@ -85,3 +85,7 @@ log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Editor settings #
+###################
+.vscode/
