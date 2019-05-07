@@ -43,16 +43,26 @@ Karp uses virtuals envs for python. To get running:
 Configuration
 =============
 
+Set the environment varibles `KARP5_INSTANCE_PATH` and `KARP5_ELASTICSEARCH_URL`:
+1. using `export VAR=value`
+2. or creating a file `.env` in the root of your cloned path with `VAR=value`
+3. `KARP5_INSTANCE_PATH` - the path where your configs are.
+   - If you have cloned this repo you can use `/path/to/karp-backend/`.
+4. `KARP5_ELASTICSEARCH_URL` - the url to elasticsearch.
+   - Typically `localhost:9200`
+
 Copy `config.json.example` to `config.json` and make your changes.
 You will also need to make configurations for your lexicons.
-Read more [here](TODO manual.md).
+Read more [here](doc/manual.md).
 
 
 Tests
 =====
 TODO: DO MORE TESTS!
-Test that Karp-b is working by starting it
-`python src/main.py`
+Run the tests by typing: `make test`
+
+Test that `karp-backend` is working by starting it
+`make run` or `python run.py`
 
 
 Known bugs
