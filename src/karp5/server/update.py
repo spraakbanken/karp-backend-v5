@@ -19,7 +19,6 @@ from karp5.document import autoupdate_child
 from karp5.document import doc_to_es
 
 
-
 _logger = logging.getLogger('karp5')
 
 
@@ -41,8 +40,8 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         authdict, permitted = auth.validate_user()
         if lexiconName not in permitted:
             raise errors.KarpAuthenticationError('You are not allowed to modify '
-                                             'the lexicon %s, only %s'
-                                             % (lexiconName, permitted))
+                                                 'the lexicon %s, only %s'
+                                                 % (lexiconName, permitted))
 
         # doc_type must be set
         ans = es.delete(index=index, doc_type=typ, id=_id)
@@ -65,7 +64,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = [er['create']['error'] for er in e.errors]
         raise errors.KarpElasticSearchError("Error during deletion %s.\n"
-                                        % '\n'.join(err))
+                                            % '\n'.join(err))
 
     except (esExceptions.TransportError, esExceptions.RequestError) as e:
         # elasticsearch-py throws errors (TransportError)
@@ -73,15 +72,15 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = [e.error]
         raise errors.KarpElasticSearchError('Error during deletion. '
-                                        'Message: %s.\n'
-                                        % '\n'.join(err))
+                                            'Message: %s.\n'
+                                            % '\n'.join(err))
 
     except Exception as e:
         handle_update_error(e, {"id": _id}, helpers.get_user(), 'delete')
         err = ['Oops, an unpredicted error', str(e),
                'Document not deleted']
         raise errors.KarpGeneralError('Document not deleted',
-                                  debug_msg=' '.join(err))
+                                      debug_msg=' '.join(err))
 
     jsonans = {'es_loaded': 1, 'sql_loaded': db_loaded, 'es_ans': ans}
     if db_error:
@@ -141,9 +140,9 @@ def update_doc(lexicon, _id, data=None, live=True):
 
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to modify the '
-                                         'lexicon %s, only %s'
-                                         % (lexicon, permitted),
-                                         status_code=403)
+                                             'lexicon %s, only %s'
+                                             % (lexicon, permitted),
+                                             status_code=403)
 
     validate.validate_json(data_doc, lexicon)
     date = datetime.datetime.now()
@@ -165,7 +164,7 @@ def update_doc(lexicon, _id, data=None, live=True):
         _logger.debug('index: %s, type: %s, id: %s', index, typ, _id)
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
-                                        % str(e))
+                                            % str(e))
     except Exception as e:
         handle_update_error(e, {"id": _id, "data": data}, user, 'update')
         raise errors.KarpElasticSearchError("Unexpected error during update.")
@@ -222,7 +221,7 @@ def add_multi_doc(lexicon, index=''):
     if lexicon not in permitted:
         errstr = 'You are not allowed to modify the lexicon %s'
         raise errors.KarpAuthenticationError(errstr % lexicon,
-                                         status_code=403)
+                                             status_code=403)
     user = helpers.get_user()
     try:
         bulk, sql_bulk, ids = [], [], []
@@ -248,7 +247,7 @@ def add_multi_doc(lexicon, index=''):
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, 'add')
         raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
-                                        % str(e))
+                                            % str(e))
 
     db_loaded, db_error = db.update_bulk(lexicon, sql_bulk)
     if db_error:
@@ -279,7 +278,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
     # lexiconOrder = data_doc.get("lexiconOrder", None)
     if not lexiconName:
         raise errors.KarpParsingError("The field lexiconName is empty, "
-                                  "although it is required.")
+                                      "although it is required.")
 
     if suggestion:
         orgin_id = _id or True  # save as reference in db
@@ -292,7 +291,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
         if lexiconName not in permitted:
             errstr = 'You are not allowed to modify the lexicon %s'
             raise errors.KarpAuthenticationError(errstr % lexiconName,
-                                             status_code=403)
+                                                 status_code=403)
 
         orgin_id = ''  # not a suggestion
         user = helpers.get_user()
@@ -316,7 +315,7 @@ def add_doc(lexicon, index='', _id=None, suggestion=False, data=None,
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, 'add')
         raise errors.KarpElasticSearchError("Error during update. Message: %s.\n"
-                                        % str(e))
+                                            % str(e))
     except Exception as e:
         raise errors.KarpGeneralError(str(e))
 
@@ -360,7 +359,7 @@ def handle_update_error(error, data, user, action):
 
 def send_notification(user, message, _id, status):
     import re
-    if re.match('^[^@]+@[^@]+\.[^@]+$', user):
+    if re.match(r'^[^@]+@[^@]+\.[^@]+$', user):
         import karp5.dbhandler.emailsender as sender
         msg = 'Your suggestion with id %s has been %s with the message:\n"%s"'\
               % (_id, status, message)

@@ -57,7 +57,6 @@ class Operator(object):
             q_obj = q_obj.replace('QUERY', query)
         return q_obj
 
-
     def set_field(self, q_obj=None, field=None, other_op=None):
         """ Similar to the string method, but does not update the self.query
             q_obj is a query string (such as self.query)
@@ -74,8 +73,6 @@ class Operator(object):
             q_obj = q_obj.replace(other_op[0], other_op[1])
         self.query = q_obj
         return q_obj
-
-
 
     def multiple_fields_string(self, fields='', query=None, constraints=''):
         """ Similar to the string method but handles multiple field search.
@@ -132,7 +129,7 @@ class Operator(object):
         if no_opers > self.max_operands or no_opers < self.min_operands:
             raise errors.QueryError('Wrong number of operands given. \
                                    Permitted range: %d-%d'
-                                  % (self.min_operands, self.max_operands))
+                                    % (self.min_operands, self.max_operands))
 
         for index, operand in enumerate(operands):
             # If the operand is within the range of what the operator needs,
@@ -180,7 +177,6 @@ class Operator(object):
         if self.etype == "not":
             return json.loads('{"bool" : {"must_not" : [%s]}}' % ','.join(ops))
 
-
     # def set_operand(self, operand):
     #     return lambda q: self.query(operand, q)
 
@@ -208,7 +204,7 @@ class Operator(object):
             # (Eg. "gälla..5" in comment won't be found with term
             # self.operator =  "term" if max_words<=1 else "match_phrase"
             self.operator = "match_phrase"
-            #self.query = lambda x,y,z: {self.operator: {x: y}}
+            # self.query = lambda x,y,z: {self.operator: {x: y}}
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter
@@ -219,13 +215,13 @@ class Operator(object):
             # full-text) fields, like pos and might, in theory, be faster. In
             # practice, it is not (as of July 2015).
             self.operator = "term"
-            #self.query = lambda x,y,z: {self.operator: {x: y}}
+            # self.query = lambda x,y,z: {self.operator: {x: y}}
             self.query = '"%s" : {"FIELD" : "QUERY"}' % self.operator
             self.isfilter = True
 
         elif op == "contains":
             self.operator = "match"
-            #self.query = lambda x,y,z: {self.operator: {x: {"query": y, "operator": "and"}}}
+            # self.query = lambda x,y,z: {self.operator: {x: {"query": y, "operator": "and"}}}
             self.query = '"%s": {"FIELD": {"query": "QUERY", "operator": "and"}}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter (might be possible, not tested)
@@ -239,7 +235,7 @@ class Operator(object):
             self.min_operands = 0
             self.operator = "exist"  # "missing"
             # self.isfilter = True
-            #self.query = lambda x,y,z: {"exists" : {"field" : x}}
+            # self.query = lambda x,y,z: {"exists" : {"field" : x}}
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "exists":
             # This filter consider empty strings (but not empty lists) to be an
@@ -248,31 +244,31 @@ class Operator(object):
             self.min_operands = 0
             self.operator = "exist"
             # self.isfilter = True
-            #self.query = lambda x,y,z: {"exists": {"field": x}}
+            # self.query = lambda x,y,z: {"exists": {"field": x}}
             self.query = '"exists" : {"field" : "FIELD"}'
         elif op == "regexp":
             self.operator = "regexp"
             self.query = '"regexp" : {"FIELD" : "QUERY"}'
-            #self.query = lambda x,y,z: {"regexp": {x: y}}
+            # self.query = lambda x,y,z: {"regexp": {x: y}}
         elif op == "startswith":
             self.operator = "startswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : "QUERY.*"}' % op
-            #self.query = lambda x,y,z: {op : {x : y+".*"}}
+            # self.query = lambda x,y,z: {op : {x : y+".*"}}
         elif op == "endswith":
             self.operator = "endswith"
             op = 'regexp'
             self.query = '"%s" : {"FIELD" : ".*QUERY"}' % op
-            #self.query = lambda x,y,z: {op : {x : ".*"+y}}
+            # self.query = lambda x,y,z: {op : {x : ".*"+y}}
         elif op == "lte":
             self.operator = "lte"
             op = 'range'
-            #self.query = lambda x,y,z: {op : {x : {"lte" : y}}}
+            # self.query = lambda x,y,z: {op : {x : {"lte" : y}}}
             self.query = '"%s" : {"FIELD" : {"lte" : "QUERY"}}' % op
         elif op == "gte":
             self.operator = "gte"
             op = 'range'
-            #self.query = lambda x,y,z: {op : {x : {"gte" : y}}}
+            # self.query = lambda x,y,z: {op : {x : {"gte" : y}}}
             self.query = '"%s" : {"FIELD" : {"gte" : "QUERY"}}' % op
         elif op == "range":
             self.operator = "range"
@@ -280,8 +276,8 @@ class Operator(object):
             self.max_operands = 2  # allows exactly two operands
             self.min_operands = 2
             self.query = '"%s" : {"FIELD" : {"lte" : "OP1", "gte": "QUERY"}}' % op
-            #self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
+            # self.query = lambda x,y,z: {op: {x: {"lte" : z, "gte": y}}}
         else:
             raise errors.QueryError('Operator "%s" not recognized.\
                                    Valid options %s'
-                                  % (op, ','.join(operators)))
+                                    % (op, ','.join(operators)))

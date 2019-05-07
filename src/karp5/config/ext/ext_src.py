@@ -1,4 +1,4 @@
-import functools
+# import functools
 import logging
 
 from karp5.config import mgr as conf_mgr

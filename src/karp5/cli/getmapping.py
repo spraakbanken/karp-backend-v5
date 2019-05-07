@@ -1,5 +1,6 @@
 import json
-import logging
+
+# import logging
 import os
 
 from karp5.config import mgr as conf_mgr
@@ -20,7 +21,7 @@ def getmapping(alias, outfile=""):
     testindex = "testmapping"
     try:
         mapp = open(_mapping, "r").read()
-    except:
+    except Exception:
         mapp = None
     added = []
     for index in to_create:
@@ -29,7 +30,7 @@ def getmapping(alias, outfile=""):
             print("create")
             es.indices.create(index=testindex, body=mapp)
             print("created")
-        except:
+        except Exception:
             es.indices.delete(index=testindex)
             es.indices.create(index=testindex, body=mapp)
             raise

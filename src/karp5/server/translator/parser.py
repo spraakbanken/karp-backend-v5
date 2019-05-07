@@ -41,7 +41,7 @@ def parse(settings=None, isfilter=False):
     # isfilter is used for minientries and some queries to statistics
     # only one query is allowed
     query = request.args.get('q', ['']) or request.args.get('query')
-    #query = query.decode('utf8')  # use utf8, same as lexiconlist
+    # query = query.decode('utf8')  # use utf8, same as lexiconlist
     p_extra = parse_extra(settings)
     command, query = query.split('||', 1)
     settings['query_command'] = command
@@ -73,8 +73,8 @@ def parse(settings=None, isfilter=False):
     else:
         raise errors.QueryError("Search command not recognized: %s.\
                                Available options: simple, extended"
-                              % (command)
-                             )
+                                % (command)
+                                )
 
 
 def get_command():
@@ -96,7 +96,7 @@ def parse_extra(settings):
         if k not in available:
             raise errors.QueryError("Option not recognized: %s.\
                                    Available options: %s"
-                                  % (k, ','.join(available)))
+                                    % (k, ','.join(available)))
 
     if 'mode' in request.args:
         # _logger.debug('change mode -> %s' % (parsed))
@@ -113,12 +113,12 @@ def parse_extra(settings):
     for r in settings.get('allowed', []):
         if r in wanted or not wanted:
             ok_lex.append(r)
-            lex_wanted.append({"term" : {conf_mgr.lookup("lexiconName", mode): r}})
+            lex_wanted.append({"term": {conf_mgr.lookup("lexiconName", mode): r}})
 
     if len(lex_wanted) > 1:
         # if more than one lexicon, the must be put into a 'should' ('or'),
         # not the 'must' query ('and') that will be constructed later
-        info = {"bool" : {"should" : lex_wanted}}
+        info = {"bool": {"should": lex_wanted}}
     elif len(lex_wanted) == 1:
         info = lex_wanted[0]
 
@@ -126,7 +126,7 @@ def parse_extra(settings):
         # if no lexicon is set, ES will search all lexicons,
         # included protected ones
         raise errors.AuthenticationError("You are not allowed to search any" +
-                                       " of the requested lexicons")
+                                         " of the requested lexicons")
 
     # the below line is used by checklexiconhistory and checksuggestions
     settings['resource'] = ok_lex
@@ -135,7 +135,7 @@ def parse_extra(settings):
         size = request.args['size']
         settings['size'] = float(size) if size == 'inf' else int(size)
     if 'sort' in request.args:
-        #settings['sort'] = conf_mgr.lookup_multiple(request.args['sort'].split(','), mode)
+        # settings['sort'] = conf_mgr.lookup_multiple(request.args['sort'].split(','), mode)
         settings['sort'] = sum([conf_mgr.lookup_multiple(s, mode)
                                 for s in request.args['sort'].split(',')], [])
     if 'page' in request.args:
@@ -147,7 +147,7 @@ def parse_extra(settings):
                                in request.args['buckets'].split(',')]
 
     if 'show' in request.args:
-        #settings['show'] = conf_mgr.lookup_multiple(request.args['show'][0].split(','), mode)
+        # settings['show'] = conf_mgr.lookup_multiple(request.args['show'][0].split(','), mode)
         settings['show'] = sum([conf_mgr.lookup_multiple(s, mode)
                                 for s in request.args['show'].split(',')], [])
     # to be used in random
@@ -239,7 +239,7 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
             # a field may correspond to several paths, not ok for nested queries
             raise errors.QueryError("Cannot construct nested query from multiple fields.\
                                    You attempt to search all of %s."
-                                  % (','.join(info.get("fields"))))
+                                    % (','.join(info.get("fields"))))
         todo[info.get("fields")[0]] = newexps
 
     # A complicated way to construct the nested query.
@@ -361,20 +361,20 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
     boost_list = conf_mgr.searchfield(mode, 'boosts')
     boost_score = len(boost_list)*100
     for field in boost_list:
-        qs.append({"match": {field : {"query": text, "boost": boost_score}}})
+        qs.append({"match": {field: {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
-    q = {"bool" : {"should" :[qs]}}
+    q = {"bool": {"should": [qs]}}
     if extra:
-        q = {"bool" : {"must" :[q, extra]}}
+        q = {"bool": {"must": [q, extra]}}
     if isfilter:
-        return {"filter" : q}
+        return {"filter": q}
 
     res = {"query": q}
     if highlight:
         res["highlight"] = {"fields": {"*": {"highlight_query": q}},
                             "require_field_match": False
-                           }
+                            }
     return res
 
 
@@ -411,7 +411,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
             _logger.debug('case 3')
             qs = construct_exp(exps, querytype="must", constant_score=constant_score)
             qs.update(f_obj)
-            q_obj = {"bool" : qs}
+            q_obj = {"bool": qs}
         else:
             _logger.debug('case 4')
             q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
@@ -430,7 +430,7 @@ def search(exps, filters, fields, isfilter=False, highlight=False,
                 high_fields[field] = {"number_of_fragments": 0,
                                       "highlight_query": field_q["highlight_query"],
                                       "require_field_match": False
-                                     }
+                                      }
 
         res["highlight"] = {"fields": high_fields, "require_field_match": False}
         _logger.debug('highlight %s', res['highlight'])
@@ -484,7 +484,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
     if q:
         q = parse(isfilter=True, settings=settings)
     else:  # always filter to show only the permitted resources
-        q = {"filter" : resource}
+        q = {"filter": resource}
 
     buckets = settings.get('buckets')
     _logger.debug('buckets %s', buckets)
@@ -519,7 +519,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
         if normal:
             bucket_settings["size"] = size
             bucket_settings["shard_size"] = shard_size
-        #else:
+        # else:
         #    add_size = ''
 
         # construct query for entries with the current field/bucket
@@ -542,12 +542,12 @@ def statistics(settings, exclude=[], order={}, prefix='',
 
         # count_errors = ''  # '"show_term_doc_count_error": true, '
         to_add_field = "%s%s" % (prefix, bucket)
-        #to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
-        to_add_exist = {terms: {"field" : bucket}}
+        # to_add_exist = '"%s%s" : {"%s" : {%s "field" : "%s" %s %s %s} %s}'\
+        to_add_exist = {terms: {"field": bucket}}
 
         # construct query for entries missing the current field/bucket
         missing_field = "%s%s_missing" % (prefix, bucket)
-        to_add_missing = {"missing" : {"field" : bucket}}
+        to_add_missing = {"missing": {"field": bucket}}
 
         if to_add:
             to_add_exist["aggs"] = to_add
@@ -565,7 +565,7 @@ def statistics(settings, exclude=[], order={}, prefix='',
         else:
             to_add = {to_add_field: to_add_exist}
         # construct a query to see the cardinality of this field
-        more.append(({"aggs": {"more" : {"cardinality" : {"field" : bucket}}}},
+        more.append(({"aggs": {"more": {"cardinality": {"field": bucket}}}},
                      bucket))
         # set normal to True, since only the innermost bucket grouping can
         # contain cardinality information

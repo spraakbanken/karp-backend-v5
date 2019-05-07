@@ -13,22 +13,23 @@ import elasticsearch_test
 
 import dotenv
 dotenv.load_dotenv(dotenv_path='.env', verbose=True)
-os.environ['KARP_INSTANCE_PATH'] = os.path.join(
+os.environ['KARP5_INSTANCE_PATH'] = os.path.join(
     os.path.dirname(__file__),
     'data/'
 )
 from karp5 import create_app, Config
 from karp5.cli import upload_offline as upload, cli as karp5_cli, setup_cli
-from karp5.config import mgr as conf_mgr
+from karp5.config import conf_mgr
 
 
 _tempfile = tempfile.NamedTemporaryFile(suffix='.db')
+
 
 class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
     DATABASE_BASEURL = 'sqlite://'
-    ELASTICSEARCH_URL='localhost:9201'
+    ELASTICSEARCH_URL = 'localhost:9201'
 
 
 @pytest.fixture(scope="session")

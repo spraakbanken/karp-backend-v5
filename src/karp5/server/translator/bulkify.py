@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import json
 
 from karp5.document import doc_to_es
-from karp5.document import doc_to_sql
+# from karp5.document import doc_to_sql
 
 
 _index = 'test'

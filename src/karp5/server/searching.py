@@ -8,7 +8,7 @@ import copy
 import elasticsearch
 import logging
 import re
-from flask import request, jsonify, Response
+from flask import request, jsonify, Response, stream_with_context, copy_current_request_context
 from itertools import chain
 import json
 
@@ -25,8 +25,8 @@ from karp5.server.translator.errors import AuthenticationError, QueryError
 # from gevent.queue import Queue, Empty
 import functools
 import sys
-import time
-from karp5 import util
+# import time
+
 
 _logger = logging.getLogger('karp5')
 
@@ -42,7 +42,7 @@ def query(page=0):
     except Exception as e:  # catch *all* exceptions and show for user
         _logger.exception(e)
         raise errors.KarpGeneralError(str(e), user_msg=str(e),
-                                  query=request.query_string)
+                                      query=request.query_string)
 
 
 def requestquery(page=0):
@@ -57,7 +57,7 @@ def requestquery(page=0):
     except QueryError as e:
         _logger.exception(e)
         raise errors.KarpQueryError('Parse error - '+e.message, debug_msg=e.debug_msg,
-                                query=request.query_string)
+                                    query=request.query_string)
     except AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
@@ -68,11 +68,13 @@ def requestquery(page=0):
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
         raise errors.KarpQueryError("Could not parse data", debug_msg=e,
-                                query=request.query_string)
+                                    query=request.query_string)
     mode = settings['mode']
     sort = sortorder(settings, mode, settings.get('query_command', ''))
-    start = settings['start'] if 'start' in settings\
-                              else settings['page'] * settings['size']
+    if 'start' in settings:
+        start = settings['start']
+    else:
+        start = settings['page'] * settings['size']
 
     # size = min(settings['size'], setupconf.max_page)
     size = settings['size']
@@ -142,7 +144,7 @@ def querycount(page=0):
                               search_type="query_then_fetch",
                               # raise the size for the statistics call
                               size=25  # stat_size
-                             )
+                              )
         _logger.debug('ANNE: count_ans: %s\n', count_ans)
         distribution = count_ans['aggregations']['q_statistics']['lexiconOrder']['buckets']
     except errors.KarpException as e:  # pass on karp exceptions
@@ -157,7 +159,7 @@ def querycount(page=0):
         # Remember that 'buckets' is not allowed here! %s"
         _logger.exception(e)
         raise errors.KarpQueryError("Could not parse data", debug_msg=e,
-                                query=request.query_string)
+                                    query=request.query_string)
     return jsonify({'query': q_ans, 'distribution': distribution})
 
 
@@ -214,7 +216,7 @@ def minientry():
                                   'from_': start, 'sort': sort,
                                   'size': min(settings['size'], max_page),
                                   'search_type': 'dfs_query_then_fetch'}
-                                )
+                                 )
         if settings.get('highlight', False):
             clean_highlight(ans)
 
@@ -225,7 +227,7 @@ def minientry():
         raise errors.KarpAuthenticationError(msg)
     except QueryError as e:
         raise errors.KarpQueryError("Parse error, %s" % e.message, debug_msg=e,
-                                query=request.query_string)
+                                    query=request.query_string)
     except errors.KarpException as e:  # pass on karp exceptions
         _logger.exception(e)
         raise
@@ -426,7 +428,7 @@ def autocomplete():
         The format of result depends on which flag that is set.
     """
     auth, permitted = validate_user(mode="read")
-    #query = request.query_string
+    # query = request.query_string
     try:
         settings = parser.make_settings(permitted, {'size': 1000})
         mode = parser.get_mode()
@@ -449,13 +451,13 @@ def autocomplete():
         ans = {}
         # if multi is not true, only one iteration of this loop will be done
         for q in qs:
-            boost = {"term": {headboost: {"boost" : "500", "value": q}}}
+            boost = {"term": {headboost: {"boost": "500", "value": q}}}
 
             autocompleteq = conf_mgr.extra_src(mode, 'autocomplete', autocompletequery)
             exp = autocompleteq(mode, boost, q)
             autocomplete_field = conf_mgr.searchonefield(mode, 'autocomplete_field')
             autocomplete_fields = conf_mgr.searchfield(mode, 'autocomplete_field')
-            fields = {"exists": {"field" : autocomplete_field}}
+            fields = {"exists": {"field": autocomplete_field}}
             # last argument is the 'fields' used for highlightning
             elasticq = parser.search([exp, fields, resource], [], '', usefilter=True)
             _logger.debug('Will send %s', elasticq)
@@ -467,7 +469,7 @@ def autocomplete():
             ans = parser.adapt_query(settings['size'], 0, es, elasticq,
                                      {'size': settings['size'], 'index': index,
                                       '_source': autocomplete_fields}
-                                    )
+                                     )
             # save the results for multi
             res[q] = ans
         if multi:
@@ -496,9 +498,9 @@ def autocompletequery(mode, boost, q):
     # other modes: don't care about msd
     look_in = [boost]
     for boost_field in conf_mgr.searchfield(mode, 'boosts'):
-        look_in.append({"match_phrase" : {boost_field : q}})
+        look_in.append({"match_phrase": {boost_field: q}})
 
-    exp = {"bool" : {"should" : [look_in]}}
+    exp = {"bool": {"should": [look_in]}}
 
     return exp
 
@@ -550,13 +552,13 @@ def testquery():
         else:
             sort = settings['sort']
         start = settings['start'] if 'start' in settings\
-                                  else settings['page'] * settings['size']
+            else settings['page'] * settings['size']
         elasticq = parser.parse()
         return json.dumps(elasticq) + json.dumps({'sort': sort, '_from': start,
                                         'size': settings['size'],
                                         'version': 'true'
-                                       }
-                                      )
+                                        }
+                                       )
     except Exception as e:  # catch *all* exceptions
         # TODO only catch relevant exceptions
         _logger.exception(e)
@@ -570,7 +572,7 @@ def get_context(lexicon):
     auth, permitted = validate_user(mode="read")
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to search the '
-                                         'lexicon %s' % lexicon)
+                                             'lexicon %s' % lexicon)
     # make default settings
     settings = parser.make_settings(permitted, {"size": 10, "resource": lexicon})
     # parse parameter settings
@@ -634,7 +636,7 @@ def get_context(lexicon):
         if querystring.startswith('simple'):
             querystring = 'and|anything|equals|%s' % querystring.split('|')[-1]
         else:
-            querystring = re.sub('extended\|\|', '', querystring)
+            querystring = re.sub(r'extended\|\|', '', querystring)
         parser.parse_ext(querystring, exps, [], mode)
 
     preexps = copy.deepcopy(exps)  # deep copy for the pre-query
@@ -662,7 +664,7 @@ def get_pre_post(exps, center_id, sortfield, sortfieldname, sortvalue,
     show = conf_mgr.searchfield(mode, 'minientry_fields')
     for _i, _v in enumerate(show):
         if _v == "Corpus_unit_id.raw":
-	        show[_i] = "Corpus_unit_id"
+            show[_i] = "Corpus_unit_id"
     _logger.debug("searching.py:get_pre_post show = {0}".format(show))
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
@@ -700,7 +702,7 @@ def export(lexicon):
     auth, permitted = validate_user(mode="read")
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to search the '
-                                         'lexicon %s' % lexicon)
+                                             'lexicon %s' % lexicon)
 
     settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
     parser.parse_extra(settings)
@@ -744,6 +746,7 @@ def export(lexicon):
         if len(ans) < divsize:
             _logger.debug('simply sending entries')
             return jsonify({lexicon: ans})
+
         def gen():
             start, stop = 0, divsize
             yield '{"%s": [' % lexicon
@@ -751,8 +754,8 @@ def export(lexicon):
                 _logger.debug('chunk %s - %s' % (start, stop))
                 if start > 1:
                     yield ','
-                yield ','.join([json.dumps(obj) for obj in ans[start:stop]])
-                #yield json.dumps(ans[start:stop])
+                yield ','.join([dumps(obj) for obj in ans[start:stop]])
+                # yield dumps(ans[start:stop])
                 start = stop
                 stop += divsize
             yield ']}'
@@ -779,7 +782,7 @@ def prevent_timeout(generator):
         def error_catcher(g, *pargs, **kwargs):
             try:
                 g(*pargs, **kwargs)
-            except Exception as e:
+            except Exception:
                 q.put(sys.exc_info())
 
         pool = ThreadPool(1)
@@ -821,7 +824,7 @@ def main_handler(generator):
                         yield response  # dumps(response)[1:-1] + ",\n"
             except GeneratorExit:
                 raise
-            except Exception as e:
+            except Exception:
                 raise
             # print 'main done'
             yield "\n"
@@ -841,10 +844,8 @@ def main_handler(generator):
                         result.update(response)
             except GeneratorExit:
                 raise
-            except:
+            except Exception:
                 raise
-
-
 
             # result = dumps(result)
             # print 'last yield'
@@ -865,7 +866,7 @@ def export2(lexicon, divsize=5000):
     auth, permitted = validate_user(mode="read")
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to search the '
-                                         'lexicon %s' % lexicon)
+                                             'lexicon %s' % lexicon)
 
     settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon})
     parser.parse_extra(settings)
@@ -878,8 +879,8 @@ def export2(lexicon, divsize=5000):
         date = dateP.parse(date, dateP.parserinfo(yearfirst=True),
                            default=datetime(1999, 01, 01, 23, 59))
 
-    #def get_data(inp):
-    #time.sleep(10)
+    # def get_data(inp):
+    # time.sleep(10)
     to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     size = settings['size']
@@ -892,21 +893,21 @@ def export2(lexicon, divsize=5000):
             if last < entry['date']:
                 to_keep[_id] = entry
         else:
-                to_keep[_id] = entry
+            to_keep[_id] = entry
 
     ans = [val['doc'] for val in to_keep.values() if val['status'] != 'removed']
     # print 'shorten list?'
     if size != float('inf') and size < len(ans):
         # print 'done, %s < %s' % (size, len(ans))
         ans = ans[:settings['size']]
-    #inp['out'] = ans
+    # inp['out'] = ans
     # print 'I am done!'
-    #return
+    # return
 
     if settings.get('format', ''):
-        #ans = {}
-        #get_data(ans)
-        #ans = ans['out']
+        # ans = {}
+        # get_data(ans)
+        # ans = ans['out']
         # print 'exporting %s entries' % len(ans)
         toformat = settings.get('format')
         index, typ = conf_mgr.get_mode_index(mode)
@@ -916,15 +917,15 @@ def export2(lexicon, divsize=5000):
         yield Response(lmf, mimetype='text/xml')
 
     else:
-        #import threading
-        #import time
+        # import threading
+        # import time
         # print 'divsize %s' % divsize
         divsize = int(divsize)
-        #def gen():
-        #ans = {}
-        #t = threading.Thread(target=get_data, args=[ans])
-        #t.start()
-        #yield '{"%s": [' % lexicon
+        # def gen():
+        # ans = {}
+        # t = threading.Thread(target=get_data, args=[ans])
+        # t.start()
+        # yield '{"%s": [' % lexicon
         yield '"%s": [' % lexicon
         # while t.is_alive():
         #     yield(' ')
@@ -932,8 +933,8 @@ def export2(lexicon, divsize=5000):
         #     time.sleep(1)
         #     _logger.debug('wake up')
 
-        #print 'thread finished %s' % t.is_alive()
-        #ans = ans['out']
+        # print 'thread finished %s' % t.is_alive()
+        # ans = ans['out']
         # print 'exporting %s entries' % len(ans)
         start, stop = 0, divsize
         # print 'streaming entries'
@@ -947,10 +948,10 @@ def export2(lexicon, divsize=5000):
                 # print 'yielding a res'
                 yield res
                 yield '\n'
-            except:
+            except Exception:
                 # print 'exception here! % - %s' % start, stop
                 raise
-            #yield dumps(ans[start:stop])
+            # yield dumps(ans[start:stop])
             start = stop
             stop += divsize
         # print 'done'

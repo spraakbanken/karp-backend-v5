@@ -52,11 +52,13 @@ def suggest_id(index):
 
 
 def get_id_sequence(index_name, size):
-    tasks = "".join(['{"index": {"_index": "sequence", "_type": "sequence", "_id": "' + index_name + '"}}\n{}\n' for _ in range(0, size)])
+    tasks = "".join(['{"index": {"_index": "sequence", "_type": "sequence", "_id": "' +
+                     index_name + '"}}\n{}\n' for _ in range(0, size)])
     es = conf_mgr.elastic(mode=index_name)
     result = es.bulk(body=tasks)
     for item in result['items']:
         yield item["index"]["_version"]
+
 
 def create_saolp():
     create_sequence_index('saolp', 10000000)
