@@ -32,7 +32,7 @@ class Config(object):
     MAX_PAGE = _config['SETUP']['MAX_PAGE']
     MINIENTRY_PAGE = _config['SETUP']['MINIENTRY_PAGE']
     SCAN_LIMIT = _config['SETUP']['SCAN_LIMIT']
-    ELASTICSEARCH_URL = os.environ['KARP5_ELASTICSEARCH_URL']
+    ELASTICSEARCH_URL = os.environ['KARP5_ELASTICSEARCH_URL'].split(',')
     OVERRIDE_ELASTICSEARCH_URL = strtobool(os.environ.get('KARP5_ELASTICSEARCH_URL_OVERRIDE', 'false'))
     TESTING = False
     DEBUG = False
