@@ -10,7 +10,7 @@ import karp5.server.idgenerator as idgenerator
 import karp5.server.searching as searching
 import karp5.server.suggestions as suggestions
 import karp5.server.update as update
-from karp5.config import mgr as conf_mgr
+from karp5.config import conf_mgr
 import karp5
 import logging
 
