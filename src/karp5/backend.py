@@ -3,7 +3,7 @@
     Is also responsible for which ES node to query.
 """
 
-from flask import jsonify, request, session
+from flask import jsonify, session
 import karp5.server.checkdbhistory as checkdbhistory
 import karp5.server.idgenerator as idgenerator
 import karp5.server.searching as searching
@@ -234,7 +234,6 @@ def init(route):
     def helppage():
         """Render API documentation."""
         _logger.debug('ok')
-        import os
         import markdown
 
         _logger.debug('index page')

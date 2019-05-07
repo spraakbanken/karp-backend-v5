@@ -9,12 +9,13 @@ def get_json(client, path):
     assert 200 <= response.status_code < 300
     return json.loads(response.data.decode())
 
+
 @pytest.mark.parametrize('command', [
     'query',
     'querycount',
     'minientry',
 ])
-@pytest.mark.parametrize('q,mode,n_hits',[
+@pytest.mark.parametrize('q,mode,n_hits', [
     ('simple||sit', 'panacea', 2),
     ('simple||sit', 'karp', 2),
     ('extended||and|pos|exists', 'panacea', 6609),

@@ -34,7 +34,7 @@ def check_user(force_lookup=False):
             user, pw = auth.username, auth.password
         except TypeError:
             raise errors.KarpAuthenticationError("Incorrect username or password.",
-                                             "Make sure that they are properly encoded")
+                                                 "Make sure that they are properly encoded")
         postdata["username"] = user
         postdata["password"] = pw
         secret = conf_mgr.app_config.AUTH_SECRET

@@ -19,7 +19,7 @@ setup(
         'karp5': ['src/karp5/html/*']
     },
     # packages=[
-        # 'karp5',
+    #     'karp5',
     #     'karp5.dbhandler',
     #     'karp5.offline',
     #     'karp5.server',
@@ -43,6 +43,7 @@ setup(
             'pytest',
             'pytest-cov',
             'elasticsearch_test-py',
+            'autopep8',
             # 'urllib3',
         ]
     },

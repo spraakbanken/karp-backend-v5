@@ -10,12 +10,10 @@ try:
 except ImportError:
     from itertools import izip_longest as zip_longest
 
-import elasticsearch_dsl as es_dsl
+# import elasticsearch_dsl as es_dsl
 import pytest
 
 from karp5.cli import upload_offline as upload
-
-
 
 
 def get_es_indices():
@@ -118,7 +116,7 @@ def test_copy_mode(cli_w_panacea):
 
     r = cli_w_panacea.publish_mode(target_mode, target_suffix)
     assert r.exit_code == 0
-    time.sleep(1)
+    time.sleep(5)
 
     _test_alias_contains_index(target_mode, mk_indexname(target_mode, target_suffix))
     _test_n_hits_equals(source_mode, n_hits)
@@ -175,11 +173,11 @@ def mock_copy_alias(source_docs, lex, filter_func=None):
 
 
 def gen_data(n):
-    for i in range(1,n):
-        yield { '_source': { 'id': i } }
+    for i in range(1, n):
+        yield {'_source': {'id': i}, '_id': i+4321}
 
 
-def filter_even_gen(doc):
+def filter_even_gen(doc, _id):
     if doc['id'] % 2 == 0:
         yield doc
         c = doc.copy()
@@ -188,7 +186,7 @@ def filter_even_gen(doc):
         yield c
 
 
-def filter_even_list(doc):
+def filter_even_list(doc, _id):
     result = []
     if doc['id'] % 2 == 0:
         c = doc.copy()
@@ -202,19 +200,19 @@ def filter_even_list(doc):
     (gen_data(10), 'lex', None, gen_data(10)),
     (gen_data(10), 'lex', filter_even_gen, [
         {'_source': {'id': 2}},
-        {'_source': {'id': 102, 'link':2}},
+        {'_source': {'id': 102, 'link': 2}},
         {'_source': {'id': 4}},
-        {'_source': {'id': 104, 'link':4}},
+        {'_source': {'id': 104, 'link': 4}},
         {'_source': {'id': 6}},
-        {'_source': {'id': 106, 'link':6}},
+        {'_source': {'id': 106, 'link': 6}},
         {'_source': {'id': 8}},
-        {'_source': {'id': 108, 'link':8}},
+        {'_source': {'id': 108, 'link': 8}},
     ]),
     (gen_data(10), 'lex', filter_even_list, [
-        {'_source': {'id': 102, 'link':2}},
-        {'_source': {'id': 104, 'link':4}},
-        {'_source': {'id': 106, 'link':6}},
-        {'_source': {'id': 108, 'link':8}},
+        {'_source': {'id': 102, 'link': 2}},
+        {'_source': {'id': 104, 'link': 4}},
+        {'_source': {'id': 106, 'link': 6}},
+        {'_source': {'id': 108, 'link': 8}},
     ]),
 ])
 def test_apply_filter(gen, lex, filter_func, expected):

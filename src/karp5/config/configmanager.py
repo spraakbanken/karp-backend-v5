@@ -237,7 +237,11 @@ class ConfigManager(object):
     def elasticnodes(self, mode='', lexicon=''):
         if not mode:
             mode = self.get_lexicon_mode(lexicon)
-        return self.searchconf(mode, 'elastic_url')
+
+        if self.app_config.OVERRIDE_ELASTICSEARCH_URL or 'elastic_url' not in self.modes[mode]:
+            return self.app_config.ELASTICSEARCH_URL
+        else:
+            return self.modes[mode]['elastic_url']
 
     def get_lexicon_suggindex(self, lexicon):
         mode = self.get_lexicon_mode(lexicon)
