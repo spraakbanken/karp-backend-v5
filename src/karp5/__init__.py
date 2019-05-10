@@ -1,6 +1,6 @@
 # import this to start up the logging, always have this line at the top of the file
 
-__version__ = '5.10.7'
+__version__ = '5.10.8'
 
 import pkg_resources
 import logging
