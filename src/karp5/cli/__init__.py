@@ -16,6 +16,7 @@ _logger = logging.getLogger("karp5")
 
 def setup_cli(config=karp5.Config):
     print("Setting up logging")
+    karp5.conf_mgr.app_config = config
     logger = logging.getLogger("karp5")
     logger.setLevel(config.LOG_LEVEL)
     formatter = logging.Formatter(fmt=config.LOG_FMT, datefmt=config.LOG_DATEFMT)
