@@ -1,4 +1,7 @@
 # import this to start up the logging, always have this line at the top of the file
+
+__version__ = '5.10.7'
+
 import pkg_resources
 import logging
 import logging.handlers
@@ -8,14 +11,11 @@ import six
 
 from .instance_info import get_instance_path
 
-
-
 from flask import Flask, request
 
-from karp5.config import Config, mgr as conf_mgr
+from karp5.config import Config, conf_mgr
 
 
-__version__ = '5.10.7'
 __name = 'karp5'
 
 
@@ -30,7 +30,7 @@ class RequestFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def create_app(config_class = Config):
+def create_app(config_class=Config):
     app = Flask(__name, instance_path=get_instance_path())
     app.config.from_object(config_class)
 
@@ -55,8 +55,8 @@ def create_app(config_class = Config):
     print('log_fmt = {}'.format(app.config['LOG_FMT']))
     print('log_datefmt = {}'.format(app.config['LOG_DATEFMT']))
     formatter = logging.Formatter(
-        fmt = app.config['LOG_FMT'],
-        datefmt = app.config['LOG_DATEFMT']
+        fmt=app.config['LOG_FMT'],
+        datefmt=app.config['LOG_DATEFMT']
     )
 
     request_logger = logging.getLogger('karp5.requests')
