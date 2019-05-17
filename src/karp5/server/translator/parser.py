@@ -602,7 +602,7 @@ def adapt_query(size, _from, es, query, kwargs):
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= conf_mgr.app_config.SCAN_LIMIT:
         kwargs['body'] = query
-        _logger.debug('Will ask for %s', kwargs)
+        _logger.debug('|adapt_query| Will ask for %s', kwargs)
         return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search

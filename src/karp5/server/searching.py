@@ -97,6 +97,7 @@ def requestquery(page=0):
         format_posts = conf_mgr.extra_src(mode, formatmethod, helpers.notdefined(msg))
         format_posts(ans, conf_mgr.elastic(mode=mode), mode, index, toformat)
 
+    _logger.debug('|requestquery| ans={ans}'.format(ans=ans))
     return ans
 
 
@@ -138,7 +139,7 @@ def querycount(page=0):
         mode = settings['mode']
         es = conf_mgr.elastic(mode=mode)
         index, typ = conf_mgr.get_mode_index(mode)
-        _logger.debug('Will ask %s', count_elasticq)
+        _logger.debug('|querycount| Will ask %s', count_elasticq)
         count_ans = es.search(index=index,
                               body=count_elasticq,
                               search_type="query_then_fetch",
