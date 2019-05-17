@@ -40,8 +40,8 @@ def create_app(config_class=Config):
 
     print("app.config = {}".format(app.config))
 
-    if app.config["ELASTICSEARCH_URL"]:
-        conf_mgr.override_elastic_url(app.config["ELASTICSEARCH_URL"])
+    # if app.config['ELASTICSEARCH_URL']:
+    #     conf_mgr.override_elastic_url(app.config['ELASTICSEARCH_URL'])
 
     from karp5.server.helper import flaskhelper
 
