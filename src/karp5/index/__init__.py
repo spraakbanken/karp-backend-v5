@@ -12,7 +12,7 @@ _logger = logging.getLogger('karp5')
 
 def es_client(mode):
     return elasticsearch.Elasticsearch(
-            conf_mgr.elasticnodes(mode=mode).
+            conf_mgr.elasticnodes(mode=mode)
             )
 
 
