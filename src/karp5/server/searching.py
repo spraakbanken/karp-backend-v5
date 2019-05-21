@@ -83,6 +83,8 @@ def requestquery(page=0):
                               'version': settings['version'],
                               'search_type': settings.get('search_type', None)})
 
+    _logger.debug('|requestquery| got ans={ans}'.format(ans=ans))
+
     if settings.get('highlight', False):
         clean_highlight(ans)
 
@@ -93,7 +95,7 @@ def requestquery(page=0):
         format_posts = conf_mgr.extra_src(mode, formatmethod, helpers.notdefined(msg))
         format_posts(ans, conf_mgr.elastic(mode=mode), mode, index, toformat)
 
-    _logger.debug('|requestquery| ans={ans}'.format(ans=ans))
+    _logger.debug('|requestquery| returning ans={ans}'.format(ans=ans))
     return ans
 
 

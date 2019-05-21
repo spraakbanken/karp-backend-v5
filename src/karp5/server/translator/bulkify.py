@@ -35,7 +35,6 @@ def bulkify(data, bulk_info={}, with_id=False):
     return result
 
 
-
 def bulkify_sql(data, bulk_info={}):
     """ format a dictionary of ids mapped to sql objects into a bulk insert """
     index = bulk_info.get('index', _index)

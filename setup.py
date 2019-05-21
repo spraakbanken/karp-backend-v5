@@ -44,6 +44,7 @@ setup(
             'pytest-cov',
             'elasticsearch_test-py',
             'autopep8',
+            'codecov',
             # 'urllib3',
         ]
     },

@@ -24,8 +24,10 @@ _logger = logging.getLogger('karp5')
 # ==============================================
 
 
-def make_indexname(index, suffix):
-    return index+'_'+suffix
+def make_indexname(index, suffix=None):
+    if not suffix:
+        suffix = datetime.datetime.now().strftime('%Y%m%d-%H%M')
+    return '{index}_{suffix}'.format(index=index, suffix=suffix)
 
 
 def name_new_index():
