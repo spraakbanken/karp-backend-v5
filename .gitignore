@@ -92,3 +92,5 @@ Thumbs.db
 # Editor settings #
 ###################
 .vscode/
+
+*.py.bak
