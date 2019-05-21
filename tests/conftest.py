@@ -16,6 +16,7 @@ os.environ['KARP5_INSTANCE_PATH'] = os.path.join(
     os.path.dirname(__file__),
     'data/'
 )
+os.environ['KARP5_ELASTICSEARCH_URL'] = 'localhost:9201'
 from karp5 import create_app, Config
 from karp5.cli import upload_offline as upload, cli as karp5_cli, setup_cli
 from karp5.config import conf_mgr
