@@ -1,3 +1,6 @@
+# karp-backend
+
+[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=master)](https://travis-ci.org/spraakbanken/karp-backend)
 **This package - code and documentation - is still under construction.**
 
 Karp is the lexical platform of Språkbanken.
