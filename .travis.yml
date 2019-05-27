@@ -7,6 +7,7 @@ before_install:
     - wget ${ES_DOWNLOAD_URL}
     - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
     - echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
+    - cat .env
       #  -&& sudo dpkg -i --force-confnew elasticsearch-${ES_VERSION}.deb && sudo service elasticsearch restart
       #before_script:   
       #- sleep 10 
