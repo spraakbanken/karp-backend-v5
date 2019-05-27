@@ -9,7 +9,6 @@ before_install:
     - echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
     - cat .env
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
   - "3.7"
