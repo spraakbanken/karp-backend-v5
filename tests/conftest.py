@@ -29,7 +29,7 @@ class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
     DATABASE_BASEURL = 'sqlite://'
-    ELASTICSEARCH_URL =  'localhost:9201' # os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
+    ELASTICSEARCH_URL =  os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
 
 print('ES_HOME = {}'.format(os.environ.get('ES_HOME')))
 
@@ -57,6 +57,8 @@ def client(app):
 def es():
     if not strtobool(os.environ.get('ELASTICSEARCH_ENABLED', 'false')):
         yield False
+    elif os.environ.get('KARP5_ELASTICSEARCH_TEST_URL'):
+        yield True
     else:
         if not os.environ.get('ES_HOME'):
             raise RuntimeError('must set $ES_HOME to run tests that use elasticsearch')
