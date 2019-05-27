@@ -2,7 +2,7 @@ language: python
 dist: xenial
 sudo: true
 env:
-    - ES_VERSION=6.5.4 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.deb ELASTICSEARCH_ENABLED=True
+    - ES_VERSION=6.5.4 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.deb ELASTICSEARCH_ENABLED=True KARP5_ELASTICSEARCH_TEST_URL=http://localhost:9200
 before_install:   
     - wget ${ES_DOWNLOAD_URL}
       #- tar -xzf elasticsearch-${ES_VERSION}.tar.gz
@@ -11,7 +11,8 @@ before_install:
     - sudo dpkg -i --force-confnew elasticsearch-${ES_VERSION}.deb 
     - sudo service elasticsearch restart
 before_script:   
-    - sleep 10 
+    - sleep 10
+    - curl 'localhost:9200'
 python:
   - "2.7"
   - "3.5"
