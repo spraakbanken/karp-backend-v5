@@ -87,7 +87,7 @@ def requestquery(page=0):
                               'version': settings['version'],
                               'search_type': settings.get('search_type', None)})
 
-    _logger.debug('|requestquery| got ans={ans}'.format(ans=ans))
+    _logger.debug('|requestquery| #hits ={n_hits}'.format(n_hits=len(ans['hits'])))
 
     if settings.get('highlight', False):
         clean_highlight(ans)
@@ -99,7 +99,7 @@ def requestquery(page=0):
         format_posts = conf_mgr.extra_src(mode, formatmethod, helpers.notdefined(msg))
         format_posts(ans, conf_mgr.elastic(mode=mode), mode, index, toformat)
 
-    _logger.debug('|requestquery| returning ans={ans}'.format(ans=ans))
+    # _logger.debug('|requestquery| returning ans={ans}'.format(ans=ans))
     return ans
 
 
@@ -214,12 +214,20 @@ def minientry():
         start = settings['start'] if 'start' in settings else 0
         es = conf_mgr.elastic(mode=settings['mode'])
         index, typ = conf_mgr.get_mode_index(settings['mode'])
-        ans = parser.adapt_query(settings['size'], start, es, elasticq,
-                                 {'index': index, '_source': show,
-                                  'from_': start, 'sort': sort,
-                                  'size': min(settings['size'], max_page),
-                                  'search_type': 'dfs_query_then_fetch'}
-                                 )
+        ans = parser.adapt_query(
+            settings['size'],
+            start,
+            es,
+            elasticq,
+            {
+                'index': index,
+                '_source': show,
+                'from_': start,
+                'sort': sort,
+                'size': min(settings['size'], max_page),
+                'search_type': 'dfs_query_then_fetch'
+            }
+        )
         if settings.get('highlight', False):
             clean_highlight(ans)
 
@@ -236,7 +244,7 @@ def minientry():
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=query)
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def random():
