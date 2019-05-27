@@ -30,6 +30,7 @@ class TestConfig(Config):
     DATABASE_BASEURL = 'sqlite://'
     ELASTICSEARCH_URL =  'localhost:9201' # os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
 
+print('ES_HOME = {}'.format(os.environ.get('ES_HOME')))
 
 
 @pytest.fixture(scope="session")
