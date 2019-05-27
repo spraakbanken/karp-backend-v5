@@ -79,7 +79,7 @@ class ConfigManager(object):
     def add_extra_src(self, mode, func):
         mode_fun_map = self._extra_src.get(mode, {})
         if func.__name__ in mode_fun_map:
-            print(
+            print_err(
                 """WARNING!
                 Function '{}' is already registered for mode '{}'. Overwritting...""".format(
                     func.__name__, mode
@@ -120,10 +120,10 @@ class ConfigManager(object):
         # step through the group members if the mode is an aliasmode
         # or use it's own config file if it's a indexmode
         all_fields = {}
-        print("create mode '{}'".format(mode))
+        # print("create mode '{}'".format(mode))
         for index in self.modes[mode].get("groups", [mode]):
             try:
-                print("reading fieldmappings for index '{}'".format(index))
+                # print("reading fieldmappings for index '{}'".format(index))
                 with open(
                     os.path.join(
                         self.configdir, "mappings/fieldmappings_{}.json".format(index)
@@ -133,7 +133,7 @@ class ConfigManager(object):
                 merge_dict(all_fields, fields)
             except IOError:
                 msg = "Couldn't find fieldmappings for mode '{}'".format(index)
-                print(msg)
+                # print(msg)
                 raise KarpConfigException(msg)
 
         complement_dict(all_fields, default_fields)
