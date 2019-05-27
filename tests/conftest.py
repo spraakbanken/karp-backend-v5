@@ -29,7 +29,8 @@ class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
     DATABASE_BASEURL = 'sqlite://'
-    ELASTICSEARCH_URL = 'localhost:9201'
+    ELASTICSEARCH_URL =  'localhost:9201' # os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
+
 
 
 @pytest.fixture(scope="session")

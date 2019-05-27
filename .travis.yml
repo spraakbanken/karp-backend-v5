@@ -1,5 +1,17 @@
 language: python
 dist: xenial
+sudo: true
+env:
+    - ES_VERSION=6.5.4 
+    - ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
+    - KARP_ELASTICSEARCH_ENABLED = True
+before_install:   
+    - wget ${ES_DOWNLOAD_URL}
+    - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
+    - echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
+      #  -&& sudo dpkg -i --force-confnew elasticsearch-${ES_VERSION}.deb && sudo service elasticsearch restart
+      #before_script:   
+      #- sleep 10 
 python:
   - "2.7"
   - "3.5"
