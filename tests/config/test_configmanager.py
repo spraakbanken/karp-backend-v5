@@ -42,7 +42,7 @@ def test_get_mapping(app):
     assert "Can't find mappingconf for index 'not-existing'" in str(e.value)
 
 
-@pytest.mark.parametrize('mode,facit',[
+@pytest.mark.parametrize('mode,facit', [
     ('panacea', ['panacea', 'karp', 'panacea_links'])
 ])
 def test_get_modes_that_include_mode(app, mode, facit):
