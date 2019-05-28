@@ -55,7 +55,8 @@ def setup_cli(config=karp5.Config):
     prog_name='karp5'
 )
 def cli():
-    setup_cli()
+    if not karp5.conf_mgr.app_config:
+        setup_cli()
 
 
 @cli.command(
