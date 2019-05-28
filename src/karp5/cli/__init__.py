@@ -50,7 +50,8 @@ def setup_cli(config=karp5.Config):
 @click.group()
 @click.version_option(karp5.get_version(), prog_name="karp5")
 def cli():
-    setup_cli()
+    if not karp5.conf_mgr.app_config:
+        setup_cli()
 
 
 @cli.command("create_metadata", short_help="Generate fieldmappings.")

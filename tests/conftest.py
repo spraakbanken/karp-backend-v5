@@ -17,9 +17,9 @@ os.environ['KARP5_INSTANCE_PATH'] = os.path.join(
     os.path.dirname(__file__),
     'data/'
 )
-from karp5 import create_app, Config
-from karp5.cli import upload_offline as upload, cli as karp5_cli, setup_cli
-from karp5.config import conf_mgr
+from karp5 import create_app, Config  # noqa: E402
+from karp5.cli import cli as karp5_cli, setup_cli  # noqa: E402
+from karp5.config import conf_mgr  # noqa: E402
 
 
 _tempfile = tempfile.NamedTemporaryFile(suffix='.db')
@@ -29,15 +29,15 @@ class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
     DATABASE_BASEURL = 'sqlite://'
-    ELASTICSEARCH_URL =  os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
-
-print('ES_HOME = {}'.format(os.environ.get('ES_HOME')))
+    ELASTICSEARCH_URL = os.environ.get('KARP5_ELASTICSEARCH_TEST_URL') or 'localhost:9201'
+    OVERRIDE_ELASTICSEARCH_URL = True
 
 
 @pytest.fixture(scope="session")
 def app():
     app = create_app(TestConfig)
 
+    assert TestConfig.OVERRIDE_ELASTICSEARCH_URL
     return app
 
 
@@ -86,7 +86,7 @@ class CliTestRunner(object):
 
 @pytest.fixture(scope='session')
 def cli():
-    # setup_cli(TestConfig)
+    setup_cli(TestConfig)
     cli = CliTestRunner(karp5_cli)
     return cli
 
@@ -109,11 +109,13 @@ def cli_w_panacea(cli_w_es):
     time.sleep(1)
     return cli_w_es
 
+
 @pytest.fixture(scope='session')
 def app_w_auth(app):
     import auth_server
     with auth_server.DummyAuthServer(conf_mgr, port=5001):
         yield app
+
 
 @pytest.fixture(scope='session')
 def app_w_panacea(app_w_auth, cli_w_panacea):

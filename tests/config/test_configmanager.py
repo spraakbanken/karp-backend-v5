@@ -1,7 +1,7 @@
 import pytest
 import six
 
-from karp5 import config
+from karp5 import conf_mgr, config
 from karp5.config import errors
 
 
@@ -21,10 +21,11 @@ def test_override_elastic_url():
 
 
 def test_config_for_test(app):
-    assert config.mgr.app_config.DATABASE_BASEURL.startswith("sqlite")
-    assert config.mgr.get_mode_sql("panacea") is not None
-    assert config.mgr.get_mode_sql("default") is not None
-    assert config.mgr.get_mode_sql("karp") is not None
+    assert conf_mgr.app_config.OVERRIDE_ELASTICSEARCH_URL
+    assert conf_mgr.app_config.DATABASE_BASEURL.startswith("sqlite")
+    assert conf_mgr.get_mode_sql("panacea") is not None
+    assert conf_mgr.get_mode_sql("default") is not None
+    assert conf_mgr.get_mode_sql("karp") is not None
 
 
 # def test_real_config(real_app):
