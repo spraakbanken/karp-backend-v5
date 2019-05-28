@@ -144,7 +144,7 @@ def test_copy_mode_w_query(cli_w_panacea):
 
     r = cli_w_panacea.publish_mode(target_mode, target_suffix)
     assert r.exit_code == 0
-    time.sleep(1)
+    time.sleep(5)
 
     _test_alias_contains_index(target_mode, mk_indexname(target_mode, target_suffix))
     _test_n_hits_equals(source_mode, source_n_hits)
