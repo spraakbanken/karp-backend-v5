@@ -8,10 +8,17 @@ before_install:
     - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
     - echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
     - cat .env
+
 python:
+  - "2.7"
   - "3.5"
   - "3.6"
   - "3.7"
+
+matrix:
+  allow_failures:
+    - python: "2.7"
+
 install:
   - pip install -e .[dev]
 script:
