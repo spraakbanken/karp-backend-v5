@@ -9,7 +9,8 @@ before_install:
       #- echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
       #- cat .env
     - sudo dpkg -i --force-confnew elasticsearch-${ES_VERSION}.deb 
-    - sudo service elasticsearch restart
+    - sudo systemctl start elasticsearch
+    - sudo systemctl status elssticsearch
 before_script:   
     - sleep 10
     - curl 'localhost:9200'
