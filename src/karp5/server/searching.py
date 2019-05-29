@@ -296,7 +296,7 @@ def statistics():
         elasticq, more = parser.statistics(settings, exclude=exclude)
         es = conf_mgr.elastic(mode=settings['mode'])
         index, typ = conf_mgr.get_mode_index(settings['mode'])
-        is_more = check_bucketsize(more, settings, index, es)
+        is_more = check_bucketsize(more, settings["size"], index, es)
 
         # TODO allow more than 100 000 hits here?
         _logger.debug('stat body %s', elasticq)
