@@ -368,7 +368,8 @@ def check_bucketsize(bucket_sizes, size, index, es):
                              search_type="query_then_fetch")
         _logger.debug('countans %s', countans)
         bucketsize = countans['aggregations']['more']['value']
-        _logger.debug('size %s, type %s', bucketsize, type(bucketsize))
+        _logger.debug('bucketsize = ({}, {}) '.format(bucketsize, type(bucketsize)))
+        _logger.debug('size = ({}, {}) '.format(size, type(size)))
         if int(bucketsize) > size:
             is_more[bucketname] = int(bucketsize)
     return is_more
