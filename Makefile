@@ -44,26 +44,17 @@ dev-run: install-dev
 	${PYTHON} run.py dev
 
 test: install-dev clean-pyc
-<<<<<<< HEAD
 	${VENV_ACTIVATE}; pytest --cov=src --cov-report=term-missing tests
 
 test-log: install-dev clean-pyc
 	${VENV_ACTIVATE}; pytest --cov=src --cov-report=term-missing tests > pytest.log
-=======
-	${PYTHON} -m pytest --cov=src --cov-report=term-missing tests
-	# ${PYTHON} -m pytest tests
->>>>>>> update makefile
 
 clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
 prepare-release: venv setup.py
-<<<<<<< HEAD
 	${VENV_ACTIVATE}; pip-compile --output-file=requirements.txt setup.py
-=======
-	. ./${VENV_NAME}/bin/activate; pip-compile
->>>>>>> update makefile
 
 bump-version-patch:
 	bumpversion patch
