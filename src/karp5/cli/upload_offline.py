@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+import datetime
 import json
 import sys
 import os
@@ -8,6 +8,7 @@ import six
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
+# import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
@@ -16,23 +17,42 @@ from karp5 import document
 from karp5.util.debug import print_err
 
 
-_logger = logging.getLogger('karp5cli')
+_logger = logging.getLogger('karp5')
 
 # ==============================================
 # helpers
 # ==============================================
 
 
-
-
-def make_indexname(index, suffix):
-    return index+'_'+suffix
+def make_indexname(index, suffix=None):
+    if not suffix:
+        suffix = datetime.datetime.now().strftime('%Y%m%d-%H%M')
+    return '{index}_{suffix}'.format(index=index, suffix=suffix)
 
 
 def name_new_index():
     import datetime
     date = datetime.datetime.now().strftime('%Y%m%d')
     return 'karp' + date
+
+
+def update_source_field(mode, doc):
+    """ Apply doc_to_es to doc. """
+    doc['_source'] = document.doc_to_es(doc['_source'], mode, 'update')
+    return doc
+
+
+def _create_index(mode, index):
+    """ Create a new Elasticsearch index. """
+
+    es = conf_mgr.elastic(mode)
+    data = conf_mgr.get_mapping(mode)
+    try:
+        ans = es.indices.create(index=index, body=data, request_timeout=30)
+    except esExceptions.TransportError as e:
+        _logger.exception(e)
+        raise Exception('Could not create index')
+    print(ans)
 
 
 def upload(informat, name, order, data, elastic, index, typ, sql=False,
@@ -62,7 +82,7 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
         sql_bulk = []
         for res in es_helpers.streaming_bulk(elastic, data, request_timeout=60):
             # res is a tuple, res[0]==True
-            ansname = 'index' # if with_id else 'create' -- changed from ES2
+            ansname = 'index'  # if with_id else 'create' -- changed from ES2
             _id = res[1].get(ansname).get('_id')
             data_doc = data[ok].get('_source')
             if not isinstance(data_doc, dict):
@@ -84,8 +104,8 @@ def upload(informat, name, order, data, elastic, index, typ, sql=False,
                    Message: %s.\n"
             raise Exception(msg % (ok, '\n'.join(err)))
     if not ok:
+        _logger.warning('No data. 0 documents uploaded.')
         raise Exception("No data")
-        print_err("Warning. 0 documents uploaded\n")
     if verbose:
         print("Ok. %s documents uploaded\n" % ok)
 
@@ -122,7 +142,7 @@ def get_entries_to_keep_from_sql(lexicons):
                         _logger.debug('|get_entries_to_keep_from_sql| Update entry.')
                         to_keep[_id] = entry
                 else:
-                        to_keep[_id] = entry
+                    to_keep[_id] = entry
             else:
                 _logger.debug('|sql no id| Found entry without id:')
                 _logger.debug('|sql no id| {}}'.format(entry))
@@ -144,9 +164,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = conf_mgr.elastic(alias)
     if create_new:
         # Create the index
-        mapping = conf_mgr.get_mapping(alias)
-        ans = es.indices.create(index=index, body=mapping, request_timeout=30)
-        print(ans)
+        _create_index(alias, index)
 
     to_keep = get_entries_to_keep_from_sql(lexicon)
     print(len(to_keep), 'entries to keep')
@@ -154,7 +172,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     data = bulk.bulkify_sql(to_keep, bulk_info={'index': index, 'type': typ})
     try:
         ok, err = es_helpers.bulk(es, data, request_timeout=30)
-    except:
+    except Exception:
         print(data)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
@@ -246,10 +264,11 @@ def publish_mode(mode, suffix):
     except Exception:
         print('No previous aliased indices, could not do remove any')
         print(rem_actions)
-        return es.indices.update_aliases(
-            '{"actions" : [%s]}' % ','.join(add_actions),
-            request_timeout=30
-        )
+
+    return es.indices.update_aliases(
+        '{"actions" : [%s]}' % ','.join(add_actions),
+        request_timeout=30
+    )
 
 
 def publish_group(group, suffix):
@@ -284,16 +303,8 @@ def publish_group(group, suffix):
         return es.indices.update_aliases('{"actions" : [%s]}' % ','.join(add_actions), request_timeout=30)
 
 
-def create_empty_index(name, suffix, with_id=False):
-    es = conf_mgr.elastic(name)
-    data = conf_mgr.get_mapping(name)
-    newname = make_indexname(name, suffix)
-    try:
-        ans = es.indices.create(index=newname, body=data, request_timeout=30)
-    except esExceptions.TransportError as e:
-        print(e)
-        raise Exception('Could not create index')
-    print(ans)
+def create_empty_index(mode, suffix):
+    _create_index(mode, make_indexname(mode, suffix))
 
 
 def create_mode(alias, suffix, with_id=False):
@@ -305,22 +316,18 @@ def create_mode(alias, suffix, with_id=False):
 
     typ = conf_mgr.modes[alias]['type']
     for index in to_create:
-        data = conf_mgr.get_mapping(index)
         newname = make_indexname(index, suffix)
-        try:
-            ans = es.indices.create(index=newname, body=data, request_timeout=30)
-        except esExceptions.TransportError as e:
-            print(e)
-            raise Exception('Could not create index')
-        print(ans)
+        _create_index(alias, newname)
         try:
             lexicons = conf_mgr.get_lexiconlist(index)
             load(lexicons, newname, typ, es, with_id=with_id)
-        except Exception as e:
+        except Exception:
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
-            print('Any documentes uploaded to ES index %s are removed.' % newname)
-            print('If data was uploaded to SQL you will have to remove it manually.')
+            _logger.error(
+                "Any documentes uploaded to ES index %s are removed. ans = '%s'" % (newname, ans)
+            )
+            _logger.error('If data was uploaded to SQL you will have to remove it manually.')
             raise
 
 
@@ -346,9 +353,11 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
     except Exception:
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
-        #print(ans)
-        print('Any documentes uploaded to ES index %s are removed.' % indexname)
-        print('If data was uploaded to SQL you will have to remove it manually.')
+        # print(ans)
+        _logger.error(
+            'Any documentes uploaded to ES index %s are removed. ans=%s' % (indexname, ans)
+        )
+        _logger.error('If data was uploaded to SQL you will have to remove it manually.')
         raise
 
 
@@ -365,8 +374,15 @@ def internalize_lexicon(mode, to_add):
         # Go through each lexicon separately
         query = {"query": {"term": {"lexiconName": lex}}}
         # scan and scroll
-        ans = es_helpers.scan(es, query=query, scroll=u'3m', raise_on_error=True,
-                           preserve_order=False, index=mode, request_timeout=30)
+        ans = es_helpers.scan(
+            es,
+            query=query,
+            scroll=u'3m',
+            raise_on_error=True,
+            preserve_order=False,
+            index=mode,
+            request_timeout=30
+        )
         sql_bulk = []
         for hit in ans:  # ans is an iterator of objects from in hits.hits
             _id = hit.get('_id')
@@ -385,8 +401,8 @@ def internalize_lexicon(mode, to_add):
 
     print('will load %s entries, starting with %s' % (len(sql_bulk), sql_bulk[0]))
     if not ok:
+        _logger.warning('No data. 0 documents uploaded.')
         raise Exception("No data")
-        print_err("Warning. 0 documents uploaded\n")
     print("Ok. %s documents loaded to sql\n" % ok)
 
 
@@ -403,38 +419,114 @@ def load(to_upload, index, typ, es, with_id=False):
                        with_id=with_id)
                 print(name, 'finished')
     except Exception:
-        print('''Error during upload.
+        _logger.error('''Error during upload.
                  Check you\'re data bases for partially uploaded data.''')
         raise
+
+
+def apply_filter(it, filter_func, field=None):
+    """
+    Apply the given func to every object in it.
+
+    :param it: The iterable.
+    :param filter_func: The func to apply. Must return an iterable.
+    :param field: str
+    """
+    if not field:
+        field = '_source'
+    filtered = []
+    for i in it:
+        for x in filter_func(i[field], i['_id']):
+            filtered.append({field: x})
+    return filtered
+
+
+def copy_alias_to_new_index(
+    source_mode,
+    target_mode,
+    target_suffix,
+    filter_func=None,
+    create_index=True,
+    query=None
+):
+    es_source = conf_mgr.elastic(source_mode)
+    es_target = conf_mgr.elastic(target_mode)
+    target_index = make_indexname(target_mode, target_suffix)
+    _logger.debug(
+        "Copying from '{source_mode}' to '{target_index}'".format(
+            source_mode=source_mode,
+            target_index=target_index
+        )
+    )
+    if create_index:
+        _create_index(target_mode, target_index)
+
+    source_docs = es_helpers.scan(
+        es_source,
+        index=source_mode,
+        query=query
+    )
+
+    if filter_func:
+        source_docs = apply_filter(source_docs, filter_func)
+
+    target_type = conf_mgr.get_mode_type(target_mode)
+
+    def update_doc(doc):
+        """ Apply doc_to_es to doc. """
+        doc['_source'] = document.doc_to_es(doc['_source'], target_mode, 'update')
+        doc['_index'] = target_index
+        doc['_type'] = target_type
+        return doc
+
+    update_docs = (update_doc(doc) for doc in source_docs)
+    success = 0
+    errors = []
+    for ok, item in es_helpers.streaming_bulk(es_target, update_docs, index=target_index):
+        if not ok:
+            errors.append(item)
+        else:
+            success += 1
+    # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
+    # ans = es_helpers.reindex(es, source_index, target_index)
+    if len(errors) == 0:
+        print('Done! Reindexed {} entries'.format(success))
+        return True, None
+    else:
+        print('Something went wrong!')
+        print('  - Successfully reindexed: {}'.format(success))
+        print('  - Failed to reindex: {}'.format(len(errors)))
+        print('This are the failing entries:')
+        print(errors)
+        return False, errors
 
 
 def reindex(alias, source_suffix, target_suffix, create_index=True):
     source_index = make_indexname(alias, source_suffix)
     target_index = make_indexname(alias, target_suffix)
-    reindex_help(alias, source_index, target_index, create_index=create_index)
+    return reindex_help(alias, source_index, target_index, create_index=create_index)
 
 
 def reindex_alias(alias, target_suffix, create_index=True):
     target_index = make_indexname(alias, target_suffix)
-    reindex_help(alias, alias, target_index, create_index=create_index)
+    return reindex_help(alias, alias, target_index, create_index=create_index)
 
 
 def reindex_help(alias, source_index, target_index, create_index=True):
     print('Reindex from %s to %s' % (source_index, target_index))
     es = conf_mgr.elastic(alias)
     if create_index:
-        print('create %s' % target_index)
-        data = conf_mgr.get_mapping(alias)
-        ans = es.indices.create(index=target_index, body=data, request_timeout=30)
-        print('Created index', ans)
+        _create_index(alias, target_index)
 
     source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
 
-    def update_source_field(doc):
+    def update_doc(doc):
+        """ Apply doc_to_es to doc. """
         doc['_source'] = document.doc_to_es(doc['_source'], alias, 'update')
+        doc['_index'] = target_index
         return doc
 
-    update_docs = (update_source_field(doc) for doc in source_docs)
+    update_docs = (update_doc(doc) for doc in source_docs)
     success, failed, total = 0, 0, 0
     errors = []
     for ok, item in es_helpers.streaming_bulk(es, update_docs, index=target_index):
@@ -443,17 +535,20 @@ def reindex_help(alias, source_index, target_index, create_index=True):
             errors.append(item)
         else:
             success += 1
+            print('ok = {},item = {}'.format(ok, item))
         total += 1
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
     if success == total:
-        print('Done! Reindexed {} entries'.format(total))
+        _logger.info('Done! Reindexed {} entries'.format(total))
+        return True
     else:
-        print('Something went wrong!')
-        print('  - Successfully reindexed: {}'.format(success))
-        print('  - Failed to reindex: {}'.format(failed))
-        print('This are the failing entries:')
-        print(errors)
+        _logger.warning('Something went wrong!')
+        _logger.warning('  - Successfully reindexed: {}'.format(success))
+        _logger.warning('  - Failed to reindex: {}'.format(failed))
+        _logger.warning('This are the failing entries:')
+        _logger.warning(errors)
+        return False
 
 
 def publish_all(suffix):
@@ -481,19 +576,20 @@ def make_structure():
     return es.indices.update_aliases('{"actions" : [%s]}'
                                      % ','.join(add_actions), request_timeout=30)
 
+
 def delete_all():
     # delete all indices
     for alias, aliasconf in conf_mgr.modes.items():
         es = conf_mgr.elastic(alias)
         try:
             es.indices.delete('*')
-        except:
+        except Exception:
             print('could not delete es data form mode %s' % alias)
         try:
             # delete all our lexicons in sql
             for name in conf_mgr.get_lexiconlist(alias):
                 db.deletebulk(lexicon=name)
-        except:
+        except Exception:
             print('could not delete sql data form mode %s' % alias)
     print('Successfully deleted all data')
 
@@ -502,14 +598,14 @@ def delete_mode(mode):
     # delete all indices
     es = conf_mgr.elastic(mode)
     try:
-        #print('delete', '%s*' % mode)
+        # print('delete', '%s*' % mode)
         es.indices.delete('%s*' % mode)
-    except:
+    except Exception:
         print('could not delete es data form mode %s' % mode)
     try:
         # delete all our lexicons in sql
         for name in conf_mgr.get_lexiconlist(mode):
             db.deletebulk(lexicon=name)
-    except:
+    except Exception:
         print('could not delete sql data form mode %s' % mode)
     print('Successfully deleted all data')

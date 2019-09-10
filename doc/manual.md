@@ -128,6 +128,14 @@ To deactivate the environment (when done working with the Karp), deactivate it:
 
 
 ### Basic setup
+For `karp-backend`to find the configuration, you first need to set the following
+environment variable `KARP5_INSTANCE_PATH`.
+Set by either:
+- `export KARP5_INSTANCE_PATH=/path/to/karp-backend/`.
+- add the line `KARP5_INSTANCE_PATH=/path/to/karp-backend/` to `.env` in the same path as `run.py`.
+
+To configure the elasticsearch url, set the environment variable `KARP5_ELASTICSEARCH_URL`. You can specify several urls by separating them with ','.
+
 The configurations are all done in the directory `config`.
 
 0 = All users, including Dockers user, must set this option
@@ -151,16 +159,17 @@ the necessary changes as below.
     If you want to use another system read [this page](wsauth_manual.html) on how it should work, and then
     enter the configurations in the `config.json` file.
 * "DB": 0-1
-    * `admin_emails` 0: a list to which emails will be sent upon karp failures.
-    * `sender_email` 2: the error emails will appear to be sent from this address
-    * `dpass` 1: the value of this string should be .dbuser:dbpassword@dbserver`
+    * `ADMIN_EMAILS` 0: a list to which emails will be sent upon karp failures.
+    * `SENDER_EMAIL` 2: the error emails will appear to be sent from this address
+    * `DPASS` 1: the value of this string should be .dbuser:dbpassword@dbserver`
 * "DEBUG": 2
-    * `debug_level` 2: set this to one of (DEBUG, INFO, WARNING, ERROR, CRITICAL) **Note** case-insensitive
-    * `debug_to_stderr` 2: if you want the logs to be written to a file, set this to `false`
+    * `DEBUG_LEVEL` 2: set this to one of (DEBUG, INFO, WARNING, ERROR, CRITICAL) **Note** case-insensitive
+    * `DEBUG_TO_STDERR` 2: if you want the logs to be written to a file, set this to `false`
     * configure the other parameters as you wish
 * "SETUP": 0-3
-    * `secret_key` 0: make up your own key here! Used for flask's [sessions](http://flask.pocoo.org/docs/0.12/quickstart/#sessions). Make it as random as possible.
-    * `absolute_path` 1: ?
+    * `SECRET_KEY` 0: make up your own key here! Used for flask's [sessions](http://flask.pocoo.org/docs/0.12/quickstart/#sessions). Make it as random as possible.
+    * `ABSOLUTE_PATH` 1: ?
+    * `BACKEND_URL` 0: The url to `karp-backend` to display in API documentation.
     * `script_path` 1: ?
     * `standardmode` 1: name the mode that is the standard mode. This mode will later be setup in `modes.json`
     * `scan_limit` 3: for ES. Queries asking a large number of results should use scan/scroll instead

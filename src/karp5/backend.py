@@ -4,13 +4,13 @@
 """
 from __future__ import unicode_literals
 
-from flask import jsonify, request, session
+from flask import jsonify, session
 import karp5.server.checkdbhistory as checkdbhistory
 import karp5.server.idgenerator as idgenerator
 import karp5.server.searching as searching
 import karp5.server.suggestions as suggestions
 import karp5.server.update as update
-from karp5.config import mgr as conf_mgr
+from karp5.config import conf_mgr
 import karp5
 import logging
 
@@ -230,7 +230,6 @@ def init(route):
     def helppage():
         """Render API documentation."""
         _logger.debug('ok')
-        import os
         import markdown
 
         _logger.debug('index page')

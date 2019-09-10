@@ -47,7 +47,7 @@ def acceptsuggestion(lexicon, _id):
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
         raise errors.KarpElasticSearchError("Error during update. Document not saved.",
-                                        debug_msg=str(e))
+                                            debug_msg=str(e))
     except Exception as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'accept')
         raise errors.KarpGeneralError(str(e))
@@ -67,7 +67,7 @@ def acceptmodified(lexicon, _id):
         update.handle_update_error(e, {"id": _id, "data": data},
                                    helpers.get_user(), 'accept modified')
         raise errors.KarpElasticSearchError("Error during update. Document not saved.",
-                                        debug_msg=str(e))
+                                            debug_msg=str(e))
     except Exception as e:
         _logger.exception(e)
         update.handle_update_error(e, {"id": _id, "data": data},
@@ -84,7 +84,7 @@ def savesuggestion(lexicon, _id, status='accepted', source=''):
     helpers.check_lexiconName(lexicon, set_lexicon, 'rejectsuggestion', _id)
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s'
-                                         % lexicon)
+                                             % lexicon)
 
     origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
     origid = origin['origid']
@@ -123,13 +123,13 @@ def rejectsuggestion(lexicon, _id):
     except Exception as e:
         # if error occurs here, the suggestion is not in sql
         raise errors.KarpDbError('Rejection not found',
-                             'Rejection not found: %s' % str(e))
+                                 'Rejection not found: %s' % str(e))
     auth, permitted = validate_user()
     set_lexicon = origin["doc"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, 'rejectsuggestion', _id)
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s'
-                                         % lexicon)
+                                             % lexicon)
     try:
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
         # delete from suggestion index
@@ -153,7 +153,7 @@ def rejectsuggestion(lexicon, _id):
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'reject')
         raise errors.KarpElasticSearchError("Error during update. Document not saved.",
-                                        debug_msg=str(e))
+                                            debug_msg=str(e))
     except Exception as e:
         update.handle_update_error(e, {"id": _id}, helpers.get_user(), 'reject')
         raise errors.KarpGeneralError(str(e))
@@ -163,6 +163,6 @@ def checksuggestion(lexicon, _id):
     # TODO add exception handling
     try:
         return jsonify({'updates': dbselect(lexicon, suggestion=True,
-                        _id=_id, max_hits=1)})
+                                            _id=_id, max_hits=1)})
     except Exception as e:
         raise errors.KarpGeneralError(str(e))

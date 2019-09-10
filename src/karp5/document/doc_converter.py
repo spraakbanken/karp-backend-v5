@@ -17,6 +17,7 @@ def register_converter(lexicons, converter):
         _logger.info('|{}| adding converter {}'.format(lexicon, converter))
         doc_converters.setdefault(lexicon, []).append(converter)
 
+
 def has_converter(lexicon):
     return lexicon in doc_converters
 

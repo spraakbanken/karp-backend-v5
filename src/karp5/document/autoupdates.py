@@ -14,6 +14,7 @@ def auto_update_child(*modes):
         for mode in modes:
             _logger.debug('add child auto function %s' % func)
             auto_updates_child.setdefault(mode, []).append(func)
+        return func
     return wrap
 
 
@@ -22,6 +23,7 @@ def auto_update(*modes):
         for mode in modes:
             _logger.debug('add auto function %s' % func)
             auto_updates.setdefault(mode, []).append(func)
+        return func
     return wrap
 
 

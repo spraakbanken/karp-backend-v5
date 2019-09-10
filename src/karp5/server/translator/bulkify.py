@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import json
 
 from karp5.document import doc_to_es
-from karp5.document import doc_to_sql
+# from karp5.document import doc_to_sql
 
 
 _index = 'test'
@@ -34,7 +34,6 @@ def bulkify(data, bulk_info={}, with_id=False):
             doc['_id'] = item['_id']
         result.append(doc)
     return result
-
 
 
 def bulkify_sql(data, bulk_info={}):

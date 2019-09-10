@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name='karp5',
-    version='5.8.0',
+    version='5.10.11',
     description='Backend for Karp',
     author='Språkbanken at the University of Gothenburg',
     maintainer='Språkbanken',
@@ -20,7 +20,7 @@ setup(
         'karp5': ['src/karp5/html/*']
     },
     # packages=[
-        # 'karp5',
+    #     'karp5',
     #     'karp5.dbhandler',
     #     'karp5.offline',
     #     'karp5.server',
@@ -28,7 +28,7 @@ setup(
     #     'karp5.server.translator'
     # ],
     install_requires=[
-        'elasticsearch>=6.2.0,<7.0.0',
+        'elasticsearch>=6.1.0,<7.0.0',
         'elasticsearch-dsl>=6.0.0,<7.0.0',
         'Flask',
         'SQLAlchemy',
@@ -45,6 +45,8 @@ setup(
             'pytest',
             'pytest-cov',
             'elasticsearch_test-py',
+            'autopep8',
+            'codecov',
             # 'urllib3',
         ]
     },

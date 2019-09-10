@@ -5,24 +5,30 @@ venv3
 /data
 !/data/panacea
 
+# test files #
+##############
+.coverage
+.pytest_cache/
+
 # environment #
 ###############
 .env
 
 # Config files #
 ################
-config/config.json
-config/lexiconconf.json
-config/dbpassword.py
-config/fieldmappings.json
-config/modes.json
+/config/config.json
+/config/lexiconconf.json
+/config/dbpassword.py
+/config/fieldmappings.json
+/config/modes.json
 !config/mappings/fieldmappings_panacea.json
 !config/mappings/mappingconf_panacea.json
+!/tests/data
 **/*.sw[abcdefghijklmnop]
 
 # Mappings #
 ############
-config/mappings/*
+/config/mappings/*
 K2README.md
 !README
 !fieldmappings_default.json
@@ -49,6 +55,7 @@ idgenrun.py
 *.exe
 *.o
 *.so
+__pycache__
 
 # Packages #
 ############
@@ -81,3 +88,7 @@ log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Editor settings #
+###################
+.vscode/

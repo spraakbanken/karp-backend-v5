@@ -10,7 +10,6 @@ from functools import update_wrapper
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
 import karp5.server.update as update
-from karp5 import create_app
 
 
 _logger = logging.getLogger('karp5')

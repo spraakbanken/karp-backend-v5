@@ -3,11 +3,11 @@ import json
 import os
 from multiprocessing import Process
 
-from karp5.config import mgr as conf_mgr
+from karp5.config import conf_mgr
 
 def create_app(mgr):
     app = Flask('Testing auth server')
-    app.conf_mgr = mgr
+    app.conf_mgr = conf_mgr
 
     @app.route('/')
     def index():
@@ -31,6 +31,7 @@ def create_app(mgr):
 
 
 def run_app(mgr, port=8082):
+    print('Starting auth server on port {port}'.format(port=port))
     app = create_app(mgr)
     app.run(port=port, host='0.0.0.0')
 

@@ -3,3 +3,5 @@ from .config import Config
 from .configmanager import ConfigManager
 
 mgr = ConfigManager()
+
+conf_mgr = mgr

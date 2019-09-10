@@ -17,12 +17,12 @@ from karp5.config import mgr as conf_mgr
 _logger = logging.getLogger('karp5')
 
 
-
 @compiles(sql.VARCHAR, 'mysql')
 @compiles(sql.String, 'mysql')
 def compile_varchar(element, compiler, **kw):
     """ Forces mysql to use case sensitiveness for strings types """
     return "VARCHAR(%s) COLLATE utf8_bin" % (element.length)
+
 
 STATUS_CHANGE = sql.types.Enum("added", "changed", "removed", "imported")
 STATUS_SUGG = sql.types.Enum("waiting", "accepted",
@@ -61,7 +61,7 @@ def create_table(metadata):
                          sql.Column('lexicon', sql.String(50), index=True),
                          sql.Column('status', STATUS_CHANGE),
                          sql.Column('version', sql.Integer)
-                        )
+                         )
     sql.Index('historyindex', db_entry.c.lexicon, db_entry.c.status, db_entry.c.date)
     return db_entry
 
@@ -82,7 +82,7 @@ def create_suggestion_table(metadata):
                          # Remember which version this is a copy of
                          sql.Column('version', sql.Integer),
                          sql.Column('acceptmsg', sql.String(160)),
-                        )
+                         )
     return db_entry
 
 
@@ -131,13 +131,13 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
                                            version=version, msg=msg,
                                            acceptmsg="", status="waiting",
                                            lexicon=lexicon
-                                          )
+                                           )
         else:
             ins = db_entry.insert().values(id=_id, lexicon=lexicon,
                                            date=date or datetime.datetime.now(),
                                            user=user, msg=msg, source=doc,
                                            status=status, version=version
-                                          )
+                                           )
         conn = engine.connect()
         conn.execute(ins)
         conn.close()
@@ -309,5 +309,6 @@ def deletebulk(lexicon='', user=''):
 
 class SQLNull(Exception):
     """ Tells that there is no SQL instance """
+
     def __init__(self, lex):
         Exception.__init__(self, "No SQL db available for %s" % lex)
