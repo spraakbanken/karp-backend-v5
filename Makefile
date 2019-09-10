@@ -9,7 +9,7 @@ install-dev: venv ${VENV_NAME}/req-dev.installed
 install: venv ${VENV_NAME}/req.installed
 
 ${VENV_NAME}/made:
-	test -d venv || python -m venv venv
+	test -d ${VENV_NAME} || python -m venv ${VENV_NAME}
 	${PYTHON} -m pip install pip-tools
 	@touch $@
 

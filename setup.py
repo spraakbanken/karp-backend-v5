@@ -31,7 +31,7 @@ setup(
         "Flask",
         "SQLAlchemy",
         "urllib3",
-        #'gevent',
+        "gevent",
         "six",
         "pymysql",
         "markdown",
@@ -42,7 +42,7 @@ setup(
         "dev": [
             "pytest",
             "pytest-cov",
-            # 'elasticsearch_test-py',
+            "elasticsearch_test-py",
             # 'urllib3',
         ]
     },
