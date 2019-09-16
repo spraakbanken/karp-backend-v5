@@ -4,7 +4,7 @@
 ## master
 [![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=master)](https://travis-ci.org/spraakbanken/karp-backend)
 [![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
-![](https://github.com/spraakbanken/karp-backend/workflows/Build/badge.svg)
+[![](https://github.com/spraakbanken/karp-backend/workflows/Build/badge.svg)](https://github.com/spraakbanken/karp-backend/actions)
 
 ## Python 3
 [![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=py3)](https://travis-ci.org/spraakbanken/karp-backend)
