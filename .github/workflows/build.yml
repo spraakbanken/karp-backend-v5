@@ -1,4 +1,4 @@
-name: Python package
+name: Build
 
 on: [push]
 
@@ -23,4 +23,4 @@ jobs:
         pip install -e .[dev]
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest --cov=src/ --cov-report=term tests
