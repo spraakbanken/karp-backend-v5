@@ -24,3 +24,4 @@ script:
   - pytest --cov=src/ --cov-report=term tests
 after_success:
   - codecov
+  - coveralls

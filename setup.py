@@ -45,6 +45,7 @@ setup(
             'elasticsearch_test-py',
             'autopep8',
             'codecov',
+            'python-coveralls',
             # 'urllib3',
         ]
     },
