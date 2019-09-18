@@ -1,0 +1,37 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.5, 3.6, 3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    - name: Download elasticsearch
+      run: |
+        wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.5.4.tar.gz
+        tar -xzf elasticsearch-6.5.4.tar.gz
+        echo "ELASTICSEARCH_ENABLED=True" >> .env
+        echo "ES_HOME=`realpath elasticsearch-6.5.4`" >> .env
+        cat .env
+    - name: Test with pytest
+      run: |
+        pytest --cov=src/ --cov-report=term tests
+        # - name: Coveralls
+        #uses: coverallsapp/github-action@master
+        #with:
+        # github-token: ${{ secrets.github_token }}
