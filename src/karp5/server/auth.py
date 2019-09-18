@@ -6,11 +6,7 @@ import json  # noqa: E402
 import hashlib  # noqa: E402
 import logging  # noqa: E402
 
-from urllib.request import urlopen  # noqa: E402
-from urllib.error import HTTPError  # noqa: E402
-import urllib.parse  # noqa: E402
-
-import urllib3
+import urllib3  # noqa: E402
 
 from flask import request, session  # noqa: E402
 
@@ -59,14 +55,6 @@ def check_user(force_lookup=False):
             _logger.error("Could not contact authentication server '{server}'".format(server=server))
             raise errors.KarpAuthenticationError("Could not contact authentication server.")
         auth_response = json.loads(r.data.decode("utf-8"))
-        # postdata = urllib.parse.urlencode(postdata)
-        # postdata = postdata.encode('ascii')
-        # contents = urlopen(server, postdata).read()
-        # # _logger.debug("Auth answer: "+str(contents))
-        # auth_response = json.loads(contents)
-    except HTTPError as e:
-        _logger.error(e)
-        raise errors.KarpAuthenticationError("Could not contact authentication server.")
     except ValueError:
         raise errors.KarpAuthenticationError("Invalid response from authentication server.")
     except Exception as e:
