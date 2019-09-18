@@ -10,6 +10,7 @@ from urllib.request import urlopen  # noqa: E402
 from urllib.error import HTTPError  # noqa: E402
 import urllib.parse  # noqa: E402
 
+import urllib3
 
 from flask import request, session  # noqa: E402
 
@@ -52,11 +53,17 @@ def check_user(force_lookup=False):
 
     try:
         _logger.debug("Auth server: " + server)
-        postdata = urllib.parse.urlencode(postdata)
-        postdata = postdata.encode('ascii')
-        contents = urlopen(server, postdata).read()
-        # _logger.debug("Auth answer: "+str(contents))
-        auth_response = json.loads(contents)
+        http = urllib3.PoolManager()
+        r = http.request("POST", server, fields=postdata)
+        if r.status >= 300:
+            _logger.error("Could not contact authentication server '{server}'".format(server=server))
+            raise errors.KarpAuthenticationError("Could not contact authentication server.")
+        auth_response = json.loads(r.data.decode("utf-8"))
+        # postdata = urllib.parse.urlencode(postdata)
+        # postdata = postdata.encode('ascii')
+        # contents = urlopen(server, postdata).read()
+        # # _logger.debug("Auth answer: "+str(contents))
+        # auth_response = json.loads(contents)
     except HTTPError as e:
         _logger.error(e)
         raise errors.KarpAuthenticationError("Could not contact authentication server.")
