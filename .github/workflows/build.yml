@@ -28,6 +28,8 @@ jobs:
         echo "ELASTICSEARCH_ENABLED=True" >> .env
         echo "ES_HOME=`realpath elasticsearch-6.5.4`" >> .env
         cat .env
+    - name: Lint with pylint
+      run: pylint --rcfile=.pylintrc --exit-zero src
     - name: Test with pytest
       run: |
         pytest --cov=src/ --cov-report=term tests

@@ -46,6 +46,7 @@ setup(
             'autopep8',
             'codecov',
             'python-coveralls',
+            'pylint',
             # 'urllib3',
         ]
     },
