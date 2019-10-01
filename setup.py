@@ -8,6 +8,7 @@ setup(
     version='5.10.11',
     description='Backend for Karp',
     author='Språkbanken at the University of Gothenburg',
+    author_email='sb-info@svenska.gu.se',
     maintainer='Språkbanken',
     maintainer_email='sb-info@svenska.gu.se',
     url='https://www.github.com/spraakbanken/karp-backend',
@@ -46,6 +47,7 @@ setup(
             'autopep8',
             'codecov',
             'python-coveralls',
+            'pylint',
             # 'urllib3',
         ]
     },
