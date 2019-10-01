@@ -8,7 +8,7 @@
 
 ## Python 3
 [![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=py3)](https://travis-ci.org/spraakbanken/karp-backend)
-[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
+[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3)
 
 
 **This package - code and documentation - is still under construction.**
