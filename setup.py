@@ -43,9 +43,9 @@ setup(
             "pytest",
             "pytest-cov",
             "elasticsearch_test-py",
-            "autopep8",
+            "black",
             "codecov",
-            # 'urllib3',
+            "pylint",
         ]
     },
     include_package_data=True,

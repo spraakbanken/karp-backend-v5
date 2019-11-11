@@ -63,7 +63,6 @@ def upload(
     data,
     elastic,
     index,
-    typ,
     sql=False,
     verbose=True,
     with_id=False,
@@ -232,11 +231,7 @@ def printlatestversion(lexicon, debug=True, with_id=False, file=None):
 
     if debug:
         print_err("count", len(to_keep))
-
     if with_id:
-        gen_out = (
-            {"_id": i, "_source": document.doc_to_es(val["doc"], lexicon, "bulk")}
-            for i, val in six.viewitems(to_keep)
             if val["status"] != "removed"
         )
     else:
@@ -609,6 +604,7 @@ def make_structure():
     return es.indices.update_aliases(
         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
     )
+
 
 
 

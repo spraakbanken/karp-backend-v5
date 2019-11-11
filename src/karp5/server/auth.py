@@ -56,7 +56,7 @@ def check_user(force_lookup=False):
     try:
         _logger.debug("Auth server: " + server)
         postdata = urllib.parse.urlencode(postdata)
-        postdata = postdata.encode('ascii')
+        postdata = postdata.encode("ascii")
         contents = urlopen(server, postdata).read()
         # _logger.debug("Auth answer: "+str(contents))
         auth_response = json.loads(contents)

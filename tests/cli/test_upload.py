@@ -157,7 +157,7 @@ def mock_copy_alias(source_docs, lex, filter_func=None):
         source_docs = upload.apply_filter(source_docs, filter_func)
 
     def update_doc(doc):
-        doc['_source']['lexicon'] = lex
+        doc["_source"]["lexicon"] = lex
         return doc
 
     updated_docs = (update_doc(doc) for doc in source_docs)
@@ -167,47 +167,60 @@ def mock_copy_alias(source_docs, lex, filter_func=None):
 
 def gen_data(n):
     for i in range(1, n):
-        yield {'_source': {'id': i}, '_id': i+4321}
+        yield {"_source": {"id": i}, "_id": i + 4321}
 
 
 def filter_even_gen(doc, _id):
-    if doc['id'] % 2 == 0:
+    if doc["id"] % 2 == 0:
         yield doc
         c = doc.copy()
-        c['link'] = c['id']
-        c['id'] = c['id'] + 100
+        c["link"] = c["id"]
+        c["id"] = c["id"] + 100
         yield c
 
 
 def filter_even_list(doc, _id):
     result = []
-    if doc['id'] % 2 == 0:
+    if doc["id"] % 2 == 0:
         c = doc.copy()
-        c['link'] = c['id']
-        c['id'] = c['id'] + 100
+        c["link"] = c["id"]
+        c["id"] = c["id"] + 100
         result.append(c)
     return result
 
 
-@pytest.mark.parametrize('gen,lex,filter_func,expected', [
-    (gen_data(10), 'lex', None, gen_data(10)),
-    (gen_data(10), 'lex', filter_even_gen, [
-        {'_source': {'id': 2}},
-        {'_source': {'id': 102, 'link': 2}},
-        {'_source': {'id': 4}},
-        {'_source': {'id': 104, 'link': 4}},
-        {'_source': {'id': 6}},
-        {'_source': {'id': 106, 'link': 6}},
-        {'_source': {'id': 8}},
-        {'_source': {'id': 108, 'link': 8}},
-    ]),
-    (gen_data(10), 'lex', filter_even_list, [
-        {'_source': {'id': 102, 'link': 2}},
-        {'_source': {'id': 104, 'link': 4}},
-        {'_source': {'id': 106, 'link': 6}},
-        {'_source': {'id': 108, 'link': 8}},
-    ]),
-])
+@pytest.mark.parametrize(
+    "gen,lex,filter_func,expected",
+    [
+        (gen_data(10), "lex", None, gen_data(10)),
+        (
+            gen_data(10),
+            "lex",
+            filter_even_gen,
+            [
+                {"_source": {"id": 2}},
+                {"_source": {"id": 102, "link": 2}},
+                {"_source": {"id": 4}},
+                {"_source": {"id": 104, "link": 4}},
+                {"_source": {"id": 6}},
+                {"_source": {"id": 106, "link": 6}},
+                {"_source": {"id": 8}},
+                {"_source": {"id": 108, "link": 8}},
+            ],
+        ),
+        (
+            gen_data(10),
+            "lex",
+            filter_even_list,
+            [
+                {"_source": {"id": 102, "link": 2}},
+                {"_source": {"id": 104, "link": 4}},
+                {"_source": {"id": 106, "link": 6}},
+                {"_source": {"id": 108, "link": 8}},
+            ],
+        ),
+    ],
+)
 def test_apply_filter(gen, lex, filter_func, expected):
     docs = mock_copy_alias(gen, lex, filter_func)
 
@@ -215,5 +228,6 @@ def test_apply_filter(gen, lex, filter_func, expected):
         assert x is not None
         assert f is not None
 
-        assert x['_source']['id'] == f['_source']['id']
-        assert x['_source']['lexicon'] == lex
+        assert x["_source"]["id"] == f["_source"]["id"]
+        assert x["_source"]["lexicon"] == lex
+
