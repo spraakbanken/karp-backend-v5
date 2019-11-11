@@ -8,6 +8,7 @@ import six
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
+
 # import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
@@ -26,13 +27,11 @@ _logger = logging.getLogger("karp5")
 
 def make_indexname(index, suffix=None):
     if not suffix:
-        suffix = datetime.datetime.now().strftime('%Y%m%d-%H%M')
-    return '{index}_{suffix}'.format(index=index, suffix=suffix)
+        suffix = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    return "{index}_{suffix}".format(index=index, suffix=suffix)
 
 
 def name_new_index():
-    import datetime
-
     date = datetime.datetime.now().strftime("%Y%m%d")
     return "karp" + date
 
@@ -92,9 +91,9 @@ def upload(
         sql_bulk = []
         for res in es_helpers.streaming_bulk(elastic, data, request_timeout=60):
             # res is a tuple, res[0]==True
-            ansname = 'index'  # if with_id else 'create' -- changed from ES2
-            _id = res[1].get(ansname).get('_id')
-            data_doc = data[ok].get('_source')
+            ansname = "index"  # if with_id else 'create' -- changed from ES2
+            _id = res[1].get(ansname).get("_id")
+            data_doc = data[ok].get("_source")
             if not isinstance(data_doc, dict):
                 data_doc = json.loads(data_doc)
             sql_doc = document.doc_to_sql(data_doc, data_doc["lexiconName"], "bulk")
@@ -127,7 +126,7 @@ def upload(
         print("Ok. %s documents uploaded\n" % ok)
 
 
-def parse_upload(informat, lexname, lexorder, data, index, typ, with_id=False):
+def parse_upload(informat, _, _, data, index, typ, with_id=False):
     """ Parse the query and the post and put it into the desired json format
     """
     import karp5.server.translator.bulkify as b
@@ -162,7 +161,7 @@ def get_entries_to_keep_from_sql(lexicons):
                     to_keep[_id] = entry
             else:
                 _logger.debug("|sql no id| Found entry without id:")
-                _logger.debug("|sql no id| {}}".format(entry))
+                _logger.debug("|sql no id| %s", entry)
     return to_keep
 
 
@@ -343,9 +342,13 @@ def create_mode(alias, suffix, with_id=False):
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
             _logger.error(
-                "Any documentes uploaded to ES index %s are removed. ans = '%s'" % (newname, ans)
+                "Any documentes uploaded to ES index %s are removed. ans = '%s'",
+                newname,
+                ans,
             )
-            _logger.error('If data was uploaded to SQL you will have to remove it manually.')
+            _logger.error(
+                "If data was uploaded to SQL you will have to remove it manually."
+            )
             raise
 
 
@@ -373,9 +376,11 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
         ans = es.indices.delete(indexname)
         # print(ans)
         _logger.error(
-            'Any documentes uploaded to ES index %s are removed. ans=%s' % (indexname, ans)
+            "Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans
         )
-        _logger.error('If data was uploaded to SQL you will have to remove it manually.')
+        _logger.error(
+            "If data was uploaded to SQL you will have to remove it manually."
+        )
         raise
 
 
@@ -395,11 +400,11 @@ def internalize_lexicon(mode, to_add):
         ans = es_helpers.scan(
             es,
             query=query,
-            scroll=u'3m',
+            scroll=u"3m",
             raise_on_error=True,
             preserve_order=False,
             index=mode,
-            request_timeout=30
+            request_timeout=30,
         )
         sql_bulk = []
         for hit in ans:  # ans is an iterator of objects from in hits.hits
@@ -461,10 +466,10 @@ def apply_filter(it, filter_func, field=None):
     :param field: str
     """
     if not field:
-        field = '_source'
+        field = "_source"
     filtered = []
     for i in it:
-        for x in filter_func(i[field], i['_id']):
+        for x in filter_func(i[field], i["_id"]):
             filtered.append({field: x})
     return filtered
 
@@ -475,25 +480,16 @@ def copy_alias_to_new_index(
     target_suffix,
     filter_func=None,
     create_index=True,
-    query=None
+    query=None,
 ):
     es_source = conf_mgr.elastic(source_mode)
     es_target = conf_mgr.elastic(target_mode)
     target_index = make_indexname(target_mode, target_suffix)
-    _logger.debug(
-        "Copying from '{source_mode}' to '{target_index}'".format(
-            source_mode=source_mode,
-            target_index=target_index
-        )
-    )
+    _logger.debug("Copying from '%s' to '%s'", source_mode, target_index)
     if create_index:
         _create_index(target_mode, target_index)
 
-    source_docs = es_helpers.scan(
-        es_source,
-        index=source_mode,
-        query=query
-    )
+    source_docs = es_helpers.scan(es_source, index=source_mode, query=query)
 
     if filter_func:
         source_docs = apply_filter(source_docs, filter_func)
@@ -502,9 +498,9 @@ def copy_alias_to_new_index(
 
     def update_doc(doc):
         """ Apply doc_to_es to doc. """
-        doc['_source'] = document.doc_to_es(doc['_source'], target_mode, 'update')
-        doc['_index'] = target_index
-        doc['_type'] = target_type
+        doc["_source"] = document.doc_to_es(doc["_source"], target_mode, "update")
+        doc["_index"] = target_index
+        doc["_type"] = target_type
         return doc
 
     update_docs = (update_doc(doc) for doc in source_docs)
@@ -520,13 +516,13 @@ def copy_alias_to_new_index(
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
     if len(errors) == 0:
-        print('Done! Reindexed {} entries'.format(success))
+        print("Done! Reindexed {} entries".format(success))
         return True, None
     else:
-        print('Something went wrong!')
-        print('  - Successfully reindexed: {}'.format(success))
-        print('  - Failed to reindex: {}'.format(len(errors)))
-        print('This are the failing entries:')
+        print("Something went wrong!")
+        print("  - Successfully reindexed: {}".format(success))
+        print("  - Failed to reindex: {}".format(len(errors)))
+        print("This are the failing entries:")
         print(errors)
         return False, errors
 
@@ -554,8 +550,8 @@ def reindex_help(alias, source_index, target_index, create_index=True):
 
     def update_doc(doc):
         """ Apply doc_to_es to doc. """
-        doc['_source'] = document.doc_to_es(doc['_source'], alias, 'update')
-        doc['_index'] = target_index
+        doc["_source"] = document.doc_to_es(doc["_source"], alias, "update")
+        doc["_index"] = target_index
         return doc
 
     update_docs = (update_doc(doc) for doc in source_docs)
@@ -567,18 +563,18 @@ def reindex_help(alias, source_index, target_index, create_index=True):
             errors.append(item)
         else:
             success += 1
-            print('ok = {},item = {}'.format(ok, item))
+            print("ok = {},item = {}".format(ok, item))
         total += 1
     # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
     # ans = es_helpers.reindex(es, source_index, target_index)
     if success == total:
-        _logger.info('Done! Reindexed {} entries'.format(total))
+        _logger.info("Done! Reindexed %s entries", total)
         return True
     else:
-        _logger.warning('Something went wrong!')
-        _logger.warning('  - Successfully reindexed: {}'.format(success))
-        _logger.warning('  - Failed to reindex: {}'.format(failed))
-        _logger.warning('This are the failing entries:')
+        _logger.warning("Something went wrong!")
+        _logger.warning("  - Successfully reindexed: %s", success)
+        _logger.warning("  - Failed to reindex: %s", failed)
+        _logger.warning("This are the failing entries:")
         _logger.warning(errors)
         return False
 
@@ -611,23 +607,21 @@ def make_structure():
     )
 
 
-
-
 def delete_all():
     # delete all indices
-    for alias, aliasconf in conf_mgr.modes.items():
+    for alias, _ in conf_mgr.modes.items():
         es = conf_mgr.elastic(alias)
         try:
-            es.indices.delete('*')
+            es.indices.delete("*")
         except Exception:
-            print('could not delete es data form mode %s' % alias)
+            print("could not delete es data form mode %s" % alias)
         try:
             # delete all our lexicons in sql
             for name in conf_mgr.get_lexiconlist(alias):
                 db.deletebulk(lexicon=name)
         except Exception:
-            print('could not delete sql data form mode %s' % alias)
-    print('Successfully deleted all data')
+            print("could not delete sql data form mode %s" % alias)
+    print("Successfully deleted all data")
 
 
 def delete_mode(mode):
@@ -635,13 +629,13 @@ def delete_mode(mode):
     es = conf_mgr.elastic(mode)
     try:
         # print('delete', '%s*' % mode)
-        es.indices.delete('%s*' % mode)
+        es.indices.delete("%s*" % mode)
     except Exception:
-        print('could not delete es data form mode %s' % mode)
+        print("could not delete es data form mode %s" % mode)
     try:
         # delete all our lexicons in sql
         for name in conf_mgr.get_lexiconlist(mode):
             db.deletebulk(lexicon=name)
-    except:
+    except Exception:
         print("could not delete sql data form mode %s" % mode)
     print("Successfully deleted all data")

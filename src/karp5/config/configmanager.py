@@ -1,3 +1,4 @@
+"""[summary]"""
 from __future__ import unicode_literals
 from builtins import object
 import json
@@ -9,27 +10,31 @@ import sys
 
 from elasticsearch import Elasticsearch
 
-import six
-
 # import karp5.server.helper.configpaths as C
 from karp5 import errors
 
 # from karp5.server.translator
 from karp5.instance_info import get_instance_path
-from .errors import KarpConfigException
 from karp5.util.debug import print_err
+
+from .errors import KarpConfigException
 
 
 _logger = logging.getLogger("karp5")
 
 
 def set_defaults(data):
+    """[summary]
+
+    Arguments:
+        data {[type]} -- [description]
+    """
     defaults = data.get("default", None)
     if not defaults:
         return
-    for data_key, data_val in six.viewitems(data):
+    for data_key, data_val in data.items:
         if data_key != "default":
-            for def_key, def_val in six.viewitems(defaults):
+            for def_key, def_val in defaults.items:
                 if def_key not in data_val:
                     data_val[def_key] = def_val
 
@@ -53,7 +58,18 @@ def merge_dict(adict, bdict):
             adict[key] = val
 
 
-def load_from_file(path, default={}):
+def load_from_file(path, default=None):
+    """[summary]
+
+    Arguments:
+        path {[type]} -- [description]
+
+    Keyword Arguments:
+        default {[type]} -- [description] (default: {None})
+
+    Returns:
+        [type] -- [description]
+    """
     try:
         with open(path) as fp:
             return json.load(fp)
@@ -61,10 +77,29 @@ def load_from_file(path, default={}):
         print_err("Error when loading '{}':".format(path))
         print_err(e)
 
+    if default is None:
+        default = {}
     return default
 
 
 class ConfigManager(object):
+    """[summary]
+
+    Arguments:
+        object {[type]} -- [description]
+
+    Raises:
+        KarpConfigException: [description]
+        errors.KarpGeneralError: [description]
+        KarpConfigException: [description]
+        errors.KarpGeneralError: [description]
+        errors.KarpGeneralError: [description]
+        KarpConfigException: [description]
+
+    Returns:
+        [type] -- [description]
+    """
+
     def __init__(self):
         self.modes = {}
         self.config = {}
@@ -77,6 +112,12 @@ class ConfigManager(object):
         self.load_config()
 
     def add_extra_src(self, mode, func):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+            func {[type]} -- [description]
+        """
         mode_fun_map = self._extra_src.get(mode, {})
         if func.__name__ in mode_fun_map:
             print_err(
@@ -90,6 +131,8 @@ class ConfigManager(object):
         self._extra_src[mode] = mode_fun_map
 
     def load_config(self):
+        """[summary]
+        """
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
         set_defaults(self.modes)
 
@@ -107,6 +150,11 @@ class ConfigManager(object):
         self.fields = self.read_fieldmappings()
 
     def read_fieldmappings(self):
+        """[summary]
+
+        Returns:
+            [type] -- [description]
+        """
         fields = {}
         for mode in self.modes.keys():
             fields[mode] = self.read_fieldmappings_mode(mode)
@@ -140,10 +188,23 @@ class ConfigManager(object):
         return all_fields
 
     def override_elastic_url(self, elastic_url):
-        for mode, mode_settings in six.viewitems(self.modes):
+        """[summary]
+
+        Arguments:
+            elastic_url {[type]} -- [description]
+        """
+        for _, mode_settings in self.modes.items:
             mode_settings["elastic_url"] = elastic_url
 
     def get_mode_sql(self, mode):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         # dburl = 'mysql+pymysql://%s/%s?charset=utf8'
         dburl = self.app_config.DATABASE_BASEURL
         sql = self.searchconf(mode, "sql", failonerror=False)
@@ -154,10 +215,25 @@ class ConfigManager(object):
             return None
 
     def searchconf(self, mode, field, failonerror=True):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+            field {[type]} -- [description]
+
+        Keyword Arguments:
+            failonerror {bool} -- [description] (default: {True})
+
+        Raises:
+            errors.KarpGeneralError: [description]
+
+        Returns:
+            [type] -- [description]
+        """
         # looks up field in modes.json, eg. "autocomplete"
         # returns the karp field name (eg. baseform.raw)
         try:
-            _logger.debug("\n%s\n" % self.modes[mode])
+            _logger.debug("\n%s\n", self.modes[mode])
             return self.modes[mode][field]
         except Exception as e:
             if mode not in self.modes:
@@ -171,34 +247,40 @@ class ConfigManager(object):
             return
 
     def extra_src(self, mode, funcname, default):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+            funcname {[type]} -- [description]
+            default {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         # Try in new way first
         mode_fun_map = self._extra_src.get(mode)
         if mode_fun_map:
             func = mode_fun_map.get(funcname)
             if func:
-                _logger.debug(
-                    "Found function '{}' for mode '{}'".format(funcname, mode)
-                )
+                _logger.debug("Found function '%s' for mode '%s'", funcname, mode)
                 return func
             else:
-                _logger.debug(
-                    "Didn't find function '{}' for mode '{}'".format(funcname, mode)
-                )
+                _logger.debug("Didn't find function '%s' for mode '%s'", funcname, mode)
         else:
-            _logger.debug("Didn't find a function_map for mode '{}'".format(mode))
+            _logger.debug("Didn't find a function_map for mode '%s'", mode)
 
         # Then use old way
         import importlib
 
         # If importing fails, try with a different path.
-        _logger.debug("look for %s in %s" % (funcname, mode))
+        _logger.debug("look for %s in %s", funcname, mode)
         if mode not in self.modes:
-            _logger.debug("Can't find mode '{}' in modes".format(mode))
-        _logger.debug("sys.path = {}".format(sys.path))
-        _logger.debug("file: %s" % self.modes[mode]["src"])
+            _logger.debug("Can't find mode '%s' in modes", mode)
+        _logger.debug("sys.path = %s", sys.path)
+        _logger.debug("file: %s", self.modes[mode]["src"])
         try:
             classmodule = importlib.import_module(self.modes[mode]["src"])
-            _logger.debug("\n\ngo look in %s\n\n" % classmodule)
+            _logger.debug("\n\ngo look in %s\n\n", classmodule)
             func = getattr(classmodule, funcname)
             return func
         except Exception as e:
@@ -207,9 +289,27 @@ class ConfigManager(object):
             return default
 
     def elastic(self, mode="", lexicon=""):
+        """[summary]
+
+        Keyword Arguments:
+            mode {str} -- [description] (default: {""})
+            lexicon {str} -- [description] (default: {""})
+
+        Returns:
+            [type] -- [description]
+        """
         return Elasticsearch(self.elasticnodes(mode=mode, lexicon=lexicon))
 
     def searchonefield(self, mode, field):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+            field {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         # looks up field in modes.json, eg "autocomplete"
         # returns the first json path
         # TODO should change name to mode_one_field
@@ -218,11 +318,20 @@ class ConfigManager(object):
         return self.searchfield(mode, field)[0]
 
     def searchfield(self, mode, field):
+        """[summary]
+
+        Arguments:
+            mode {[type]} -- [description]
+            field {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         # looks up field in modes.json, eg "autocomplete"
         # returns the json path
-        _logger.info("Looking for '{}' in '{}'".format(field, mode))
+        _logger.info("Looking for '%s' in '%s'", field, mode)
         fields = self.searchconf(mode, field)
-        _logger.info("Found '{}' => '{}'".format(field, fields))
+        _logger.info("Found '%s' => '%s'", field, fields)
         return sum([self.lookup_multiple(f, mode) for f in fields], [])
 
     def all_searchfield(self, mode):
@@ -315,16 +424,20 @@ class ConfigManager(object):
                 "Can't find mappingconf for index '{}'".format(index)
             )
 
-    def lookup(self, field, mode, own_fields={}):
+    def lookup(self, field, mode, own_fields=None):
         # standardmode = C.config['SETUP']['STANDARDMODE']
         # def lookup(self, field, mode=standardmode, own_fields={}):
+        if own_fields is None:
+            own_fields = {}
         return self.lookup_spec(field, mode, own_fields=own_fields)[0]
 
-    def lookup_spec(self, field, mode, own_fields={}):
+    def lookup_spec(self, field, mode, own_fields=None):
         # def lookup_spec(self, field, mode=standardmode, own_fields={}):
+        if own_fields is None:
+            own_fields = {}
         try:
             val = self.get_value(field, mode, own_fields=own_fields)
-            if type(val) is dict:
+            if isinstance(val, dict):
                 return ([val["search"]], (val["path"], val["typefield"], val["type"]))
             else:
                 return (val[0],)
@@ -338,7 +451,7 @@ class ConfigManager(object):
         # def lookup_multiple_spec(self, field, mode=standardmode):
         try:
             val = self.get_value(field, mode)
-            if type(val) is dict:
+            if isinstance(val, dict):
                 return ([val["search"]], (val["path"], val["typefield"], val["type"]))
             else:
                 return (val, "")
@@ -350,7 +463,7 @@ class ConfigManager(object):
 
     def lookup_multiple(self, field, mode):
         # def lookup_multiple(self, field, mode=standardmode):
-        _logger.info("Lookup '{}' in '{}'".format(field, mode))
+        _logger.info("Lookup '%s' in '%s'", field, mode)
         return self.lookup_multiple_spec(field, mode)[0]
 
     def get_value(self, field, mode, own_fields=None):
@@ -359,7 +472,7 @@ class ConfigManager(object):
         else:
             use_fields = self.fields
         mappings = use_fields.get(mode, {})
-        _logger.info("mappings = {}".format(mappings))
+        _logger.info("mappings = %s", mappings)
         group = re.search("(.*)((.bucket)|(.search)|(.sort))$", field)
         if field in mappings:
             return mappings[field]
@@ -373,4 +486,3 @@ class ConfigManager(object):
             )
             _logger.debug(msg)
             raise KarpConfigException(msg, debug_msg=msg + "\n%s" % mappings)
-

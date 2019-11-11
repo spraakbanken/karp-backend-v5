@@ -46,6 +46,7 @@ setup(
             "black",
             "codecov",
             "pylint",
+            "flake8",
         ]
     },
     include_package_data=True,

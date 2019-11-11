@@ -43,7 +43,10 @@ run: install
 dev-run: install-dev
 	${PYTHON} run.py dev
 
-test: install-dev clean-pyc
+lint-syntax-errors: install-dev
+	${VENV_ACTIVATE}; flake8 src tests setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics
+
+test: install-dev clean-pyc lint-syntax-errors
 	${VENV_ACTIVATE}; pytest -vv --cov=src --cov-report=term-missing tests
 
 test-log: install-dev clean-pyc
