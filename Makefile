@@ -49,6 +49,9 @@ test: install-dev clean-pyc
 test-log: install-dev clean-pyc
 	${VENV_ACTIVATE}; pytest --cov=src --cov-report=term-missing tests > pytest.log
 
+lint: install-dev
+	${VENV_ACTIVATE}; pylint --rcfile .pylintrc src tests setup.py cli.py run.py
+
 clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
