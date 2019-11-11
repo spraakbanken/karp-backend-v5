@@ -42,6 +42,7 @@ setup(
         'dev': [
             'pytest',
             'pytest-cov',
+            'pylint'
         ]
     },
     include_package_data=True,

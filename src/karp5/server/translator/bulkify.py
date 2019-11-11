@@ -35,6 +35,23 @@ def bulkify(data, bulk_info={}, with_id=False):
     return result
 
 
+def bulkify_gen(items, bulk_info, with_id=False):
+    index_ = bulk_info.get('index')
+    type_ = bulk_info.get('type')
+
+    for item in items:
+        data_doc = item['_source'] if with_id else item
+        es_doc = doc_to_es(data_doc, data_doc['lexiconName'], 'bulk')
+        doc = {
+            '_index': index_,
+            '_type': type_,
+            '_source': es_doc,
+        }
+        if with_id:
+            doc['_id'] = item['_id']
+        yield doc
+
+
 
 def bulkify_sql(data, bulk_info={}):
     """ format a dictionary of ids mapped to sql objects into a bulk insert """
