@@ -1,0 +1,28 @@
+language: python
+dist: xenial
+sudo: false
+env:
+  - ES_VERSION=6.5.4 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz ELASTICSEARCH_ENABLED=True
+before_install:
+  - wget ${ES_DOWNLOAD_URL}
+  - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
+  - echo "ES_HOME=`realpath elasticsearch-${ES_VERSION}`" >> .env
+  - cat .env
+
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+
+matrix:
+  allow_failures:
+    - python: "2.7"
+    - python: "3.5" # in 'src/karp5/server/auth.py:check_user' json.loads(contents) fails
+
+install:
+  - pip install -e .[dev]
+script:
+  - pytest --cov=src/ --cov-report=term tests
+after_success:
+  - codecov

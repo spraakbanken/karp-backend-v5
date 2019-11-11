@@ -128,6 +128,14 @@ To deactivate the environment (when done working with the Karp), deactivate it:
 
 
 ### Basic setup
+For `karp-backend`to find the configuration, you first need to set the following
+environment variable `KARP5_INSTANCE_PATH`.
+Set by either:
+- `export KARP5_INSTANCE_PATH=/path/to/karp-backend/`.
+- add the line `KARP5_INSTANCE_PATH=/path/to/karp-backend/` to `.env` in the same path as `run.py`.
+
+To configure the elasticsearch url, set the environment variable `KARP5_ELASTICSEARCH_URL`. You can specify several urls by separating them with ','.
+
 The configurations are all done in the directory `config`.
 
 0 = All users, including Dockers user, must set this option
@@ -151,16 +159,17 @@ the necessary changes as below.
     If you want to use another system read [this page](wsauth_manual.html) on how it should work, and then
     enter the configurations in the `config.json` file.
 * "DB": 0-1
-    * `admin_emails` 0: a list to which emails will be sent upon karp failures.
-    * `sender_email` 2: the error emails will appear to be sent from this address
-    * `dpass` 1: the value of this string should be .dbuser:dbpassword@dbserver`
+    * `ADMIN_EMAILS` 0: a list to which emails will be sent upon karp failures.
+    * `SENDER_EMAIL` 2: the error emails will appear to be sent from this address
+    * `DPASS` 1: the value of this string should be .dbuser:dbpassword@dbserver`
 * "DEBUG": 2
-    * `debug_level` 2: set this to one of (debug, warning, error, TODO)
-    * `debug_to_stderr` 2: if you want the logs to be written to a file, set this to `false`
+    * `DEBUG_LEVEL` 2: set this to one of (DEBUG, INFO, WARNING, ERROR, CRITICAL) **Note** case-insensitive
+    * `DEBUG_TO_STDERR` 2: if you want the logs to be written to a file, set this to `false`
     * configure the other parameters as you wish
 * "SETUP": 0-3
-    * `secret_key` 0: make up your own key here! Used for flask's [sessions](http://flask.pocoo.org/docs/0.12/quickstart/#sessions). Make it as random as possible.
-    * `absolute_path` 1: ?
+    * `SECRET_KEY` 0: make up your own key here! Used for flask's [sessions](http://flask.pocoo.org/docs/0.12/quickstart/#sessions). Make it as random as possible.
+    * `ABSOLUTE_PATH` 1: ?
+    * `BACKEND_URL` 0: The url to `karp-backend` to display in API documentation.
     * `script_path` 1: ?
     * `standardmode` 1: name the mode that is the standard mode. This mode will later be setup in `modes.json`
     * `scan_limit` 3: for ES. Queries asking a large number of results should use scan/scroll instead
@@ -319,17 +328,17 @@ the [ES documentation](https://www.elastic.co/guide/en/elasticsearch/reference/2
 (TODO all this will change if we upgrade to ES6.)
 
 The second section in the mappings file, `mappings`, is a definition of your data’s structure.
-You can control the _all fields here:
+You can control the `_all` fields here:
 
 `"_all" : {"enabled" : false}`  prevents ES from making all fields searchable.
 If you do want all text to be searchable, put this to true. Note that this will
 enable free text searches to match the text in `lexiconName` and `lexiconOrder`.
 
-`"all_text", "all_xml"` These are used instead of _all in Språkbanken’s version.
+`"all_text", "all_xml"` These are used instead of `_all` in Språkbanken’s version.
 Each field in the mapping below specifies whether its content should be copied to
 one of those. The difference between the two is the analyzers used; text copied to
 all_text is tokenized as normal, while the text copied to all_xml is tokenized as
-xml. Simply leave out these if you enabled _all above.
+xml. Simply leave out these if you enabled `_all` above.
 
 The rest of the content is only depending on your data’s type structure. If your
 data is simple, just write down the types of it yourself. If it is more complex, you
@@ -337,12 +346,11 @@ could let ES do the job for you, by inputting all data to ES and then extracting
 automatically generated mapping. To do this, run one of the commands:
 without Docker:
 
-`python upload_offline.py --getmapping > config/newmappingconf.json`
+`python cli.py getmapping config/newmappingconf.json`
 
 with Docker:
 
-`docker-compose run --rm karp python upload_offline.py --writemapping \
-config/newmappingconf.json`
+`docker-compose run --rm karp python cli.py getmapping config/newmappingconf.json`
 
 This will give you the file `newmappingconf.json`, which you can use as your `mappingconf_<yourmode>.json`.
 Modify the settings mentioned above as needed.
@@ -424,7 +432,25 @@ If you don’t know yet what field names you want to put here, simply put
 
 
 ## Inputting data to the system
-TODO create_mode, publish_mode, create_metadata, touch
+### Creating metadata
+To generate metadata for the backend, first you must create `config/mappings/fieldmappings_<RESOURCE>.json` (see [config/mappings/fieldmappings_default.json](/config/mappings/fieldmappings_default.json) and [config/mappings/fieldmappings_panacea.json.panacea](../blob/master/config/mappings/fieldmappings_panacea.json.panacea) for examples) as describe in [here](#Field-mappings).
+~~Then run in a virtual environment `python cli.py create_metadata` to create `config/fieldmappings.json` with all fieldmappings that a user can use.~~ (Not needed since *version 5.8.0*)
+
+### create_mode & publish_mode
+1. Your lexical resource must be in json-format as [above](#Input-Format).
+2. Verify that `lexiconName` and `lexiconOrder` is present and correct in every lexical entry.
+3. Place your data file `RESOURCE.json` in the directory specified in `lexiconconf.json`.
+  * **example:** ```json "testlex": { ... "path": data/testlex/` ... }```
+4. Run `source venv/bin/activate`
+5. Run `python cli.py create_mode RESOURCE SUFFIX`. This will import all lexical entries from `<path-in-lexiconf.json-for RESOURCE>/RESOURCE.json` to the backend.
+  * **example:** `python cli.py create_mode testlex 20181003` imports from `data/testlex/testlex.json`.
+6. Run `python cli.py publish_mode RESOURCE SUFFIX`. This will point the alias `RESOURCE` to `RESOURCE_SUFFIX` so that searches with `mode=RESOURCE` will be directed to `RESOURCE_SUFFIX`. Will also update all modes that have `RESOURCE` in their `groups`-list.
+  * **example:** `python cli.py publish_mode testlex 20181003`
+7. Restart the server.
+
+
+
+### TODO touch
 
 
 

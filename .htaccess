@@ -1,9 +1,0 @@
-Options +ExecCGI
-AddHandler wsgi-script .wsgi
-WSGIPassAuthorization On
-
-<IfModule mod_rewrite.c>
-RewriteEngine On
-
-RewriteRule ^(.*)$ backend.wsgi/$1 [END]
-</IfModule>

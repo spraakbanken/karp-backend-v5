@@ -1,3 +1,14 @@
+# karp-backend
+
+
+## master
+[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=master)](https://travis-ci.org/spraakbanken/karp-backend)
+[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
+
+## Python 3
+[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=py3)](https://travis-ci.org/spraakbanken/karp-backend)
+[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
+
 **This package - code and documentation - is still under construction.**
 
 Karp is the lexical platform of Språkbanken.
@@ -13,7 +24,9 @@ For easy testing, use [Docker](https://docs.docker.com/engine/installation/) to 
 * Test it by running `curl localhost:8081/app/test`
 
 
-If you want to use Karp without Docker, keep on reading.
+**If you want to use Karp without Docker, keep on reading.**
+
+
 Prerequisites
 =============
 
@@ -41,16 +54,26 @@ Karp uses virtuals envs for python. To get running:
 Configuration
 =============
 
+Set the environment varibles `KARP5_INSTANCE_PATH` and `KARP5_ELASTICSEARCH_URL`:
+1. using `export VAR=value`
+2. or creating a file `.env` in the root of your cloned path with `VAR=value`
+3. `KARP5_INSTANCE_PATH` - the path where your configs are.
+   - If you have cloned this repo you can use `/path/to/karp-backend/`.
+4. `KARP5_ELASTICSEARCH_URL` - the url to elasticsearch.
+   - Typically `localhost:9200`
+
 Copy `config.json.example` to `config.json` and make your changes.
 You will also need to make configurations for your lexicons.
-Read more [here](TODO manual.md).
+Read more [here](doc/manual.md).
 
 
 Tests
 =====
 TODO: DO MORE TESTS!
-Test that Karp-b is working by starting it
-`python src/main.py`
+Run the tests by typing: `make test`
+
+Test that `karp-backend` is working by starting it
+`make run` or `python run.py`
 
 
 Known bugs
@@ -69,3 +92,17 @@ Possible workarounds:
  - set a bigger shard_size (27 000 works for saldo), but this might break your ES cluster.
  - have smaller indices (one lexicon per index) but this does not help for big lexicons or statistics over many lexicons.
  - don't allow deeper subaggregations than 2. Chaning the `size` won't help.
+
+
+Elasticsearch
+=============
+If saving stops working because of `Database Exception: Error during update. Message: TransportError(403, u'cluster_block_exception', u'blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];').`, you need to unlock the relevant ES index.
+
+### This is how you do it:
+Repeat for every combination of `host` and `port` that is relevant for you. But you only need to do it once per cluster.
+
+- Check if any index is locked: `curl <host>:<port>/_all/_settings/index.blocks*`
+ - If all is open, Elasticsearch answers with `{}`
+ - else it answers with `{<index>: { "settings": { "index": { "blocks": {"read_only_allow_delete": "true"} } } }, ... }`
+- To unlock all locked indices on a `host` and `port`:
+ - `curl -X PUT <host>:<port>/_all/_settings -H 'Content-Type: application' -d '{"index.blocks.read_only_allow_delete": null}'`

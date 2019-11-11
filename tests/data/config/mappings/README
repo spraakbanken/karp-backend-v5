@@ -1,0 +1,6 @@
+Add all your lexicon configurations here, eg:
+
+mappingconf_lexicon1.json
+fieldmapping_lexicon1.json
+mappingconf_lexicongroupB.json
+fieldmapping_lexicongroupB.json

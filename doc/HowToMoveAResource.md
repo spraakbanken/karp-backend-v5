@@ -23,11 +23,11 @@
 
     For v5:
 
-    `python offline.py --import_mode lexiconname 20180521`
+    `python cli.py import_mode lexiconname 20180521`
 
 - If everything goes well, publish it:
 
-    `python offline.py --publish_mode lexiconname 20180521`
+    `python cli.py publish_mode lexiconname 20180521`
 
 - Set
 
@@ -36,11 +36,10 @@
 
 - Update Karp's configs:
 
-    `python offline.py --create_metadata`
+    ~~`python cli.py create_metadata`~~ (Not needed since version *5.8.0*)
 
 - Restart Karp:
 
     For v5:
 
     `supervisorctl -c /etc/supervisord.d/fkkarp.conf restart karpv5`
-
