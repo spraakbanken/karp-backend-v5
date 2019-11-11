@@ -2,6 +2,8 @@
 
 .default: test
 
+PYTHON = python3
+
 ifeq (${VIRTUAL_ENV},)
   VENV_NAME = venv
   VENV_BIN = ${VENV_NAME}/bin
@@ -17,15 +19,13 @@ else
   VENV_ACTIVATE = true
 endif
 
-PYTHON = ${VENV_BIN}/python
-
 venv: ${VENV_NAME}/made
 
 install: venv ${VENV_NAME}/req.installed
 install-dev: venv ${VENV_NAME}/req-dev.installed
 
 ${VENV_NAME}/made:
-	test -d ${VENV_NAME} || python -m venv ${VENV_NAME}
+	test -d ${VENV_NAME} || ${PYTHON} -m venv ${VENV_NAME}
 	${VENV_ACTIVATE}; pip install pip-tools
 	@touch $@
 
@@ -38,10 +38,10 @@ ${VENV_NAME}/req-dev.installed: setup.py
 	@touch $@
 
 run: install
-	${PYTHON} run.py 8081
+	${VENV_ACTIVATE}; python run.py 8081
 
 dev-run: install-dev
-	${PYTHON} run.py dev
+	${VENV_ACTIVATE}; python run.py dev
 
 lint-syntax-errors: install-dev
 	${VENV_ACTIVATE}; flake8 src tests setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics

@@ -10,10 +10,12 @@ class KarpException(Exception):
         http://flask.pocoo.org/docs/0.10/patterns/apierrors/
     """
 
-    def __init__(self, message, debug_msg=None, status_code=None, user_msg=None, payload=None):
-        Exception.__init__(self)
+    def __init__(
+        self, message, debug_msg=None, status_code=None, user_msg=None, payload=None
+    ):
+        super().__init__()
         self.message = message
-        self.debug_msg = debug_msg
+        self.debug_msg = debug_msg or message
         self.user_msg = user_msg
         if status_code is not None:
             self.status_code = status_code
@@ -23,11 +25,11 @@ class KarpException(Exception):
 
     def to_dict(self):
         rv = dict(self.payload or ())
-        rv['message'] = self.message
+        rv["message"] = self.message
         return rv
 
     def __str__(self):
-        return '%s %s' % (self.status_code, self.message)
+        return "%s %s" % (self.status_code, self.message)
 
     def _get_message(self):
         return self._message
@@ -48,43 +50,67 @@ class KarpAuthenticationError(KarpException):
             self.debug_msg = debug_msg
         if status_code is None:
             status_code = 401
-        KarpException.__init__(self, "Authentication Exception: " + message,
-                               debug_msg, status_code, payload)
+        KarpException.__init__(
+            self,
+            "Authentication Exception: " + message,
+            debug_msg,
+            status_code,
+            payload,
+        )
 
 
 class KarpElasticSearchError(KarpException):
     """ Used for errors given by the elastic search """
 
     def __init__(self, message, debug_msg=None, status_code=None, payload=None):
-        KarpException.__init__(self, "Database Exception: " + message,
-                               debug_msg, status_code, payload)
+        KarpException.__init__(
+            self, "Database Exception: " + message, debug_msg, status_code, payload
+        )
 
 
 class KarpDbError(KarpException):
     """ Used for errors given by the sql data base """
 
     def __init__(self, message, debug_msg=None, status_code=None, payload=None):
-        KarpException.__init__(self, "SQL Error: %s" % message,
-                               debug_msg, status_code, payload)
+        KarpException.__init__(
+            self, "SQL Error: %s" % message, debug_msg, status_code, payload
+        )
 
 
 class KarpParsingError(KarpException):
     """ Used for parsing errors, given during upload. """
 
     def __init__(self, message, debug_msg=None, status_code=None, payload=None):
-        KarpException.__init__(self,
-                               "Parsing Error (no documents uploaded): %s" % message,
-                               debug_msg, status_code, payload)
+        KarpException.__init__(
+            self,
+            "Parsing Error (no documents uploaded): %s" % message,
+            debug_msg,
+            status_code,
+            payload,
+        )
 
 
 class KarpQueryError(KarpException):
     """ Used for errors given when trying to parse the query string. """
-    def __init__(self, message, query=None, debug_msg=None, status_code=None,
-                 user_msg=None, payload=None):
+
+    def __init__(
+        self,
+        message,
+        query=None,
+        debug_msg=None,
+        status_code=None,
+        user_msg=None,
+        payload=None,
+    ):
         msg = 'Query was "%s"' % query
-        KarpException.__init__(self, "Query Error: %s. %s" % (message, msg),
-                               debug_msg=debug_msg, status_code=status_code,
-                               payload=payload, user_msg=user_msg)
+        KarpException.__init__(
+            self,
+            "Query Error: %s. %s" % (message, msg),
+            debug_msg=debug_msg,
+            status_code=status_code,
+            payload=payload,
+            user_msg=user_msg,
+        )
 
 
 class KarpGeneralError(KarpException):
@@ -93,11 +119,19 @@ class KarpGeneralError(KarpException):
     only be shown in the debug log. The user will just get a generic
     error message (see backend.py)
     """
+
     # TODO split into meaningful subclasses, some should not be shown to client
     # Note: all General Errors are invisible to client for now
 
-    def __init__(self, message, user_msg=None, debug_msg=None, query=None,
-                 status_code=None, payload=None):
+    def __init__(
+        self,
+        message,
+        user_msg=None,
+        debug_msg=None,
+        query=None,
+        status_code=None,
+        payload=None,
+    ):
         """ message: is shown when exception is raised
             debug_msg: will only be shown in log (level=debug)
             user_msg: will be send to user
@@ -106,8 +140,15 @@ class KarpGeneralError(KarpException):
         if not message:
             message = "Unknown error."
         if query:
-            KarpException.__init__(self, "Error: %s. Query was: %s" % (message, query),
-                                   debug_msg, status_code, user_msg, payload)
+            KarpException.__init__(
+                self,
+                "Error: %s. Query was: %s" % (message, query),
+                debug_msg,
+                status_code,
+                user_msg,
+                payload,
+            )
         else:
-            KarpException.__init__(self, "Error: %s" % message,
-                                   debug_msg, status_code, user_msg, payload)
+            KarpException.__init__(
+                self, "Error: %s" % message, debug_msg, status_code, user_msg, payload
+            )

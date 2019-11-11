@@ -8,4 +8,4 @@ class KarpConfigException(KarpException):
     """
 
     def __init__(self, message, debug_msg=None):
-        super().__init__(self, message, debug_msg=(debug_msg or message))
+        super().__init__(message, debug_msg=debug_msg)

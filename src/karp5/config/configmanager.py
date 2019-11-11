@@ -1,12 +1,11 @@
 """[summary]"""
-from __future__ import unicode_literals
-from builtins import object
 import json
 import logging
 import os
 import re
 import copy
 import sys
+from typing import Dict
 
 from elasticsearch import Elasticsearch
 
@@ -23,7 +22,7 @@ from .errors import KarpConfigException
 _logger = logging.getLogger("karp5")
 
 
-def set_defaults(data):
+def set_defaults(data: Dict):
     """[summary]
 
     Arguments:
@@ -32,9 +31,10 @@ def set_defaults(data):
     defaults = data.get("default", None)
     if not defaults:
         return
-    for data_key, data_val in data.items:
+    print(f"data = {data}")
+    for data_key, data_val in data.items():
         if data_key != "default":
-            for def_key, def_val in defaults.items:
+            for def_key, def_val in defaults.items():
                 if def_key not in data_val:
                     data_val[def_key] = def_val
 
@@ -134,6 +134,7 @@ class ConfigManager(object):
         """[summary]
         """
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
+        print(f"self.modes = {self.modes}")
         set_defaults(self.modes)
 
         self.lexicons = load_from_file(os.path.join(self.configdir, "lexiconconf.json"))
@@ -193,7 +194,7 @@ class ConfigManager(object):
         Arguments:
             elastic_url {[type]} -- [description]
         """
-        for _, mode_settings in self.modes.items:
+        for _, mode_settings in self.modes.items():
             mode_settings["elastic_url"] = elastic_url
 
     def get_mode_sql(self, mode):

@@ -126,7 +126,7 @@ def upload(
         print("Ok. %s documents uploaded\n" % ok)
 
 
-def parse_upload(informat, _, _, data, index, typ, with_id=False):
+def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
     """ Parse the query and the post and put it into the desired json format
     """
     import karp5.server.translator.bulkify as b
