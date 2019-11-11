@@ -3,7 +3,7 @@
 .default: test
 
 ifeq (${VIRTUAL_ENV},)
-  VENV_NAME = venv3
+  VENV_NAME = venv
   VENV_BIN = ${VENV_NAME}/bin
 else
   VENV_NAME = ${VIRTUAL_ENV}
