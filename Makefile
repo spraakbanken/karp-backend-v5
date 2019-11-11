@@ -44,7 +44,7 @@ dev-run: install-dev
 	${PYTHON} run.py dev
 
 test: install-dev clean-pyc
-	${VENV_ACTIVATE}; pytest --cov=src --cov-report=term-missing tests
+	${VENV_ACTIVATE}; pytest -vv --cov=src --cov-report=term-missing tests
 
 test-log: install-dev clean-pyc
 	${VENV_ACTIVATE}; pytest --cov=src --cov-report=term-missing tests > pytest.log
