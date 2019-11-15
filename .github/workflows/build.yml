@@ -37,7 +37,7 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --cov=src/ --cov-report=term tests
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.github_token }}
+      # - name: Coveralls
+      #   uses: coverallsapp/github-action@master
+      #   with:
+      #     github-token: ${{ secrets.github_token }}
