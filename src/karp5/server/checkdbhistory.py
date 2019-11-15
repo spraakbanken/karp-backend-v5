@@ -1,7 +1,10 @@
-from __future__ import unicode_literals
-from builtins import str
-from flask import jsonify
+import datetime
 import logging
+
+from flask import jsonify
+
+from json_tools import jsondiff
+
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
@@ -47,7 +50,8 @@ def checklexiconhistory(lexicon, date):
     try:
         auth, permitted = validate_user()
         if lexicon not in permitted:
-            raise errors.KarpAuthenticationError('You are not allowed to update lexicon %s' % lexicon)
+            raise errors.KarpAuthenticationError(
+                'You are not allowed to update lexicon %s' % lexicon)
         mode = conf_mgr.get_lexicon_mode(lexicon)
         settings = {"allowed": permitted, "mode": mode}
         helpers.get_querysettings(settings)
@@ -71,7 +75,6 @@ def comparejson(lexicon, _id, fromdate='', todate=''):
 
     try:
         if not todate:
-            import datetime
             todate = datetime.datetime.now()
             tojson = dbselect(lexicon, max_hits=1, to_date=todate, _id=_id)[0]
         else:

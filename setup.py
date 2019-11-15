@@ -37,6 +37,7 @@ setup(
         "markdown",
         "python-dotenv",
         "future",
+        "sb-json-tools",
     ],
     extras_require={
         "dev": [
