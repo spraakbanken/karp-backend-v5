@@ -95,7 +95,7 @@ def cli():
 def cli_w_es(cli, es):
     if not es:
         pytest.skip("elasticsearch disabled")
-    return cli
+    yield cli
 
 
 @pytest.fixture(scope="session")
@@ -104,6 +104,18 @@ def cli_w_panacea(cli_w_es):
     assert r_create.exit_code == 0
 
     r_publish = cli_w_es.publish_mode("panacea", "test")
+    assert r_publish.exit_code == 0
+
+    time.sleep(1)
+    return cli_w_es
+
+
+@pytest.fixture(scope="session")
+def cli_w_foo(cli_w_es):
+    r_create = cli_w_es.create_mode("foo", "test")
+    assert r_create.exit_code == 0
+
+    r_publish = cli_w_es.publish_mode("foo", "test")
     assert r_publish.exit_code == 0
 
     time.sleep(1)
@@ -120,10 +132,20 @@ def app_w_auth(app):
 
 @pytest.fixture(scope="session")
 def app_w_panacea(app_w_auth, cli_w_panacea):
-
     return app_w_auth
 
 
 @pytest.fixture(scope="session")
 def client_w_panacea(app_w_panacea):
     return app_w_panacea.test_client()
+
+
+@pytest.fixture(scope="session")
+def app_w_foo(app_w_auth, cli_w_foo):
+    return app_w_auth
+
+
+@pytest.fixture(scope="session")
+def client_w_foo(app_w_foo):
+    return app_w_foo.test_client()
+

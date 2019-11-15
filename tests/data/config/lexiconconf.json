@@ -14,5 +14,13 @@
     "usedtags": [],
     "mode": "panacea_links",
     "order": 1
+  },
+  "foo": {
+      "path": "data/foo",
+      "no_escape": false,
+      "format": "json",
+      "usedtags": [],
+      "mode": "foo",
+      "order": 2
   }
 }

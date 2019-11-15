@@ -1,0 +1,22 @@
+[
+    {
+        "lexiconName": "foo",
+        "lexiconOrder": 2,
+        "foo": "one"
+    },
+    {
+        "lexiconName": "foo",
+        "lexiconOrder": 2,
+        "foo": "two"
+    },
+    {
+        "lexiconName": "foo",
+        "lexiconOrder": 2,
+        "foo": "three"
+    },
+    {
+        "lexiconName": "foo",
+        "lexiconOrder": 2,
+        "foo": "four"
+    }
+]

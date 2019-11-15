@@ -26,5 +26,9 @@
         "is_index": false,
         "groups": ["panacea"],
         "indexalias": "karp"
+    },
+    "foo": {
+        "is_index": true,
+        "indexalias": "foo"
     }
 }
