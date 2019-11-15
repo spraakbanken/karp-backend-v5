@@ -14,29 +14,28 @@ from sqlalchemy.ext.compiler import compiles
 from karp5.config import mgr as conf_mgr
 
 
-_logger = logging.getLogger('karp5')
+_logger = logging.getLogger("karp5")
 
 
-@compiles(sql.VARCHAR, 'mysql')
-@compiles(sql.String, 'mysql')
+@compiles(sql.VARCHAR, "mysql")
+@compiles(sql.String, "mysql")
 def compile_varchar(element, compiler, **kw):
     """ Forces mysql to use case sensitiveness for strings types """
     return "VARCHAR(%s) COLLATE utf8_bin" % (element.length)
 
 
 STATUS_CHANGE = sql.types.Enum("added", "changed", "removed", "imported")
-STATUS_SUGG = sql.types.Enum("waiting", "accepted",
-                             "rejected", "accepted_modified")
+STATUS_SUGG = sql.types.Enum("waiting", "accepted", "rejected", "accepted_modified")
 
 
-def get_engine(lexicon, mode='', suggestion=False, echo=True):
+def get_engine(lexicon, mode="", suggestion=False, echo=True):
     if mode:
         dburl = conf_mgr.get_mode_sql(mode)
     else:
         dburl = conf_mgr.get_lexicon_sql(lexicon)
     print("dburl = {}".format(dburl))
     if not dburl:
-        raise SQLNull('%s/%s' % (lexicon, mode))
+        raise SQLNull("%s/%s" % (lexicon, mode))
 
     metadata = sql.MetaData()
     if not suggestion:
@@ -44,64 +43,80 @@ def get_engine(lexicon, mode='', suggestion=False, echo=True):
     else:
         db_entry = create_suggestion_table(metadata)
 
-    engine = sql.create_engine(dburl, encoding='utf-8', echo=echo)
+    engine = sql.create_engine(dburl, encoding="utf-8", echo=echo)
     metadata.create_all(engine)
     return engine, db_entry
 
 
 def create_table(metadata):
-    db_entry = sql.Table('karpentry', metadata,
-                         sql.Column('id', sql.String(50), index=True),
-                         sql.Column('date', sql.types.DateTime, index=True),
-                         sql.Column('user', sql.String(320), index=True),
-                         # Text(2**24-1) corresponds to MediumText in MySQL
-                         # avoid using the type MediumText (specific to MySQL)
-                         sql.Column('source', sql.types.Text(2**24-1)),
-                         sql.Column('msg', sql.String(160)),
-                         sql.Column('lexicon', sql.String(50), index=True),
-                         sql.Column('status', STATUS_CHANGE),
-                         sql.Column('version', sql.Integer)
-                         )
-    sql.Index('historyindex', db_entry.c.lexicon, db_entry.c.status, db_entry.c.date)
+    db_entry = sql.Table(
+        "karpentry",
+        metadata,
+        sql.Column("id", sql.String(50), index=True),
+        sql.Column("date", sql.types.DateTime, index=True),
+        sql.Column("user", sql.String(320), index=True),
+        # Text(2**24-1) corresponds to MediumText in MySQL
+        # avoid using the type MediumText (specific to MySQL)
+        sql.Column("source", sql.types.Text(2 ** 24 - 1)),
+        sql.Column("msg", sql.String(160)),
+        sql.Column("lexicon", sql.String(50), index=True),
+        sql.Column("status", STATUS_CHANGE),
+        sql.Column("version", sql.Integer),
+    )
+    sql.Index("historyindex", db_entry.c.lexicon, db_entry.c.status, db_entry.c.date)
     return db_entry
 
 
 def create_suggestion_table(metadata):
-    db_entry = sql.Table('karpsuggestions', metadata,
-                         sql.Column('id', sql.String(50), index=True),
-                         sql.Column('date', sql.types.DateTime, index=True),
-                         sql.Column('user', sql.String(320), index=True),
-                         # Text(2**24-1) corresponds to MediumText in MySQL
-                         # avoid using the type MediumText (specific to MySQL)
-                         sql.Column('source', sql.types.Text(2**24-1)),
-                         sql.Column('msg', sql.String(160)),
-                         sql.Column('lexicon', sql.String(50), index=True),
-                         # For suggestions
-                         sql.Column('status', STATUS_SUGG, index=True),
-                         sql.Column('origid', sql.String(22), index=True),
-                         # Remember which version this is a copy of
-                         sql.Column('version', sql.Integer),
-                         sql.Column('acceptmsg', sql.String(160)),
-                         )
+    db_entry = sql.Table(
+        "karpsuggestions",
+        metadata,
+        sql.Column("id", sql.String(50), index=True),
+        sql.Column("date", sql.types.DateTime, index=True),
+        sql.Column("user", sql.String(320), index=True),
+        # Text(2**24-1) corresponds to MediumText in MySQL
+        # avoid using the type MediumText (specific to MySQL)
+        sql.Column("source", sql.types.Text(2 ** 24 - 1)),
+        sql.Column("msg", sql.String(160)),
+        sql.Column("lexicon", sql.String(50), index=True),
+        # For suggestions
+        sql.Column("status", STATUS_SUGG, index=True),
+        sql.Column("origid", sql.String(22), index=True),
+        # Remember which version this is a copy of
+        sql.Column("version", sql.Integer),
+        sql.Column("acceptmsg", sql.String(160)),
+    )
     return db_entry
 
 
 def update_test(_id, lexicon, doc, user, msg):
     try:
         engine, db_entry = get_engine(lexicon)
-        ins = db_entry.insert().values(id=_id, date=datetime.datetime.now(),
-                                       user=user, msg=msg, source=doc)
+        ins = db_entry.insert().values(
+            id=_id, date=datetime.datetime.now(), user=user, msg=msg, source=doc
+        )
         conn = engine.connect()
         conn.execute(ins)
-        return 1, ''
+        return 1, ""
     except SQLNull(lexicon):
-        return 0, ('Lexicon %s has no SQL instance' % lexicon)
+        return 0, ("Lexicon %s has no SQL instance" % lexicon)
     except Exception as e:
         return 0, handle_error(e, user, msg, doc)
 
 
-def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
-           engine=None, db_entry=None, suggestion_id='', date=''):
+def update(
+    _id,
+    doc,
+    user,
+    msg,
+    lexicon,
+    version=0,
+    status="waiting",
+    engine=None,
+    db_entry=None,
+    suggestion_id="",
+    date="",
+):
     """ Puts an update in the database. If several updates are to be done, an
         engine should be created beforehand in order to avoid errors due to too
         many connections (1040). If no engine is provided, a new one is created
@@ -110,8 +125,7 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
     """
     try:
         if engine is None:
-            engine, db_entry = get_engine(lexicon,
-                                          suggestion=bool(suggestion_id))
+            engine, db_entry = get_engine(lexicon, suggestion=bool(suggestion_id))
 
         try:
             version = int(version)
@@ -124,40 +138,58 @@ def update(_id, doc, user, msg, lexicon, version=0, status='waiting',
             # No suggestion_id at all (empty string or False) would mean that
             # it is not a suggestion but a real update.
             if isinstance(suggestion_id, bool):
-                suggestion_id = ''
-            ins = db_entry.insert().values(id=_id, origid=suggestion_id,
-                                           date=date or datetime.datetime.now(),
-                                           user=user, source=doc,
-                                           version=version, msg=msg,
-                                           acceptmsg="", status="waiting",
-                                           lexicon=lexicon
-                                           )
+                suggestion_id = ""
+            ins = db_entry.insert().values(
+                id=_id,
+                origid=suggestion_id,
+                date=date or datetime.datetime.now(),
+                user=user,
+                source=doc,
+                version=version,
+                msg=msg,
+                acceptmsg="",
+                status="waiting",
+                lexicon=lexicon,
+            )
         else:
-            ins = db_entry.insert().values(id=_id, lexicon=lexicon,
-                                           date=date or datetime.datetime.now(),
-                                           user=user, msg=msg, source=doc,
-                                           status=status, version=version
-                                           )
+            ins = db_entry.insert().values(
+                id=_id,
+                lexicon=lexicon,
+                date=date or datetime.datetime.now(),
+                user=user,
+                msg=msg,
+                source=doc,
+                status=status,
+                version=version,
+            )
         conn = engine.connect()
         conn.execute(ins)
         conn.close()
-        return 1, ''
+        return 1, ""
     except SQLNull(lexicon):
-        return 0, ('Lexicon %s has no SQL instance' % lexicon)
+        return 0, ("Lexicon %s has no SQL instance" % lexicon)
     except Exception as e:
         return 0, handle_error(e, user, msg, doc)
 
 
 def update_bulk(lexicon, bulk):
-    user = 'admin'
+    user = "admin"
     try:
         engine, db_entry = get_engine(lexicon, echo=False)
         gen_bulk = []
         for (_id, data, user, msg, lex, status) in bulk:
             user = user
-            gen_bulk.append({'id': _id, 'date': datetime.datetime.now(),
-                             'user': user, 'source': data, 'msg': msg,
-                             'lexicon': lex, 'status': status})
+            gen_bulk.append(
+                {
+                    "id": _id,
+                    "date": datetime.datetime.now(),
+                    "user": user,
+                    "source": data,
+                    "msg": msg,
+                    "lexicon": lex,
+                    "status": status,
+                }
+            )
 
         # if outputfile:
         #     with open(outputfile,'w') as f:
@@ -166,28 +198,35 @@ def update_bulk(lexicon, bulk):
         #                             compile_kwargs={"literal_binds" : True})
         #            f.write(str(s))
         # else:
-        engine.execute(
-            db_entry.insert(),
-            gen_bulk
-        )
-        return len(bulk), ''
+        engine.execute(db_entry.insert(), gen_bulk)
+        return len(bulk), ""
 
     except SQLNull(lexicon):
-        return 0, ('Lexicon %s has no SQL instance' % lexicon)
+        return 0, ("Lexicon %s has no SQL instance" % lexicon)
     except Exception as e:
-        return 0, handle_error(e, user, 'bulk update: %s' % e, '')
+        return 0, handle_error(e, user, "bulk update: %s" % e, "")
 
 
-def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
-             status=None, max_hits=10, engine=None, db_entry=None,
-             suggestion=False, mode=''):
+def dbselect(
+    lexicon,
+    user="",
+    _id="",
+    from_date="",
+    to_date="",
+    exact_date="",
+    status=None,
+    max_hits=10,
+    engine=None,
+    db_entry=None,
+    suggestion=False,
+    mode="",
+):
     # does not accept a list of lexicons anymore
     if status is None:
         status = []
     try:
         if engine is None or db_entry is None:
-            engine, db_entry = get_engine(lexicon, mode=mode,
-                                          suggestion=suggestion)
+            engine, db_entry = get_engine(lexicon, mode=mode, suggestion=suggestion)
 
         conn = engine.connect()
         operands = []
@@ -203,8 +242,7 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
             operands.append(db_entry.c.date == exact_date)
         if lexicon:
             operands.append(db_entry.c.lexicon == lexicon)
-        add_list_operands([(status, db_entry.c.status)],
-                          operands)
+        add_list_operands([(status, db_entry.c.status)], operands)
         selects = sql.select([db_entry]).where(sql.and_(*operands))
         if max_hits > 0:
             selects = selects.limit(max_hits)  # only get the first hits
@@ -213,20 +251,25 @@ def dbselect(lexicon, user='', _id='', from_date='', to_date='', exact_date='',
         for entry in conn.execute(selects):
             # transform the date into a string now to enforce isoformat
             version = 8 if suggestion else 7
-            obj = {'id': entry[0], 'date': str(entry[1]), 'user': entry[2],
-                   'doc': json.loads(entry[3]), 'lexicon': entry[5],
-                   'message': entry[4], 'status': entry[6],
-                   'version': entry[version]}
+            obj = {
+                "id": entry[0],
+                "date": str(entry[1]),
+                "user": entry[2],
+                "doc": json.loads(entry[3]),
+                "lexicon": entry[5],
+                "message": entry[4],
+                "status": entry[6],
+                "version": entry[version],
+            }
             if suggestion:
-                obj['acceptmessage'] = entry[9]
-                obj['origid'] = entry[7]
+                obj["acceptmessage"] = entry[9]
+                obj["origid"] = entry[7]
             res.append(obj)
         conn.close()
         return res
 
     except SQLNull(lexicon):
-        _logger.warning("Attempt to search for %s in SQL, no db available",
-                        lexicon)
+        _logger.warning("Attempt to search for %s in SQL, no db available", lexicon)
         return []
 
 
@@ -241,13 +284,14 @@ def add_list_operands(to_add, operands):
         operands.append(sql.or_(*disjunct_operands))
 
 
-def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
-                     db_entry=None):
+def modifysuggestion(
+    _id, lexicon, msg="", status="", origid="", engine=None, db_entry=None
+):
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, suggestion=True)
         if isinstance(msg, str):
-            msg = msg.encode('utf-8')
+            msg = msg.encode("utf-8")
         conn = engine.connect()
         operands = []
         if status:
@@ -256,28 +300,31 @@ def modifysuggestion(_id, lexicon, msg='', status='', origid='', engine=None,
             operands.append(db_entry.c.msg == msg)
         if origid:
             operands.append(db_entry.c.origid == origid)
-        update = db_entry.update().where(db_entry.c.id == _id)\
-                         .values({'status': status, 'acceptmsg': msg})
+        update = (
+            db_entry.update()
+            .where(db_entry.c.id == _id)
+            .values({"status": status, "acceptmsg": msg})
+        )
         conn.execute(update)
         conn.close()
-        return 1, ''
+        return 1, ""
 
     except SQLNull(lexicon):
-        return 0, ('Lexicon %s has no SQL instance' % lexicon)
+        return 0, ("Lexicon %s has no SQL instance" % lexicon)
     except Exception as e:
-        return 0, handle_error(e, '--modification--', msg, '--modified--')
+        return 0, handle_error(e, "--modification--", msg, "--modified--")
 
 
 def handle_error(e, user, msg, doc):
-    mail_sent = 'No warnings sent by email'
+    mail_sent = "No warnings sent by email"
     if conf_mgr.app_config.ADMIN_EMAILS:
         import karp5.dbhandler.emailsender as sender
-        report = 'User: %s, msg: %s. \nDoc:\n%s' % (user, msg, doc)
-        msg = 'Karp-b failure, %s.\n%s\n%s'\
-              % (datetime.datetime.now(), e, report)
-        sender.send_notification(conf_mgr.app_config.ADMIN_EMAILS, 'Karp failure', msg)
-        mail_sent = 'Warning sent to %s' % ', '.join(conf_mgr.app_config.ADMIN_EMAILS)
-    return '%s. %s' % (str(e), mail_sent)
+
+        report = "User: %s, msg: %s. \nDoc:\n%s" % (user, msg, doc)
+        msg = "Karp-b failure, %s.\n%s\n%s" % (datetime.datetime.now(), e, report)
+        sender.send_notification(conf_mgr.app_config.ADMIN_EMAILS, "Karp failure", msg)
+        mail_sent = "Warning sent to %s" % ", ".join(conf_mgr.app_config.ADMIN_EMAILS)
+    return "%s. %s" % (str(e), mail_sent)
 
 
 def delete(lexicon, _id):
@@ -289,7 +336,7 @@ def delete(lexicon, _id):
     return []
 
 
-def deletebulk(lexicon='', user=''):
+def deletebulk(lexicon="", user=""):
     engine, dbtable = get_engine(lexicon)
     conn = engine.connect()
     operands = []
