@@ -15,7 +15,7 @@ def test_lexicon_history(client_w_panacea):
 
 
 def test_update(client_w_foo):
-    query "query?q=simple||one&mode=foo"
+    query = "query?q=simple||one&mode=foo"
 
     result = get_json(client_w_foo, query)
 
