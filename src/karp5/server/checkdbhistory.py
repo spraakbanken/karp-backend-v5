@@ -10,13 +10,13 @@ from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
 from karp5.server.auth import validate_user
 
+from karp5.dbhandler.dbhandler import dbselect
 
 _logger = logging.getLogger('karp5')
 
 
 def checkhistory(lexicon, lid):
     """ Shows the update log of an entry """
-    from karp5.dbhandler.dbhandler import dbselect
     auth, permitted = validate_user(mode="read")
     settings = {'allowed': permitted}
     size = helpers.get_size(default=10, settings=settings)
@@ -32,7 +32,6 @@ def checkuserhistory():
         raise errors.KarpGeneralError('No user name provided', 'checkuserhistory')
     try:
         size = helpers.get_size(default=10, settings={'allowed': permitted})
-        from karp5.dbhandler.dbhandler import dbselect
         updates = []
         for lexicon in permitted:
             # add updates from lexicons that are kept in sql
@@ -58,7 +57,6 @@ def checklexiconhistory(lexicon, date):
         size = settings.get('size', 10)
         status = settings.get('status', ['added', 'changed', 'removed'])
 
-        from karp5.dbhandler.dbhandler import dbselect
         return jsonify({'resource': lexicon,
                         'updates': dbselect(lexicon, status=status,
                                             from_date=date, max_hits=size)})
@@ -67,8 +65,6 @@ def checklexiconhistory(lexicon, date):
 
 
 def comparejson(lexicon, _id, fromdate='', todate=''):
-    from karp5.dbhandler.dbhandler import dbselect
-    import karp5.server.translator.jsondiff as jsondiff
     auth, permitted = validate_user()
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError('You are not allowed to update')

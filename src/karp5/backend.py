@@ -2,17 +2,18 @@
 """ The backend, redirects url calls to the appropriate modules.
     Is also responsible for which ES node to query.
 """
-from __future__ import unicode_literals
+
+import logging
 
 from flask import jsonify, session
-import karp5.server.checkdbhistory as checkdbhistory
+
+from karp5.server import checkdbhistory
 import karp5.server.idgenerator as idgenerator
 import karp5.server.searching as searching
 import karp5.server.suggestions as suggestions
 import karp5.server.update as update
 from karp5.config import conf_mgr
 import karp5
-import logging
 
 
 _logger = logging.getLogger("karp5")
