@@ -1,7 +1,13 @@
 netrc
+
+# virtual environments #
+########################
 .venv
 venv
 venv3
+
+# data files #
+##############
 /data
 !/data/panacea
 
