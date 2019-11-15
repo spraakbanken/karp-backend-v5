@@ -16,7 +16,7 @@
     "order": 1
   },
   "foo": {
-      "path": "data/foo",
+      "path": "data/foo/",
       "no_escape": false,
       "format": "json",
       "usedtags": [],
