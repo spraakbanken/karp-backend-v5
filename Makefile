@@ -1,6 +1,6 @@
-.phony: test clean clean-pyc run dev-run
+.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log
 
-.default: test
+.DEFAULT: test
 
 PYTHON = python3
 
