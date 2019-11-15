@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 import os
 
-if os.environ.get('KARP5_INSTANCE_PATH'):
-    instance_path = os.path.abspath(os.environ.get('KARP5_INSTANCE_PATH'))
+if os.environ.get("KARP5_INSTANCE_PATH"):
+    instance_path = os.path.abspath(os.environ.get("KARP5_INSTANCE_PATH"))
 else:
     instance_path = os.path.abspath(__file__)
 

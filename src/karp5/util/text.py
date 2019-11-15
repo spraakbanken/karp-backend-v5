@@ -64,4 +64,3 @@ def unescape_control(s):
 # control_chars = [chr(c) for c in range(0x20)]
 # return u''.join([c.encode('unicode_escape').replace('\\x', '\u00')
 #                if c in control_chars else c for c in s])
-

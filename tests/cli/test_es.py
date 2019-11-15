@@ -8,7 +8,7 @@ import elasticsearch_dsl as es_dsl
 import pytest
 
 from karp5.config import mgr as conf_mgr
-from karp5.cli import upload_offline as upload
+# from karp5.cli import upload_offline as upload
 
 
 @pytest.mark.skip(reason="Only run separately.")

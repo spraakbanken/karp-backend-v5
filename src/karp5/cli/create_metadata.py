@@ -26,7 +26,7 @@ from karp5.config import mgr as conf_mgr
 
 def print_all(outpath):
     " Find all modes and print their field configs "
-    with open(outpath, 'w') as fp:
+    with open(outpath, "w") as fp:
         json.dump(conf_mgr.fields, fp, indent=2)
 
 

@@ -8,5 +8,5 @@ def main():
     app.run(port=8081, debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
