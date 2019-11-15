@@ -13,7 +13,7 @@ def dump_array_fp(fp, gen):
     gen : Iterable
         Iterable object to write.
     """
-    fp.write('[\n')
+    fp.write("[\n")
     it = iter(gen)
     try:
         obj = next(it)
@@ -22,11 +22,11 @@ def dump_array_fp(fp, gen):
         pass
     else:
         for v in it:
-            fp.write(',\n')
+            fp.write(",\n")
             fp.write(json.dumps(v))
-    fp.write('\n]')
+    fp.write("\n]")
 
 
 def dump_array(filename, gen):
-    with open(filename, 'w') as fp:
+    with open(filename, "w") as fp:
         return dump_array_fp(fp, gen)

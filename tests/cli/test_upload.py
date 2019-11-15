@@ -230,4 +230,3 @@ def test_apply_filter(gen, lex, filter_func, expected):
 
         assert x["_source"]["id"] == f["_source"]["id"]
         assert x["_source"]["lexicon"] == lex
-
