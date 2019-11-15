@@ -112,7 +112,7 @@ def cli_w_panacea(cli_w_es):
 
 @pytest.fixture(scope="session")
 def app_w_auth(app):
-    import auth_server
+    from tests import auth_server
 
     with auth_server.DummyAuthServer(conf_mgr, port=5001):
         yield app

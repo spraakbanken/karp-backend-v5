@@ -10,15 +10,8 @@ before_install:
   - cat .env
 
 python:
-  - "2.7"
-  - "3.5"
   - "3.6"
   - "3.7"
-
-matrix:
-  allow_failures:
-    - python: "2.7"
-    - python: "3.5" # in 'src/karp5/server/auth.py:check_user' json.loads(contents) fails
 
 install:
   - pip install -e .[dev]

@@ -3,7 +3,7 @@ import logging
 
 from flask import jsonify
 
-from json_tools import jsondiff
+from sb_json_tools import jsondiff
 
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
