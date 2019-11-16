@@ -1,14 +1,15 @@
-from __future__ import unicode_literals
+import os
 
 import pytest
 import six
 
 from karp5 import conf_mgr, config
+from karp5.instance_info import get_instance_path
 from karp5.config import errors
 
 
 def test_override_elastic_url():
-    mgr = config.ConfigManager()
+    mgr = config.ConfigManager("path")
     elastic_url = "test.elastic.url"
 
     for mode, mode_settings in six.viewitems(mgr.modes):
@@ -41,6 +42,13 @@ def test_get_mapping(app):
     with pytest.raises(errors.KarpConfigException) as e:
         mapping = config.mgr.get_mapping("not-existing")
     assert "Can't find mappingconf for index 'not-existing'" in str(e.value)
+
+
+def test_default_filename(app):
+    lexicon = "foo"
+    filename = conf_mgr.default_filename(lexicon)
+
+    assert filename == os.path.join(os.path.abspath(get_instance_path()), "data", "foo", "foo.json")
 
 
 @pytest.mark.parametrize(

@@ -100,7 +100,8 @@ class ConfigManager(object):
         [type] -- [description]
     """
 
-    def __init__(self):
+    def __init__(self, instance_path):
+        self.instance_path = instance_path
         self.modes = {}
         self.config = {}
         self.lexicons = {}
@@ -214,6 +215,32 @@ class ConfigManager(object):
             # return dburl % (C.config['DB']['DBPASS'], sql)
         else:
             return None
+
+    def default_filename(self, lexicon):
+        conf = self.lexicons.get(lexicon)
+        if not conf:
+            raise KarpConfigException("Can't find config for lexicon '%s'", lexicon)
+        path = conf.get("path")
+        if not path:
+            _logger.warn("Failed to load path for lexicon '%s'. Trying to read the 'default' path...", lexicon)
+            path = self.lexicons.get("default").get("path")
+            if not path:
+                msg = "Couldn't find 'path' for either '%s' or 'default'. Please check your config."
+                _logger.error(msg, lexicon)
+                raise KarpConfigException(msg, lexicon)
+
+        fformat = conf.get(
+            "format",
+            self.lexicons.get(
+                "format",
+                "json"
+            )
+        )
+        return os.path.join(
+                self.instance_path,
+                path,
+                f"{lexicon}.{fformat}"
+            )
 
     def searchconf(self, mode, field, failonerror=True):
         """[summary]

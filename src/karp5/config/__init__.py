@@ -1,7 +1,7 @@
-from __future__ import unicode_literals
+from karp5 import instance_info
 from .config import Config
 from .configmanager import ConfigManager
 
-mgr = ConfigManager()
+mgr = ConfigManager(instance_info.get_instance_path())
 
 conf_mgr = mgr

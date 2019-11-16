@@ -250,9 +250,10 @@ def parse_config(name, info, default):
     """ Parse the info in lexiconconf.json and returns
         group, data, order, format
     """
-    path = info.get("path", default.get("path", ""))
+    # path = info.get("path", default.get("path", ""))
     fformat = info.get("format", default.get("format", "json"))
-    filename = os.path.join(path, f"{name}.{fformat}")
+    # filename = os.path.join(path, f"{name}.{fformat}")
+    filename = conf_mgr.default_filename(name)
     _logger.info("reading file '%s'", filename)
     data = open(filename, "r").read()
     return info["mode"], data, info.get("order"), fformat

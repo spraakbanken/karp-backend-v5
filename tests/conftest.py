@@ -15,6 +15,7 @@ import dotenv
 
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 os.environ["KARP5_INSTANCE_PATH"] = os.path.join(os.path.dirname(__file__), "data/")
+
 from karp5 import create_app, Config  # noqa: E402
 from karp5.cli import cli as karp5_cli, setup_cli  # noqa: E402
 from karp5.config import conf_mgr  # noqa: E402
