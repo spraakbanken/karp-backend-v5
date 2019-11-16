@@ -29,6 +29,16 @@
     },
     "foo": {
         "is_index": true,
-        "indexalias": "foo"
+        "indexalias": "foo",
+        "sql": "foo",
+        "secret_fields": [],
+        "src": "",
+        "suggestionalias": "foosuggestion",
+        "sort_by": ["lexiconOrder", "_score", "foo.sort"],
+        "head_sort_field": ["lexiconOrder"],
+        "autocomplete_field": ["foo"],
+        "minientry_fields": ["lexiconName", "foo"],
+        "statistics_buckets": ["lexiconName", "foo"],
+        "boosts": ["foo"]
     }
 }
