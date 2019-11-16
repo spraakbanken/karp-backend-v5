@@ -34,7 +34,10 @@ def test_update(client_w_foo):
     new_data = post_json(
         client_w_foo,
         "/add/foo",
-        {'doc': entry}
+        {
+            "doc": entry,
+            "message": "adding entry"
+        }
     )
     assert "sql_loaded" in new_data
     assert new_data["sql_loaded"] == 1
