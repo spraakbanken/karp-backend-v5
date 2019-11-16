@@ -3,7 +3,9 @@
 .DEFAULT: test
 
 PYTHON = python3
+PLATFORM := ${shell uname -o}
 
+${info Platform: ${PLATFORM}}
 ifeq (${VIRTUAL_ENV},)
   VENV_NAME = venv3
   VENV_BIN = ${VENV_NAME}/bin
@@ -17,6 +19,12 @@ ifeq (${VIRTUAL_ENV},)
   VENV_ACTIVATE = . ${VENV_BIN}/activate
 else
   VENV_ACTIVATE = true
+endif
+
+ifeq (${PLATFORM}, Android)
+  FLAKE8_FLAGS = --jobs=1
+else
+  FLAKE8_FLAGS = --jobs=auto
 endif
 
 venv: ${VENV_NAME}/made
@@ -44,7 +52,7 @@ dev-run: install-dev
 	${VENV_ACTIVATE}; python run.py dev
 
 lint-syntax-errors: install-dev
-	${VENV_ACTIVATE}; flake8 src tests setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics
+	${VENV_ACTIVATE}; flake8 src tests setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics ${FLAKE8_FLAGS}
 
 test: install-dev clean-pyc lint-syntax-errors
 	${VENV_ACTIVATE}; pytest -vv --cov=src --cov-report=term-missing tests
