@@ -91,10 +91,6 @@ class ConfigManager(object):
     Raises:
         KarpConfigException: [description]
         errors.KarpGeneralError: [description]
-        KarpConfigException: [description]
-        errors.KarpGeneralError: [description]
-        errors.KarpGeneralError: [description]
-        KarpConfigException: [description]
 
     Returns:
         [type] -- [description]
@@ -182,9 +178,9 @@ class ConfigManager(object):
                     fields = json.load(fp)
                 merge_dict(all_fields, fields)
             except IOError:
-                msg = "Couldn't find fieldmappings for mode '{}'".format(index)
+                msg = "Couldn't find fieldmappings for mode '%s'"
                 # print(msg)
-                raise KarpConfigException(msg)
+                raise KarpConfigException(msg, index)
 
         complement_dict(all_fields, default_fields)
         return all_fields
@@ -265,13 +261,17 @@ class ConfigManager(object):
             return self.modes[mode][field]
         except Exception as e:
             if mode not in self.modes:
-                msg = "Mode '%s' not found" % mode
+                msg = "Mode '%s' not found"
+                _logger.error(msg, mode)
+                _logger.exception(e)
+                if failonerror:
+                    raise errors.KarpGeneralError(msg % mode)
             else:
-                msg = "Config field '%s' not found in mode '%s'" % (field, mode)
-            _logger.error(msg + ": ")
-            _logger.exception(e)
-            if failonerror:
-                raise errors.KarpGeneralError(msg)
+                msg = "Config field '%s' not found in mode '%s'"
+                _logger.error(msg, field, mode)
+                _logger.exception(e)
+                if failonerror:
+                    raise errors.KarpGeneralError(msg % (field, mode))
             return
 
     def extra_src(self, mode, funcname, default):
@@ -449,7 +449,7 @@ class ConfigManager(object):
                 return fp.read()
         except Exception:
             raise KarpConfigException(
-                "Can't find mappingconf for index '{}'".format(index)
+                "Can't find mappingconf for index '%s'", index
             )
 
     def lookup(self, field, mode, own_fields=None):
@@ -507,10 +507,6 @@ class ConfigManager(object):
         elif group is not None:
             return self.get_value(group.group(1), mode, own_fields=own_fields)
         else:
-            msg = "Could not find field '%s' for mode '%s', '%s'" % (
-                field,
-                mode,
-                mappings,
-            )
-            _logger.debug(msg)
-            raise KarpConfigException(msg, debug_msg=msg + "\n%s" % mappings)
+            msg = "Could not find field '%s' for mode '%s', '%s'"
+            _logger.debug(msg, field, mode, mappings)
+            raise KarpConfigException(msg, field, mode, mappings, debug_msg=msg)
