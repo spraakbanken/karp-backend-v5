@@ -252,7 +252,9 @@ def parse_config(name, info, default):
     """
     path = info.get("path", default.get("path", ""))
     fformat = info.get("format", default.get("format", "json"))
-    data = open("%s.%s" % (os.path.join(path, name), fformat), "r").read()
+    filename = os.path.join(path, f"{name}.{fformat}")
+    _logger.info("reading file '%s'", filename)
+    data = open(filename, "r").read()
     return info["mode"], data, info.get("order"), fformat
 
 
