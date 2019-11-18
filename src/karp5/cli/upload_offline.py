@@ -9,11 +9,12 @@ import six
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
 
+from sb_json_tools import json_iter
+
 # import elasticsearch_dsl as es_dsl
 
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
-from karp5.util import json_iter
 from karp5 import document
 from karp5.util.debug import print_err
 
@@ -231,7 +232,7 @@ def printlatestversion(lexicon, debug=True, with_id=False, fp=None):
     else:
         gen_out = (val["doc"] for val in to_keep.values() if val["status"] != "removed")
 
-    json_iter.dump_array_fp(fp, gen_out)
+    json_iter.dump(fp, gen_out)
 
 
 def parse_config(name, info, default):
