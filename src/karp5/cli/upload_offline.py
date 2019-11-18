@@ -226,7 +226,7 @@ def printlatestversion(lexicon, debug=True, with_id=False, fp=None):
     else:
         gen_out = (val["doc"] for val in to_keep.values() if val["status"] != "removed")
 
-    json_iter.dump(fp, gen_out)
+    json_iter.dump(gen_out, fp)
 
 
 def publish_mode(mode, suffix):
