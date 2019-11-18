@@ -63,8 +63,8 @@ def validate_xml(xml, lexicon):
                 # raise Exception('Data contains unapproved tags: %s' % tag)
                 raise errors.KarpParsingError("Data contains unapproved tags: %s" % tag)
     elif isinstance(xml, list):
-        for i, x in enumerate(xml):
-            xml[i] = validate_xml(x, lexicon)
+        for i, xml_e in enumerate(xml):
+            xml[i] = validate_xml(xml_e, lexicon)
     else:
         checkelem(xml, lexicon)
     return xml
@@ -91,7 +91,7 @@ def unescape(s):
 
 # For testing
 def compare(orig, obj):
-    if type(orig) is str or type(obj) is str:
+    if isinstance(orig, str) or isinstance(obj, str):
         # check that strings are escaped but otherwise unchanged
         if escape(orig) != obj:
             raise Exception("Unequal %s %s" % (orig, obj))
@@ -100,15 +100,15 @@ def compare(orig, obj):
         # all other types of objects should have unchanged length
         raise Exception("Unequal length %s %s" % (orig, obj))
 
-        # recursively check the rest
-        if type(orig) is dict:
-            for key, val in orig.items():
-                compare(val, obj[key])
-        elif type(orig) is list:
-            for i, val in enumerate(orig):
-                compare(val, obj[i])
-        elif orig != obj:
-            raise Exception("Unequal %s %s" % (orig, obj))
+    # recursively check the rest
+    if isinstance(orig, dict):
+        for key, val in orig.items():
+            compare(val, obj[key])
+    elif isinstance(orig, list):
+        for i, val in enumerate(orig):
+            compare(val, obj[i])
+    elif orig != obj:
+        raise Exception("Unequal %s %s" % (orig, obj))
 
 
 if __name__ == "__main__":

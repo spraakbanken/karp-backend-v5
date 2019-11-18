@@ -18,7 +18,10 @@ _logger = logging.getLogger("karp5")
 def checkhistory(lexicon, lid):
     """ Shows the update log of an entry """
     auth, permitted = validate_user(mode="read")
-    settings = {"allowed": permitted}
+    settings = {
+        "allowed": permitted,
+        "mode": conf_mgr.get_lexicon_mode(lexicon)
+    }
     size = helpers.get_size(default=10, settings=settings)
     return jsonify({"updates": dbselect(lexicon, _id=lid, max_hits=size)})
 

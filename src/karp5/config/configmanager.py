@@ -218,7 +218,8 @@ class ConfigManager(object):
             raise KarpConfigException("Can't find config for lexicon '%s'", lexicon)
         path = conf.get("path")
         if not path:
-            _logger.warn("Failed to load path for lexicon '%s'. Trying to read the 'default' path...", lexicon)
+            _logger.warn(
+                "Failed to load path for lexicon '%s'. Trying to read the 'default' path...", lexicon)
             path = self.lexicons.get("default").get("path")
             if not path:
                 msg = "Couldn't find 'path' for either '%s' or 'default'. Please check your config."
@@ -233,10 +234,10 @@ class ConfigManager(object):
             )
         )
         return os.path.join(
-                self.instance_path,
-                path,
-                f"{lexicon}.{fformat}"
-            )
+            self.instance_path,
+            path,
+            f"{lexicon}.{fformat}"
+        )
 
     def searchconf(self, mode, field, failonerror=True):
         """[summary]
@@ -434,7 +435,15 @@ class ConfigManager(object):
                 modes.add(name)
         return list(modes)
 
-    def get_lexicon_mode(self, lexicon):
+    def get_lexicon_mode(self, lexicon: str) -> str:
+        """Get mode that includes a lexicon.
+
+        Arguments:
+            lexicon -- the lexicon to query
+
+        Returns:
+            the mode that includes the lexicon
+        """
         try:
             return self.lexicons[lexicon]["mode"]
         except Exception:

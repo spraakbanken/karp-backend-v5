@@ -247,6 +247,7 @@ def dbselect(
         if max_hits > 0:
             selects = selects.limit(max_hits)  # only get the first hits
         selects = selects.order_by(db_entry.c.date.desc())  # sort by date
+        _logger.info("selects = %s", selects)
         res = []
         for entry in conn.execute(selects):
             # transform the date into a string now to enforce isoformat

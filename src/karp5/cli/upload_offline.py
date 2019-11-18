@@ -56,16 +56,7 @@ def _create_index(mode, index):
 
 
 def upload(
-    informat,
-    name,
-    order,
-    data,
-    elastic,
-    index,
-    typ,
-    sql=False,
-    verbose=True,
-    with_id=False,
+    informat, name, order, data, elastic, index, typ, sql=False, verbose=True, with_id=False,
 ):
     """ Uploads the data to elastic and the database
         sql      if True,  the data will be stored in the SQL database as well
@@ -162,6 +153,7 @@ def get_entries_to_keep_from_sql(lexicons):
             else:
                 _logger.debug("|sql no id| Found entry without id:")
                 _logger.debug("|sql no id| %s", entry)
+    _logger.debug("to_keep = %s", to_keep)
     return to_keep
 
 
@@ -221,10 +213,8 @@ def recover_add(index, suffix, lexicon):
     print("recovery done")
 
 
-def printlatestversion(lexicon, debug=True, with_id=False, file=None):
-    if file:
-        fp = file
-    else:
+def printlatestversion(lexicon, debug=True, with_id=False, fp=None):
+    if fp is None:
         fp = sys.stdout
 
     to_keep = get_entries_to_keep_from_sql(lexicon)
@@ -235,13 +225,11 @@ def printlatestversion(lexicon, debug=True, with_id=False, file=None):
     if with_id:
         gen_out = (
             {"_id": i, "_source": document.doc_to_es(val["doc"], lexicon, "bulk")}
-            for i, val in six.viewitems(to_keep)
+            for i, val in to_keep.items()
             if val["status"] != "removed"
         )
     else:
-        gen_out = (
-            val["doc"] for val in six.viewvalues(to_keep) if val["status"] != "removed"
-        )
+        gen_out = (val["doc"] for val in to_keep.values() if val["status"] != "removed")
 
     json_iter.dump_array_fp(fp, gen_out)
 
@@ -273,9 +261,7 @@ def publish_mode(mode, suffix):
 
     try:
         print("remove old aliases")
-        es.indices.update_aliases(
-            '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
-        )
+        es.indices.update_aliases('{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30)
     except Exception:
         print("No previous aliased indices, could not do remove any")
         print(rem_actions)
@@ -301,12 +287,8 @@ def publish_group(group, suffix):
         add_actions = []
         rem_actions = []
         for parent in conf_mgr.get_modes_that_include_mode(group):
-            add_actions.append(
-                '{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent)
-            )
-            rem_actions.append(
-                '{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent)
-            )
+            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent))
+            rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent))
 
         print("remove", rem_actions)
         print("add", add_actions)
@@ -345,13 +327,9 @@ def create_mode(alias, suffix, with_id=False):
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
             _logger.error(
-                "Any documentes uploaded to ES index %s are removed. ans = '%s'",
-                newname,
-                ans,
+                "Any documentes uploaded to ES index %s are removed. ans = '%s'", newname, ans,
             )
-            _logger.error(
-                "If data was uploaded to SQL you will have to remove it manually."
-            )
+            _logger.error("If data was uploaded to SQL you will have to remove it manually.")
             raise
 
 
@@ -378,12 +356,8 @@ def add_lexicon(to_add_name, to_add_file, alias, suffix):
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
         # print(ans)
-        _logger.error(
-            "Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans
-        )
-        _logger.error(
-            "If data was uploaded to SQL you will have to remove it manually."
-        )
+        _logger.error("Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans)
+        _logger.error("If data was uploaded to SQL you will have to remove it manually.")
         raise
 
 
@@ -448,9 +422,7 @@ def load(to_upload, index, typ, es, with_id=False):
                 group, data, order, form = parse_config(name, info, default)
                 sql = conf_mgr.modes[group]["sql"]
                 print("Upload %s. To sql? %s" % (name, sql))
-                upload(
-                    form, name, order, data, es, index, typ, sql=sql, with_id=with_id
-                )
+                upload(form, name, order, data, es, index, typ, sql=sql, with_id=with_id)
                 print(name, "finished")
     except Exception:
         _logger.error(
@@ -478,12 +450,7 @@ def apply_filter(it, filter_func, field=None):
 
 
 def copy_alias_to_new_index(
-    source_mode,
-    target_mode,
-    target_suffix,
-    filter_func=None,
-    create_index=True,
-    query=None,
+    source_mode, target_mode, target_suffix, filter_func=None, create_index=True, query=None,
 ):
     es_source = conf_mgr.elastic(source_mode)
     es_target = conf_mgr.elastic(target_mode)
@@ -509,9 +476,7 @@ def copy_alias_to_new_index(
     update_docs = (update_doc(doc) for doc in source_docs)
     success = 0
     errors = []
-    for ok, item in es_helpers.streaming_bulk(
-        es_target, update_docs, index=target_index
-    ):
+    for ok, item in es_helpers.streaming_bulk(es_target, update_docs, index=target_index):
         if not ok:
             errors.append(item)
         else:
@@ -547,9 +512,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     if create_index:
         _create_index(alias, target_index)
 
-    source_docs = es_helpers.scan(
-        es, size=10000, index=source_index, raise_on_error=True
-    )
+    source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
 
     def update_doc(doc):
         """ Apply doc_to_es to doc. """
@@ -601,9 +564,7 @@ def make_structure():
             # if it is a mode (not just an index), remove the old pointers
             add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
         for group in aliasconf.get("groups", []):
-            add_actions.append(
-                '{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias)
-            )
+            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias))
 
     return es.indices.update_aliases(
         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
