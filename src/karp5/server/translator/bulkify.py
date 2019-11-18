@@ -2,7 +2,6 @@
     that can be sent to elasticsearch
     Input: json structures that might be of type string ('{"hej" : "hu"}')
 """
-from __future__ import unicode_literals
 import json
 
 from karp5.document import doc_to_es

@@ -1,7 +1,6 @@
 import datetime
 import json
 import sys
-import os
 import logging
 
 import six
@@ -30,11 +29,6 @@ def make_indexname(index, suffix=None):
     if not suffix:
         suffix = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     return "{index}_{suffix}".format(index=index, suffix=suffix)
-
-
-def name_new_index():
-    date = datetime.datetime.now().strftime("%Y%m%d")
-    return "karp" + date
 
 
 def update_source_field(mode, doc):
@@ -235,19 +229,6 @@ def printlatestversion(lexicon, debug=True, with_id=False, fp=None):
     json_iter.dump(fp, gen_out)
 
 
-def parse_config(name, info, default):
-    """ Parse the info in lexiconconf.json and returns
-        group, data, order, format
-    """
-    # path = info.get("path", default.get("path", ""))
-    fformat = info.get("format", default.get("format", "json"))
-    # filename = os.path.join(path, f"{name}.{fformat}")
-    filename = conf_mgr.default_filename(name)
-    _logger.info("reading file '%s'", filename)
-    data = open(filename, "r").read()
-    return info["mode"], data, info.get("order"), fformat
-
-
 def publish_mode(mode, suffix):
     index = make_indexname(mode, suffix)
     add_actions = []
@@ -417,18 +398,32 @@ def internalize_lexicon(mode, to_add):
 def load(to_upload, index, typ, es, with_id=False):
     print("Upload to %s" % index, ",".join(to_upload))
     try:
-        for name, info in conf_mgr.lexicons.items():
-            if name in to_upload or not to_upload:
+        for lexicon, info in conf_mgr.lexicons.items():
+            if lexicon in to_upload or not to_upload:
                 default = conf_mgr.lexicons.get("default", {})
-                group, data, order, form = parse_config(name, info, default)
-                sql = conf_mgr.modes[group]["sql"]
-                print("Upload %s. To sql? %s" % (name, sql))
-                upload(form, name, order, data, es, index, typ, sql=sql, with_id=with_id)
-                print(name, "finished")
+                file_format = info.get("format", default.get("format", "json"))
+                filename = conf_mgr.default_filename(lexicon)
+                with open(filename, "r") as fp:
+                    _logger.info("reading file '%s'", filename)
+                    data = fp.read()
+                sql = conf_mgr.modes[info["mode"]]["sql"]
+                _logger.info("Upload %s. To sql? %s", lexicon, sql)
+                upload(
+                    file_format,
+                    lexicon,
+                    info["order"],
+                    data,
+                    es,
+                    index,
+                    typ,
+                    sql=sql,
+                    with_id=with_id,
+                )
+                _logger.info("Upload of %s finished.", lexicon)
     except Exception:
         _logger.error(
             """Error during upload.
-                 Check you\'re data bases for partially uploaded data."""
+                 Check you're data bases for partially uploaded data."""
         )
         raise
 
