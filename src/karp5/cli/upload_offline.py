@@ -306,13 +306,14 @@ def create_mode(alias, suffix, with_id=False):
         try:
             lexicons = conf_mgr.get_lexiconlist(index)
             load(lexicons, newname, typ, es, with_id=with_id)
-        except Exception:
+        except Exception as e:
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
             _logger.error(
                 "Any documentes uploaded to ES index %s are removed. ans = '%s'", newname, ans,
             )
             _logger.error("If data was uploaded to SQL you will have to remove it manually.")
+            _logger.exception(e)
             raise
 
 
