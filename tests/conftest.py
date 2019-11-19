@@ -23,14 +23,16 @@ from karp5.config import conf_mgr  # noqa: E402
 
 _tempfile = tempfile.NamedTemporaryFile(suffix=".db")
 
+KARP5_DBPASS = os.environ.get("KARP5_DBPASS")
+
 
 class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
-    DATABASE_BASEURL = "sqlite://"
-    ELASTICSEARCH_URL = (
-        os.environ.get("KARP5_ELASTICSEARCH_TEST_URL") or "localhost:9201"
-    )
+    if KARP5_DBPASS is None:
+        # Use sqlite if KARP5_DBPASS is not set
+        DATABASE_BASEURL = "sqlite://"
+    ELASTICSEARCH_URL = os.environ.get("KARP5_ELASTICSEARCH_TEST_URL") or "localhost:9201"
     OVERRIDE_ELASTICSEARCH_URL = True
 
 

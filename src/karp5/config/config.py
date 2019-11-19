@@ -15,7 +15,7 @@ from karp5.instance_info import get_instance_path
 with open(os.path.join(get_instance_path(), "config/config.json")) as fp:
     _CONFIG = json.load(fp)
 
-
+KARP5_DBPASS = os.environ.get("KARP5_DBPASS")
 class Config(object):
     """[summary]"""
 
@@ -54,6 +54,7 @@ class Config(object):
     TESTING = False
     DEBUG = False
     DATABASE_BASEURL = (
-        "mysql+pymysql://{}/".format(_CONFIG["DB"]["DBPASS"]) + "{}?charset=utf8"
+        f"mysql+pymysql://{KARP5_DBPASS}/" + "{}?charset=utf8" if KARP5_DBPASS
+        else f"mysql+pymysql://{_CONFIG["DB"]["DBPASS"]}/" + "{}?charset=utf8"
     )
     STANDARDMODE = _CONFIG["SETUP"]["STANDARDMODE"]
