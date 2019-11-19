@@ -96,6 +96,7 @@ def upload(
             ok += 1
         db_loaded, db_error = db.update_bulk(name, sql_bulk)
         if db_error:
+            _logger.error("Got DB error: %s", db_error)
             raise Exception(db_error)
         ok += db_loaded
     else:
