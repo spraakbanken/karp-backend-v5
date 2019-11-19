@@ -22,7 +22,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
     env:
-      KARP5_DBPASS: karp:testing@mysql/karp_test
+      KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/karp_test
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
