@@ -49,6 +49,7 @@ jobs:
         run: pylint --rcfile=.pylintrc --exit-zero src tests setup.py run.py cli.py
       - name: Test with pytest
         run: |
+          sudo apt-get install -y mysql-client
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
           pytest --cov=src/ --cov-report=term tests
           docker logs "${{ job.services.mysql.id }}"
