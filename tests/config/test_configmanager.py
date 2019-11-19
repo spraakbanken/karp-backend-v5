@@ -25,7 +25,10 @@ def test_override_elastic_url():
 
 def test_config_for_test(app):
     assert conf_mgr.app_config.OVERRIDE_ELASTICSEARCH_URL
-    assert conf_mgr.app_config.DATABASE_BASEURL.startswith("sqlite")
+    if os.environ.get("KARP5_DBPASS"):
+        assert conf_mgr.app_config.DATABASE_BASEURL.startswith("mysql")
+    else:
+        assert conf_mgr.app_config.DATABASE_BASEURL.startswith("sqlite")
     assert conf_mgr.get_mode_sql("panacea") is not None
     assert conf_mgr.get_mode_sql("default") is not None
     assert conf_mgr.get_mode_sql("karp") is not None
@@ -51,9 +54,7 @@ def test_default_filename(app):
     assert filename == os.path.join(os.path.abspath(get_instance_path()), "data", "foo", "foo.json")
 
 
-@pytest.mark.parametrize(
-    "mode,facit", [("panacea", ["panacea", "karp", "panacea_links"])]
-)
+@pytest.mark.parametrize("mode,facit", [("panacea", ["panacea", "karp", "panacea_links"])])
 def test_get_modes_that_include_mode(app, mode, facit):
     modes = config.mgr.get_modes_that_include_mode(mode)
     assert len(modes) == len(facit)
