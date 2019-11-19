@@ -47,13 +47,10 @@ jobs:
           flake8 src tests setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Lint with pylint
         run: pylint --rcfile=.pylintrc --exit-zero src tests setup.py run.py cli.py
-      - name: Install mysql-server
-        run: |
-          sudo apt-get install -y mysql-server
       - name: Test with pytest
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
-          pytest --cov=src/ --cov-report=term tests
+          pytest -vv --cov=src/ --cov-report=term tests
           docker logs "${{ job.services.mysql.id }}"
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}
