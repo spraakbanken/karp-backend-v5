@@ -56,7 +56,7 @@ jobs:
           pytest --cov=src/ --cov-report=term tests
           docker logs "${{ job.services.mysql.id }}"
         env:
-          KARP5_DBPASS: "root:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}"
+          KARP5_DBPASS: "karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}/karp_test"
       # - name: Coveralls
       #   uses: coverallsapp/github-action@master
       #   with:
