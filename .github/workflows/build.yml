@@ -12,13 +12,17 @@ jobs:
           - 3306
         env:
           MYSQL_ROOT_PASSWORD: testing
+          MYSQL_DATABASE: karp_test
+          MYSQL_PASSWORD: testing
+          MYSQL_USER: karp
         options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 10
 
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.6, 3.7, 3.8]
-
+    env:
+      KARP5_DBPASS: karp:testing@mysql/karp_test
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
@@ -48,8 +52,8 @@ jobs:
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
           pytest --cov=src/ --cov-report=term tests
           docker logs "${{ job.services.mysql.id }}"
-        env:
-          KARP5_DBPASS: "root:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}"
+        # env:
+        #   KARP5_DBPASS: "root:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}"
       # - name: Coveralls
       #   uses: coverallsapp/github-action@master
       #   with:
