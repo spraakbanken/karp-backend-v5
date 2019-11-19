@@ -1,8 +1,5 @@
-from __future__ import unicode_literals
-from future import standard_library
-
-standard_library.install_aliases()
-
+"""Handle user authentication.
+"""
 import json  # noqa: E402
 import hashlib  # noqa: E402
 import logging  # noqa: E402
@@ -44,8 +41,7 @@ def check_user(force_lookup=False):
             user, pw = auth.username, auth.password
         except TypeError:
             raise errors.KarpAuthenticationError(
-                "Incorrect username or password.",
-                "Make sure that they are properly encoded",
+                "Incorrect username or password.", "Make sure that they are properly encoded",
             )
         postdata["username"] = user
         postdata["password"] = pw
@@ -64,9 +60,7 @@ def check_user(force_lookup=False):
         _logger.error(e)
         raise errors.KarpAuthenticationError("Could not contact authentication server.")
     except ValueError:
-        raise errors.KarpAuthenticationError(
-            "Invalid response from authentication server."
-        )
+        raise errors.KarpAuthenticationError("Invalid response from authentication server.")
     except Exception as e:
         _logger.error(e)
         raise errors.KarpAuthenticationError("Unexpected error during authentication.")

@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 from .doc_converter import DocConverter
 from .doc_converter import doc_to_es
 from .doc_converter import doc_to_sql

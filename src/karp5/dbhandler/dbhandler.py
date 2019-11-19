@@ -3,7 +3,7 @@
 Connect to the sql data base and interact with it.
 Emails the admins (config/config.json) if an error occurs.
 """
-from __future__ import unicode_literals
+
 from builtins import str
 import datetime
 import json

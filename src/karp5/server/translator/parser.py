@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Responsible for the translation from the query api to elastic queries """
-from __future__ import unicode_literals
+
 from builtins import range
 import logging
 import re
@@ -224,11 +224,11 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         filters is a list of already parsed filters
         mode    is the current mode
     """
-    xs = re.split("(?<!\\\)\|", exp)  # split only on | not preceded by \
+    xs = re.split(r"(?<!\\)\|", exp)  # split only on | not preceded by \
     # xs = exp.split('|')
     etype, field, op = xs[:3]
     field_info = get_field(field, mode)
-    operands = [re.sub("\\\\\|", "|", x) for x in xs[3:]]  # replace \| by |
+    operands = [re.sub(r"\\\\\|", "|", x) for x in xs[3:]]  # replace \| by |
     _logger.debug("operands: {0}".format(operands))
     operation = parse_operation(etype, op, isfilter=isfilter)
     f_query = parse_field(field_info, operation)
@@ -717,7 +717,7 @@ def adapt_query(size, _from, es, query, kwargs):
 def split_query(query):
     expressions = []
     start = 0
-    for match in re.finditer("(?<!\|)\|\|(?!\|)", query):
+    for match in re.finditer(r"(?<!\|)\|\|(?!\|)", query):
         newstart, stop = match.span()
         e = query[start:newstart]
         start = stop

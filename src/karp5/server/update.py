@@ -1,7 +1,7 @@
 """ Methods for updating the database,
     including deletion and creation of indices
 """
-from __future__ import unicode_literals
+
 from builtins import str
 import datetime
 import logging

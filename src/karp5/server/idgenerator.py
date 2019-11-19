@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 from builtins import range
 import elasticsearch
 from elasticsearch_dsl import Index, Mapping

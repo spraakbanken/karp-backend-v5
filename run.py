@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 # startup-scriptet (samma som strix har)
 # TODO move to karp-backend-sb
