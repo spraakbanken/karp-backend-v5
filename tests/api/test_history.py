@@ -21,7 +21,6 @@ def test_lexicon_history(client_w_panacea):
     assert len(result["updates"]) == 0
 
 
-@pytest.mark.xfail(reason="unclear")
 def test_update(client_w_foo):
     query = "query?q=simple||one&mode=foo"
 
@@ -51,6 +50,7 @@ def test_update(client_w_foo):
             f"/mkupdate/foo/{new_id}",
             {"doc": changed_entry, "message": "changes", "version": i - 1},
         )
+        assert data is not None
         time.sleep(1)
 
     time.sleep(1)
@@ -59,7 +59,7 @@ def test_update(client_w_foo):
     assert "updates" in result
     print(f"result = {result}")
     # TODO This test fails.
-    # assert len(result["updates"]) == 10
+    assert len(result["updates"]) > 0
 
     result = get_json(client_w_foo, f"/checkdifference/foo/{new_id}/latest")
 
@@ -67,7 +67,6 @@ def test_update(client_w_foo):
     assert "field" in result["diff"][0]
 
 
-@pytest.mark.xfail(reason="unclear")
 def test_print_latestversion_foo(cli_w_foo):
     fp = io.StringIO()
     upload_offline.printlatestversion("foo", fp=fp)
@@ -75,15 +74,38 @@ def test_print_latestversion_foo(cli_w_foo):
     data = json.loads(fp.getvalue())
 
     print(f"data = {data}")
-    assert data is None
+    assert len(data) == 5
 
 
-@pytest.mark.xfail(reason="unclear")
 def test_print_latestversion_panacea(cli_w_panacea):
     fp = io.StringIO()
     upload_offline.printlatestversion("panacea", fp=fp)
 
     data = json.loads(fp.getvalue())
 
+    # print(f"data = {data}")
+    assert len(data) == 6609
+
+
+def test_export_latestversion_foo(cli_w_foo):
+    fp = io.StringIO()
+    upload_offline.printlatestversion("foo", fp=fp, with_id=True)
+
+    data = json.loads(fp.getvalue())
+
     print(f"data = {data}")
-    assert data is None
+    assert len(data) == 5
+    assert "_id" in data[0]
+    assert "_source" in data[0]
+
+
+def test_export_latestversion_panacea(cli_w_panacea):
+    fp = io.StringIO()
+    upload_offline.printlatestversion("panacea", fp=fp, with_id=True)
+
+    data = json.loads(fp.getvalue())
+
+    # print(f"data = {data}")
+    assert len(data) == 6609
+    assert "_id" in data[0]
+    assert "_source" in data[0]

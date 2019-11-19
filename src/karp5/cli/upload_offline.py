@@ -1,7 +1,10 @@
+"""Handle lexicon and modes.
+"""
 import datetime
 import json
 import sys
 import logging
+from typing import IO, Optional
 
 import six
 
@@ -149,7 +152,7 @@ def get_entries_to_keep_from_sql(lexicons):
             else:
                 _logger.debug("|sql no id| Found entry without id:")
                 _logger.debug("|sql no id| %s", entry)
-    _logger.debug("to_keep = %s", to_keep)
+    # _logger.debug("to_keep = %s", to_keep)
     return to_keep
 
 
@@ -209,7 +212,20 @@ def recover_add(index, suffix, lexicon):
     print("recovery done")
 
 
-def printlatestversion(lexicon, debug=True, with_id=False, fp=None):
+def printlatestversion(
+    lexicon: str, debug: bool = True, with_id: bool = False, fp: Optional[IO] = None
+):
+    """Dump the latest entries for a lexicon (or mode?).
+
+       If with_id=True, then the results can be imported from cli.
+    Arguments:
+        lexicon -- the lexicon to print
+
+    Keyword Arguments:
+        debug -- whether to print debug information (default: {True})
+        with_id -- if True, prints the entries as in ElasticSearch (default: {False})
+        fp -- file handle to write to, if None write to stdout (default: {None})
+    """
     if fp is None:
         fp = sys.stdout
 
