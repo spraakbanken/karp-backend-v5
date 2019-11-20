@@ -1,5 +1,6 @@
 import json
 import time
+import os
 
 try:
     from urllib.request import urlopen
@@ -37,13 +38,15 @@ def mk_indexname(mode, suffix):
 
 
 def _test_index_exists(mode, suffix, n_docs):
+    if isinstance(n_docs, int):
+        n_docs = str(n_docs)
     es_status = get_es_indices()
     print(es_status)
     index = mk_indexname(mode, suffix)
-    for x in es_status:
-        if x["index"] == index:
-            assert x["health"] == "yellow" or "green"
-            # assert x['docs.count'] == n_docs
+    for index_status in es_status:
+        if index_status["index"] == index:
+            assert index_status["health"] == "yellow" or "green"
+            assert index_status["docs.count"] == n_docs
             break
     else:
         assert False, "Didn't find index '{}'".format(index)
@@ -77,6 +80,27 @@ def test_create_empty_index(cli_w_es):
 
     _test_index_exists(mode, suffix, "0")
     _test_n_hits_equals(mk_indexname(mode, suffix), 0)
+    assert upload.index_exists(mode, mk_indexname(mode, suffix))
+
+
+def test_lexicon_init(cli_w_es):
+    mode = "foo"
+    lexicon = "bar"
+    suffix = "test_init_01"
+    result = cli_w_es.lexicon_init(lexicon, suffix)
+
+    assert result.exit_code == 0
+
+    time.sleep(5)
+    _test_index_exists(mode, suffix, 3)
+
+    filename = os.path.join("tests", "data", "data", "custom_path_bar.json")
+    result = cli_w_es.lexicon_init(lexicon, suffix, data=filename)
+
+    assert result.exit_code == 0
+
+    time.sleep(5)
+    _test_index_exists(mode, suffix, 5)
 
 
 def test_create_reindex_alias(cli_w_panacea):
@@ -88,12 +112,12 @@ def test_create_reindex_alias(cli_w_panacea):
 
     assert r.exit_code == 0
 
-    time.sleep(1)
+    time.sleep(10)
     _test_index_exists(mode, suffix, str(n_hits))
 
     r = cli_w_panacea.publish_mode(mode, suffix)
     assert r.exit_code == 0
-    time.sleep(1)
+    time.sleep(10)
 
     _test_alias_contains_index(mode, mk_indexname(mode, suffix))
     _test_alias_contains_index("karp", mk_indexname(mode, suffix))
@@ -112,7 +136,9 @@ def test_copy_mode(cli_w_panacea):
     ok, errors = upload.copy_alias_to_new_index(source_mode, target_mode, target_suffix)
 
     assert ok
+    assert errors is None
 
+    time.sleep(5)
     _test_index_exists(target_mode, target_suffix, n_hits)
 
     r = cli_w_panacea.publish_mode(target_mode, target_suffix)
@@ -139,7 +165,9 @@ def test_copy_mode_w_query(cli_w_panacea):
     )
 
     assert ok
+    assert errors is None
 
+    time.sleep(5)
     _test_index_exists(target_mode, target_suffix, target_n_hits)
 
     r = cli_w_panacea.publish_mode(target_mode, target_suffix)

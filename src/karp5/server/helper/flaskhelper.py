@@ -1,4 +1,3 @@
-
 from builtins import str
 from datetime import timedelta
 import logging
@@ -10,6 +9,7 @@ from functools import update_wrapper
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
 import karp5.server.update as update
+from karp5.dbhandler import emailsender as email
 
 
 _logger = logging.getLogger("karp5")
@@ -125,11 +125,7 @@ def init_errorhandler(app):
             data = request.data
             data = data.decode("utf8")
             auth = request.authorization
-            e_type = (
-                "Predicted"
-                if isinstance(error, errors.KarpException)
-                else "Unpredicted"
-            )
+            e_type = "Predicted" if isinstance(error, errors.KarpException) else "Unpredicted"
 
             _logger.debug("Error on url %s" % request.full_path)
             user = "unknown"
@@ -177,7 +173,6 @@ def init_errorhandler(app):
             msg = "Cannot print log file: %s, %s" % (date, trace)
             title = "Karp urgent logging error"
             if conf_mgr.app_config.ADMIN_EMAILS:
-                import dbhandler.emailsender as email
 
                 email.send_notification(conf_mgr.app_config.ADMIN_EMAILS, title, msg)
             open(logdir + "KARPERR" + time.strftime("%Y%m%d"), "a").write(msg)

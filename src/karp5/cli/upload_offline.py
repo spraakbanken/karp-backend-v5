@@ -2,9 +2,10 @@
 """
 import datetime
 import json
-import sys
 import logging
-from typing import IO, Optional
+import os
+import sys
+from typing import IO, Optional, List, Union
 
 import six
 
@@ -19,6 +20,7 @@ import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
 from karp5 import document
 from karp5.util.debug import print_err
+from karp5.server.translator import bulkify
 
 
 _logger = logging.getLogger("karp5")
@@ -40,23 +42,40 @@ def update_source_field(mode, doc):
     return doc
 
 
-def _create_index(mode, index):
+def index_create(mode, index):
     """ Create a new Elasticsearch index. """
 
     es = conf_mgr.elastic(mode)
     data = conf_mgr.get_mapping(mode)
     try:
+        _logger.debug("Creating index '%s' for mode '%s' with es=%s", index, mode, es)
         ans = es.indices.create(index=index, body=data, request_timeout=30)
     except esExceptions.TransportError as e:
         _logger.exception(e)
         raise Exception("Could not create index")
-    print(ans)
+    return ans
+
+
+def index_exists(mode: str, index: Union[str, List[str]]) -> bool:
+    """Check if index exists for mode.
+
+    Arguments:
+        mode {str} -- the mode to query from
+        index {str} -- the index to to query for
+
+    Returns:
+        bool -- wheter the index exists or not
+    """
+    es = conf_mgr.elastic(mode)
+    ans = es.indices.exists(index=index)
+    print(f"index_exists: and = {ans}")
+    return ans
 
 
 def upload(
     informat, name, order, data, elastic, index, typ, sql=False, verbose=True, with_id=False,
 ):
-    """ Uploads the data to elastic and the database
+    """Uploads the data to elastic and the database
         sql      if True,  the data will be stored in the SQL database as well
                  as ElasticSearch
                  if False, the data will only be stored in ElasticSearch
@@ -65,6 +84,32 @@ def upload(
                                bulk - a list of json objects annotated with
                                       index and type information, as accepted
                                       by ElasticSearch
+
+    Arguments:
+        informat {[type]} -- [description]
+        name {[type]} -- [description]
+        order {[type]} -- [description]
+        data {[type]} -- [description]
+        elastic {[type]} -- [description]
+        index {[type]} -- [description]
+        typ {[type]} -- [description]
+
+    Keyword Arguments:
+        sql {bool} -- [description] (default: {False})
+        verbose {bool} -- [description] (default: {True})
+        with_id {bool} -- [description] (default: {False})
+
+    Raises:
+        Exception: [description]
+        Exception: [description]
+        Exception: [description]
+        Exception: [description]
+        Exception: [description]
+        Exception: [description]
+        Exception: [description]
+
+    Returns:
+        [type] -- [description]
     """
     try:
         # The actual parsing
@@ -117,15 +162,28 @@ def upload(
 
 
 def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
-    """ Parse the query and the post and put it into the desired json format
+    """Parse the query and the post and put it into the desired json format
+
+    Arguments:
+        informat {[type]} -- [description]
+        lexname {[type]} -- [description]
+        lexOrder {[type]} -- [description]
+        data {[type]} -- [description]
+        index {[type]} -- [description]
+        typ {[type]} -- [description]
+
+    Keyword Arguments:
+        with_id {bool} -- [description] (default: {False})
+
+    Returns:
+        [type] -- [description]
     """
-    import karp5.server.translator.bulkify as b
 
     bulk_info = {"index": index, "type": typ}
     out_data = 0, [], []
 
     if informat == "json":
-        out_data = b.bulkify(data, bulk_info, with_id=with_id)
+        out_data = bulkify.bulkify(data, bulk_info, with_id=with_id)
     else:
         raise "Don't know how to parse %s" % informat
 
@@ -161,7 +219,6 @@ def recover(alias, suffix, lexicon, create_new=True):
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
-    import karp5.server.translator.bulkify as bulk
 
     # if not lexicon:
     #     lexicon = conf.keys()
@@ -172,12 +229,12 @@ def recover(alias, suffix, lexicon, create_new=True):
     es = conf_mgr.elastic(alias)
     if create_new:
         # Create the index
-        _create_index(alias, index)
+        index_create(alias, index)
 
     to_keep = get_entries_to_keep_from_sql(lexicon)
     print(len(to_keep), "entries to keep")
 
-    data = bulk.bulkify_sql(to_keep, bulk_info={"index": index, "type": typ})
+    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index, "type": typ})
     try:
         ok, err = es_helpers.bulk(es, data, request_timeout=30)
     except Exception:
@@ -195,7 +252,6 @@ def recover_add(index, suffix, lexicon):
         Find the last version of every SQL entry and send this to ES.
         Adds the specified lexicons to an existing index
     """
-    import karp5.server.translator.bulkify as bulk
 
     es = conf_mgr.elastic(index)
     print("Save %s to %s" % (lexicon, index))
@@ -203,7 +259,7 @@ def recover_add(index, suffix, lexicon):
     to_keep = get_entries_to_keep_from_sql(lexicon)
     print(len(to_keep), "entries to keep")
 
-    data = bulk.bulkify_sql(to_keep, bulk_info={"index": index})
+    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index})
     ok, err = es_helpers.bulk(es, data, request_timeout=30)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
@@ -305,10 +361,20 @@ def publish_group(group, suffix):
 
 
 def create_empty_index(mode, suffix):
-    _create_index(mode, make_indexname(mode, suffix))
+    return index_create(mode, make_indexname(mode, suffix))
 
 
-def create_mode(alias, suffix, with_id=False):
+def create_mode(alias, suffix, with_id=False, data_dir=None):
+    """[summary]
+
+    Arguments:
+        alias {[type]} -- [description]
+        suffix {[type]} -- [description]
+
+    Keyword Arguments:
+        with_id {bool} -- [description] (default: {False})
+        data_dir -- Path to load lexicons from. (default: {None})
+    """
     es = conf_mgr.elastic(alias)
     if conf_mgr.modes[alias]["is_index"]:
         to_create = [alias]
@@ -318,10 +384,10 @@ def create_mode(alias, suffix, with_id=False):
     typ = conf_mgr.modes[alias]["type"]
     for index in to_create:
         newname = make_indexname(index, suffix)
-        _create_index(alias, newname)
+        index_create(alias, newname)
         try:
             lexicons = conf_mgr.get_lexiconlist(index)
-            load(lexicons, newname, typ, es, with_id=with_id)
+            load(lexicons, newname, typ, es, with_id=with_id, data_dir=data_dir)
         except Exception as e:
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
@@ -333,32 +399,45 @@ def create_mode(alias, suffix, with_id=False):
             raise
 
 
-def add_lexicon(to_add_name, to_add_file, alias, suffix):
-    es = conf_mgr.elastic(alias)
-    data = conf_mgr.get_mapping(alias)
-    indexname = make_indexname(alias, suffix)
-    typ = conf_mgr.modes[alias]["type"]
+def add_lexicon(lexicon, suffix, filename=None, with_id=False):
+    mode = conf_mgr.get_lexicon_mode(lexicon)
+    es = conf_mgr.elastic(mode)
+    indexname = make_indexname(mode, suffix)
+    _type = conf_mgr.modes[mode]["type"]
+    _logger.debug(
+        "add_lexicon(lexicon=%s suffix=%s filename=%s with_id=%s)",
+        lexicon,
+        suffix,
+        filename,
+        with_id,
+    )
+    _logger.debug(" -> mode=%s indexname=%s es=%s", mode, indexname, es)
+    if not es.indices.exists(indexname):
+        try:
+            ans = index_create(mode, indexname)
+        except Exception:
+            print("Could not create index. Check if it needs manual removal")
+            raise
     try:
-        ans = es.indices.create(index=indexname, body=data, request_timeout=30)
-        print(ans)
-    except Exception:
-        print("Could not create index. Check if it needs manual removal")
-        raise
-    try:
-        inpdata = open(to_add_file, "r").read()
-        sql = conf_mgr.get_mode_sql(alias)
-        upload("json", to_add_name, "", inpdata, es, indexname, typ, sql=sql)
+        if filename is None:
+            filename = conf_mgr.default_filename(lexicon)
+        with open(filename, "r") as fp:
+            data = fp.read()
+        sql = conf_mgr.get_mode_sql(mode)
+        upload("json", lexicon, "", data, es, indexname, _type, sql=sql, with_id=with_id)
         # do this last to get the avoid version conflicts (in case some user is
         # updating the index during this process)
-        reindex_alias(alias, suffix, create_index=False)
+        # reindex_alias(mode, suffix, create_index=False)
 
-    except Exception:
+    except Exception as e:
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
         # print(ans)
         _logger.error("Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans)
         _logger.error("If data was uploaded to SQL you will have to remove it manually.")
+        _logger.exception(e)
         raise
+    return indexname
 
 
 def internalize_lexicon(mode, to_add):
@@ -377,7 +456,7 @@ def internalize_lexicon(mode, to_add):
         ans = es_helpers.scan(
             es,
             query=query,
-            scroll=u"3m",
+            scroll="3m",
             raise_on_error=True,
             preserve_order=False,
             index=mode,
@@ -413,13 +492,27 @@ def internalize_lexicon(mode, to_add):
     print("Ok. %s documents loaded to sql\n" % ok)
 
 
-def load(to_upload, index, typ, es, with_id=False):
+def load(to_upload, index, typ, es, with_id: bool = False, data_dir: str = None):
+    """[summary]
+
+    Arguments:
+        to_upload {[type]} -- [description]
+        index {[type]} -- [description]
+        typ {[type]} -- [description]
+        es {[type]} -- [description]
+
+    Keyword Arguments:
+        with_id {bool} -- [description] (default: {False})
+        data_dir {[type]} -- [description] (default: {None})
+    """
     print("Upload to %s" % index, ",".join(to_upload))
     try:
         for lexicon, info in conf_mgr.lexicons.items():
             if lexicon in to_upload or not to_upload:
                 default = conf_mgr.lexicons.get("default", {})
                 file_format = info.get("format", default.get("format", "json"))
+                if data_dir is not None:
+                    filename = os.path.join(data_dir)
                 filename = conf_mgr.default_filename(lexicon)
                 with open(filename, "r") as fp:
                     _logger.info("reading file '%s'", filename)
@@ -471,7 +564,7 @@ def copy_alias_to_new_index(
     target_index = make_indexname(target_mode, target_suffix)
     _logger.debug("Copying from '%s' to '%s'", source_mode, target_index)
     if create_index:
-        _create_index(target_mode, target_index)
+        index_create(target_mode, target_index)
 
     source_docs = es_helpers.scan(es_source, index=source_mode, query=query)
 
@@ -524,7 +617,7 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     print("Reindex from %s to %s" % (source_index, target_index))
     es = conf_mgr.elastic(alias)
     if create_index:
-        _create_index(alias, target_index)
+        index_create(alias, target_index)
 
     source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
 
