@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 
@@ -43,5 +42,5 @@ def autoupdate_child(child, parent, lexicon, user, date=""):
     if not date:
         date = datetime.datetime.now()
     for func in auto_updates_child.get(lexicon, []):
-        _logger.debug("autoupdate_child, apply %s on %s", (func, child))
+        _logger.debug("autoupdate_child, apply %s on %s", func, child)
         func(child, parent, lexicon, user, date)

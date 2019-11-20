@@ -16,11 +16,19 @@
     "order": 1
   },
   "foo": {
-      "path": "data/foo/",
-      "no_escape": false,
-      "format": "json",
-      "usedtags": [],
-      "mode": "foo",
-      "order": 2
+    "path": "data/foo/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "foo",
+    "order": 2
+  },
+  "bar": {
+    "path": "data/foo/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "foo",
+    "order": 3
   }
 }

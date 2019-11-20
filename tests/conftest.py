@@ -1,4 +1,3 @@
-
 import logging
 import os
 import tempfile
@@ -37,8 +36,8 @@ class TestConfig(Config):
     OVERRIDE_ELASTICSEARCH_URL = True
 
 
-@pytest.fixture(scope="session")
-def app():
+@pytest.fixture(name="app", scope="session")
+def fixture_app():
     app = create_app(TestConfig)
 
     assert TestConfig.OVERRIDE_ELASTICSEARCH_URL
@@ -57,8 +56,8 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture(scope="session")
-def es():
+@pytest.fixture(name="es", scope="session")
+def fixture_es():
     if not strtobool(os.environ.get("ELASTICSEARCH_ENABLED", "false")):
         yield False
     elif os.environ.get("KARP5_ELASTICSEARCH_TEST_URL"):
@@ -71,9 +70,9 @@ def es():
 
 
 class CliTestRunner(object):
-    def __init__(self, cli):
+    def __init__(self, _cli):
         self.runner = CliRunner()
-        self.cli = cli
+        self.cli = _cli
 
     def create_empty_index(self, mode, suffix):
         return self.runner.invoke(self.cli, ["create_empty_index", mode, suffix])
@@ -87,23 +86,39 @@ class CliTestRunner(object):
     def reindex_alias(self, mode, suffix):
         return self.runner.invoke(self.cli, ["reindex_alias", mode, suffix])
 
+    def lexicon_init(self, lexicon: str, suffix: str, data=None):
+        """[summary]
 
-@pytest.fixture(scope="session")
-def cli():
+        Arguments:
+            lexicon {str} -- [description]
+            suffix {str} -- [description]
+
+        Keyword Arguments:
+            data {[type]} -- [description] (default: {None})
+        """
+        cmd = ["lexicon", "init", lexicon, suffix]
+        if data is not None:
+            cmd.append("--data")
+            cmd.append(data)
+        return self.runner.invoke(self.cli, cmd)
+
+
+@pytest.fixture(name="cli", scope="session")
+def fixture_cli():
     setup_cli(TestConfig)
     cli = CliTestRunner(karp5_cli)
     return cli
 
 
-@pytest.fixture(scope="session")
-def cli_w_es(cli, es):
+@pytest.fixture(name="cli_w_es", scope="session")
+def fixture_cli_w_es(cli, es):
     if not es:
         pytest.skip("elasticsearch disabled")
     yield cli
 
 
-@pytest.fixture(scope="session")
-def cli_w_panacea(cli_w_es):
+@pytest.fixture(name="cli_w_panacea", scope="session")
+def fixture_cli_w_panacea(cli_w_es):
     r_create = cli_w_es.create_mode("panacea", "test")
     assert r_create.exit_code == 0
 
@@ -114,8 +129,8 @@ def cli_w_panacea(cli_w_es):
     return cli_w_es
 
 
-@pytest.fixture(scope="session")
-def cli_w_foo(cli_w_es):
+@pytest.fixture(name="cli_w_foo", scope="session")
+def fixture_cli_w_foo(cli_w_es):
     r_create = cli_w_es.create_mode("foo", "test")
     assert r_create.exit_code == 0
 
@@ -126,16 +141,18 @@ def cli_w_foo(cli_w_es):
     return cli_w_es
 
 
-@pytest.fixture(scope="session")
-def app_w_auth(app):
+@pytest.fixture(name="app_w_auth", scope="session")
+def fixture_app_w_auth(app):
     from tests import auth_server
 
     with auth_server.DummyAuthServer(conf_mgr, port=5001):
         yield app
 
 
-@pytest.fixture(scope="session")
-def app_w_panacea(app_w_auth, cli_w_panacea):
+@pytest.fixture(name="app_w_panacea", scope="session")
+def fixture_app_w_panacea(app_w_auth, cli_w_panacea):
+    if cli_w_panacea is None:
+        pytest.skip()
     return app_w_auth
 
 
@@ -144,12 +161,13 @@ def client_w_panacea(app_w_panacea):
     return app_w_panacea.test_client()
 
 
-@pytest.fixture(scope="session")
-def app_w_foo(app_w_auth, cli_w_foo):
+@pytest.fixture(name="app_w_foo", scope="session")
+def fixture_app_w_foo(app_w_auth, cli_w_foo):
+    if cli_w_foo is None:
+        pytest.skip()
     return app_w_auth
 
 
 @pytest.fixture(scope="session")
 def client_w_foo(app_w_foo):
     return app_w_foo.test_client()
-

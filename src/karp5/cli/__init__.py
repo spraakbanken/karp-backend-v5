@@ -1,4 +1,4 @@
-
+"""The command-line interface for Karp."""
 import logging
 import logging.handlers
 import os
@@ -32,10 +32,7 @@ def setup_cli(config=karp5.Config):
             os.mkdir(log_dir)
 
         file_handler = logging.handlers.TimedRotatingFileHandler(
-            os.path.join(log_dir, "karp5-admin.log"),
-            when="d",
-            interval=1,
-            backupCount=0,
+            os.path.join(log_dir, "karp5-admin.log"), when="d", interval=1, backupCount=0,
         )
         file_handler.setLevel(config.LOG_LEVEL)
         file_handler.setFormatter(formatter)
@@ -66,12 +63,60 @@ def create_metadata():
     metadata.print_all(outpath)
 
 
+@cli.group(name="mode")
+def group_mode():
+    """Handle MODES."""
+
+
+@cli.group(name="lexicon")
+def group_lexicon():
+    """Handle LEXICONS in MODES."""
+
+
 @cli.command("create_mode")
 @click.argument("mode")
 @click.argument("suffix")
 def create_mode(mode, suffix):
     upload.create_mode(mode, suffix)
     print("Upload successful")
+
+
+@group_mode.command("init")
+@click.argument("mode", type=str)
+@click.argument("suffix", default=None, type=str)
+@click.option("--data-dir", "-d", default=None, type=str, help="file to load", metavar="<filename>")
+def mode_init(mode, suffix, data_dir):
+    """Init MODE.
+
+    Creates the index MODE_SUFFIX.
+
+    If --data is given then the data is loaded from that file,
+    otherwise the data is loaded from default location.
+    """
+    upload.create_mode(mode, suffix, data_dir=data_dir)
+    print("Upload successful")
+
+
+@group_lexicon.command("init")
+@click.argument("lexicon", type=str)
+@click.argument("suffix", default=None, type=str)
+@click.option("--data", "-d", default=None, type=str, help="file to load", metavar="<filename>")
+def lexicon_init(lexicon, suffix, data):
+    """Init the LEXICON.
+
+    Loads the lexicon to the index <mode of LEXICON>_SUFFIX.
+
+    If --data is given then the data is loaded from that file,
+    otherwise the data is loaded from default location.
+    """
+    _logger.debug(
+        "lexicon_init(lexicon='%s', suffix='%s', filename='%s')",
+        lexicon,
+        suffix,
+        "None" if data is None else data,
+    )
+    index = upload.add_lexicon(lexicon, suffix, filename=data)
+    print(f"'{lexicon}' was successfully loaded to the index '{index}'")
 
 
 @cli.command("create_empty_index")
@@ -96,11 +141,7 @@ def import_mode(mode, suffix):
 def publish_mode(mode, suffix):
     """Publish MODE to all modes that contain MODE."""
     upload.publish_mode(mode, suffix)
-    print(
-        "Published '{mode}_{suffix}' successfully to '{mode}'".format(
-            mode=mode, suffix=suffix
-        )
-    )
+    print("Published '{mode}_{suffix}' successfully to '{mode}'".format(mode=mode, suffix=suffix))
 
 
 @cli.command("reindex_alias")
@@ -133,26 +174,22 @@ def internalize_lexicon(mode, to_upload):
 
 @cli.command("printlatestversion")
 @click.argument("lexicon", metavar="<lexicon>")
-@click.option(
-    "--output", "-o", default=None, metavar="<path>", help="File to write to."
-)
+@click.option("--output", "-o", default=None, metavar="<path>", help="File to write to.")
 def printlatestversion(lexicon, output):
     if output:
         with open(output, "w") as fp:
-            upload.printlatestversion(lexicon, file=fp)
+            upload.printlatestversion(lexicon, fp=fp)
     else:
         upload.printlatestversion(lexicon)
 
 
 @cli.command("exportlatestversion")
 @click.argument("lexicon", metavar="<lexicon>")
-@click.option(
-    "--output", "-o", default=None, metavar="<path>", help="File to write to."
-)
+@click.option("--output", "-o", default=None, metavar="<path>", help="File to write to.")
 def exportlatestversion(lexicon, output):
     if output:
         with open(output, "w") as fp:
-            upload.printlatestversion(lexicon, debug=False, with_id=True, file=fp)
+            upload.printlatestversion(lexicon, debug=False, with_id=True, fp=fp)
     else:
         upload.printlatestversion(lexicon, debug=False, with_id=True)
 

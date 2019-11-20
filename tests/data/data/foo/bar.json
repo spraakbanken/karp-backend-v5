@@ -1,0 +1,17 @@
+[
+    {
+        "lexiconName": "bar",
+        "lexiconOrder": 3,
+        "foo": "eleven"
+    },
+    {
+        "lexiconName": "bar",
+        "lexiconOrder": 3,
+        "foo": "twelve"
+    },
+    {
+        "lexiconName": "bar",
+        "lexiconOrder": 3,
+        "foo": "thirteen"
+    }
+]
