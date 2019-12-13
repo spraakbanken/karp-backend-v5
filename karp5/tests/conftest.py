@@ -13,7 +13,7 @@ import elasticsearch_test
 import dotenv
 
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
-# os.environ["KARP5_INSTANCE_PATH"] = os.path.join(os.path.dirname(__file__), "data/")
+os.environ["KARP5_INSTANCE_PATH"] = os.path.join(os.path.dirname(__file__), "data/")
 assert os.environ["KARP5_INSTANCE_PATH"] == os.path.join(os.path.dirname(__file__), "data/")
 print(os.environ["KARP5_INSTANCE_PATH"])
 
