@@ -9,10 +9,10 @@ import json
 import logging
 import os
 
-from karp5.instance_info import get_instance_path
+from karp5 import instance_info
 
 
-with open(os.path.join(get_instance_path(), "config/config.json")) as fp:
+with open(os.path.join(instance_info.get_instance_path(), "config/config.json")) as fp:
     _CONFIG = json.load(fp)
 
 KARP5_DBPASS = os.environ.get("KARP5_DBPASS")

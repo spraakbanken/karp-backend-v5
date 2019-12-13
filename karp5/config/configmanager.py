@@ -13,7 +13,7 @@ from elasticsearch import Elasticsearch
 from karp5 import errors
 
 # from karp5.server.translator
-from karp5.instance_info import get_instance_path
+from karp5 import instance_info
 from karp5.util.debug import print_err
 
 from .errors import KarpConfigException
@@ -104,7 +104,7 @@ class ConfigManager(object):
         self.field = {}
         self.defaultfields = {}
         self.app_config = None
-        self.configdir = os.path.join(get_instance_path(), "config")
+        self.configdir = os.path.join(instance_path, "config")
         self._extra_src = {}
         self.load_config()
 
@@ -131,7 +131,7 @@ class ConfigManager(object):
         """[summary]
         """
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
-        print(f"self.modes = {self.modes}")
+        print(f"self.modes = {self.modes}", file=sys.stderr)
         set_defaults(self.modes)
 
         self.lexicons = load_from_file(os.path.join(self.configdir, "lexiconconf.json"))
@@ -171,9 +171,7 @@ class ConfigManager(object):
             try:
                 # print("reading fieldmappings for index '{}'".format(index))
                 with open(
-                    os.path.join(
-                        self.configdir, "mappings/fieldmappings_{}.json".format(index)
-                    )
+                    os.path.join(self.configdir, "mappings/fieldmappings_{}.json".format(index))
                 ) as fp:
                     fields = json.load(fp)
                 merge_dict(all_fields, fields)
@@ -215,29 +213,23 @@ class ConfigManager(object):
     def default_filename(self, lexicon):
         conf = self.lexicons.get(lexicon)
         if not conf:
+            print(f"lexicons = {self.lexicons}", file=sys.stderr)
+            print(f"configdir = {self.configdir}", file=sys.stderr)
             raise KarpConfigException("Can't find config for lexicon '%s'", lexicon)
         path = conf.get("path")
         if not path:
             _logger.warn(
-                "Failed to load path for lexicon '%s'. Trying to read the 'default' path...", lexicon)
+                "Failed to load path for lexicon '%s'. Trying to read the 'default' path...",
+                lexicon,
+            )
             path = self.lexicons.get("default").get("path")
             if not path:
                 msg = "Couldn't find 'path' for either '%s' or 'default'. Please check your config."
                 _logger.error(msg, lexicon)
                 raise KarpConfigException(msg, lexicon)
 
-        fformat = conf.get(
-            "format",
-            self.lexicons.get(
-                "format",
-                "json"
-            )
-        )
-        return os.path.join(
-            self.instance_path,
-            path,
-            f"{lexicon}.{fformat}"
-        )
+        fformat = conf.get("format", self.lexicons.get("format", "json"))
+        return os.path.join(self.instance_path, path, f"{lexicon}.{fformat}")
 
     def searchconf(self, mode, field, failonerror=True):
         """[summary]
@@ -378,10 +370,7 @@ class ConfigManager(object):
         if not mode:
             mode = self.get_lexicon_mode(lexicon)
 
-        if (
-            self.app_config.OVERRIDE_ELASTICSEARCH_URL
-            or "elastic_url" not in self.modes[mode]
-        ):
+        if self.app_config.OVERRIDE_ELASTICSEARCH_URL or "elastic_url" not in self.modes[mode]:
             return self.app_config.ELASTICSEARCH_URL
         else:
             return self.modes[mode]["elastic_url"]
@@ -458,7 +447,7 @@ class ConfigManager(object):
                 return fp.read()
         except Exception:
             raise KarpConfigException(
-                "Can't find mappingconf for index '%s'", index
+                "Can't find mappingconf for index '%s' (looking in '%s')", index, self.configdir
             )
 
     def lookup(self, field, mode, own_fields=None):

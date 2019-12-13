@@ -12,12 +12,16 @@ import elasticsearch_test
 
 import dotenv
 
-dotenv.load_dotenv(dotenv_path=".env", verbose=True)
+# dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 os.environ["KARP5_INSTANCE_PATH"] = os.path.join(os.path.dirname(__file__), "data/")
+assert os.environ["KARP5_INSTANCE_PATH"] == os.path.join(os.path.dirname(__file__), "data/")
+print(os.environ["KARP5_INSTANCE_PATH"])
 
 from karp5 import create_app, Config  # noqa: E402
 from karp5.cli import cli as karp5_cli, setup_cli  # noqa: E402
 from karp5.config import conf_mgr  # noqa: E402
+
+from karp5.tests import auth_server
 
 
 _tempfile = tempfile.NamedTemporaryFile(suffix=".db")
@@ -143,7 +147,6 @@ def fixture_cli_w_foo(cli_w_es):
 
 @pytest.fixture(name="app_w_auth", scope="session")
 def fixture_app_w_auth(app):
-    from tests import auth_server
 
     with auth_server.DummyAuthServer(conf_mgr, port=5001):
         yield app

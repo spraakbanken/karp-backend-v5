@@ -7,7 +7,7 @@ import pytest
 
 from karp5.cli import upload_offline
 
-from tests.util import get_json, post_json
+from karp5.tests.util import get_json, post_json
 
 
 def test_lexicon_history(client_w_panacea):
