@@ -6,9 +6,9 @@
 [![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
 [![](https://github.com/spraakbanken/karp-backend/workflows/Build/badge.svg)](https://github.com/spraakbanken/karp-backend/actions)
 
-## Python 3
-[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=py3)](https://travis-ci.org/spraakbanken/karp-backend)
-[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend/branch/py3)
+## Python 3 (branch: stage)
+[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=stage)](https://travis-ci.org/spraakbanken/karp-backend)
+[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/stage/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend/branch/stage)
 
 **This package - code and documentation - is still under construction.**
 
