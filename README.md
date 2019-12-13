@@ -37,7 +37,7 @@ Prerequisites
 http://modwsgi.readthedocs.io/en/develop/
 http://httpd.apache.org/
 * an authentication server. Read more about this [here](https://github.com/spraakbanken/karp-docker/blob/master/dummyauth/README.md)
-* [Python >= 2.7](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
+* [Python >= 3.6](https://www.python.org/downloads/) with [pip](http://pip.readthedocs.org/en/stable/installing/)
 
 
 Installation
@@ -45,10 +45,11 @@ Installation
 
 Karp uses virtuals envs for python. To get running:
 
-1. Install virtualenv using `pip install virtualenv`
-2. Create the virtual environment using `virtualenv venv`.
-3. Activate the virtual environment with `source venv/bin/activate`.
-4. `pip install -r requirements.txt`
+- run `make install`
+- or:
+  1. Create the virtual environment using `python3 -m venv venv`.
+  2. Activate the virtual environment with `source venv/bin/activate`.
+  3. `pip install -r requirements.txt`
 
 
 Configuration
