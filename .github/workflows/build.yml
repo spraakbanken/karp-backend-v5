@@ -44,13 +44,13 @@ jobs:
         run: |
           pip install flake8
           # stop the build if there are Python syntax errors or undefined names
-          flake8 src tests setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 karp5 setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Lint with pylint
-        run: pylint --rcfile=.pylintrc --exit-zero src tests setup.py run.py cli.py
+        run: pylint --rcfile=.pylintrc --exit-zero karp5 setup.py run.py cli.py
       - name: Test with pytest
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
-          pytest -vv --cov=src/ --cov-report=term tests
+          pytest -vv --cov=karp5 --cov-report=term karp5/tests
           docker logs "${{ job.services.mysql.id }}"
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}
