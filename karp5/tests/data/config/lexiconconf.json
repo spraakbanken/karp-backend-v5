@@ -1,0 +1,34 @@
+{
+  "panacea": {
+    "path": "data/panacea/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "panacea",
+    "order": 0
+  },
+  "panacea_links": {
+    "path": "data/panacea/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "panacea_links",
+    "order": 1
+  },
+  "foo": {
+    "path": "data/foo/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "foo",
+    "order": 2
+  },
+  "bar": {
+    "path": "data/foo/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "foo",
+    "order": 3
+  }
+}

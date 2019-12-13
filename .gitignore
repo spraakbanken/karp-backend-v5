@@ -1,7 +1,13 @@
 netrc
+
+# virtual environments #
+########################
 .venv
 venv
 venv3
+
+# data files #
+##############
 /data
 !/data/panacea
 
@@ -23,7 +29,7 @@ venv3
 /config/modes.json
 !config/mappings/fieldmappings_panacea.json
 !config/mappings/mappingconf_panacea.json
-!/tests/data
+!/karp5/tests/data
 **/*.sw[abcdefghijklmnop]
 
 # Mappings #
@@ -71,6 +77,7 @@ __pycache__
 *.zip
 *.egg-info/
 dist/
+.eggs/
 
 # Logs and databases #
 ######################
