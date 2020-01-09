@@ -82,7 +82,43 @@ def load_from_file(path, default=None):
     return default
 
 
-class ConfigManager(object):
+class EntryRepository:
+    def __init__(self):
+        pass
+
+
+class LexiconRepository:
+    def __init__(self):
+        pass
+
+
+class ModeRepository:
+    def __init__(self, config_dir):
+        modes = load_from_file(os.path.join(self.configdir, "modes.json"))
+        print(f"modes = {modes}")
+        if "default" in modes:
+            self.defaults = modes["default"]
+            del modes["default"]
+        else:
+            self.defaults = {}
+
+        self.modes = []
+        for name, config in modes.items():
+            mode = Mode(name,)
+        set_defaults(self.modes)
+
+
+class GroupRepository:
+    def __init__(self):
+        pass
+
+
+class AuthenticationService:
+    def __init__(self):
+        pass
+
+
+class ConfigManager:
     """[summary]
 
     Arguments:
@@ -98,6 +134,11 @@ class ConfigManager(object):
 
     def __init__(self, instance_path):
         self.instance_path = instance_path
+        self.configdir = os.path.join(instance_path, "config")
+        self.mode_repository = ModeRepository(self.configdir)
+        self.lexicon_repository = LexiconRepository()
+        self.group_repository = GroupRepository()
+        self.entry_repository = EntryRepository()
         self.modes = {}
         self.config = {}
         self.lexicons = {}
@@ -133,7 +174,6 @@ class ConfigManager(object):
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
         print(f"self.modes = {self.modes}", file=sys.stderr)
         set_defaults(self.modes)
-
         self.lexicons = load_from_file(os.path.join(self.configdir, "lexiconconf.json"))
         set_defaults(self.lexicons)
 
