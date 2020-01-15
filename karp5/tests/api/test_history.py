@@ -6,6 +6,7 @@ import time
 import pytest
 
 from karp5.cli import upload_offline
+from karp5.dbhandler import dbhandler
 
 from karp5.tests.util import get_json, post_json
 
@@ -65,6 +66,10 @@ def test_update(client_w_foo):
 
     assert "diff" in result
     assert "field" in result["diff"][0]
+
+    to_keep = dbhandler.get_entries_to_keep("foo")
+
+    assert len(to_keep) == 5
 
 
 def test_print_latestversion_foo(cli_w_foo):
