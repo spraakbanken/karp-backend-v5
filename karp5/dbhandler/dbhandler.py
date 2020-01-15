@@ -292,6 +292,7 @@ def get_entries_to_keep(lexicon):
 
     _logger.debug("exporting entries from %s ", lexicon)
 
+    old_id = None
     for entry in dbselect(
         lexicon, engine=engine, db_entry=db_entry, max_hits=-1
     ):

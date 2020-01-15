@@ -68,8 +68,9 @@ def test_update(client_w_foo):
     assert "field" in result["diff"][0]
 
     to_keep = dbhandler.get_entries_to_keep("foo")
-
-    assert len(to_keep) == 5
+    for i, v in enumerate(to_keep, 1):
+        assert v is not None
+    assert i == 5
 
 
 def test_print_latestversion_foo(cli_w_foo):
