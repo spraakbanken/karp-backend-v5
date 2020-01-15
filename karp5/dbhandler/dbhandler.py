@@ -274,6 +274,72 @@ def dbselect(
         return []
 
 
+def dbselect_gen(
+    lexicon,
+    user="",
+    _id="",
+    from_date="",
+    to_date="",
+    exact_date="",
+    status=None,
+    max_hits=10,
+    engine=None,
+    db_entry=None,
+    suggestion=False,
+    mode="",
+):
+    # does not accept a list of lexicons anymore
+    if status is None:
+        status = []
+    try:
+        if engine is None or db_entry is None:
+            engine, db_entry = get_engine(lexicon, mode=mode, suggestion=suggestion)
+
+        conn = engine.connect()
+        operands = []
+        if user:
+            operands.append(db_entry.c.user == user)
+        if _id:
+            operands.append(db_entry.c.id == _id)
+        if from_date:
+            operands.append(db_entry.c.date >= from_date)
+        if to_date:
+            operands.append(db_entry.c.date <= to_date)
+        if exact_date:
+            operands.append(db_entry.c.date == exact_date)
+        if lexicon:
+            operands.append(db_entry.c.lexicon == lexicon)
+        add_list_operands([(status, db_entry.c.status)], operands)
+        selects = sql.select([db_entry]).where(sql.and_(*operands))
+        if max_hits > 0:
+            selects = selects.limit(max_hits)  # only get the first hits
+        selects = selects.order_by(db_entry.c.date.desc())  # sort by date
+        _logger.info("selects = %s", selects)
+        for entry in conn.execute(selects):
+            # transform the date into a string now to enforce isoformat
+            version = 8 if suggestion else 7
+            obj = {
+                "id": entry[0],
+                "date": str(entry[1]),
+                "user": entry[2],
+                "doc": json.loads(entry[3]),
+                "lexicon": entry[5],
+                "message": entry[4],
+                "status": entry[6],
+                "version": entry[version],
+            }
+            if suggestion:
+                obj["acceptmessage"] = entry[9]
+                obj["origid"] = entry[7]
+            yield obj
+        conn.close()
+        # return res
+
+    except SQLNull(lexicon):
+        _logger.warning("Attempt to search for %s in SQL, no db available", lexicon)
+        return
+
+
 def add_list_operands(to_add, operands):
     for vals, row_val in to_add:
         disjunct_operands = []
@@ -293,7 +359,7 @@ def get_entries_to_keep(lexicon):
     _logger.debug("exporting entries from %s ", lexicon)
 
     old_id = None
-    for entry in dbselect(
+    for entry in dbselect_gen(
         lexicon, engine=engine, db_entry=db_entry, max_hits=-1
     ):
         _id = entry["id"]
