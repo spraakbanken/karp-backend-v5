@@ -296,18 +296,22 @@ def get_entries_to_keep(lexicon):
     for entry in dbselect(
         lexicon, engine=engine, db_entry=db_entry, max_hits=-1
     ):
-
         _id = entry["id"]
-
-        if _id in to_keep:
-            last = to_keep[_id]["date"]
-
-            if last < entry["date"]:
-                to_keep[_id] = entry
+        if _id == old_id:
+            continue
         else:
-            to_keep[_id] = entry
+            old_id = _id
+            yield _id, entry
 
-    return to_keep.items()
+        #if _id in to_keep:
+         #   last = to_keep[_id]["date"]
+
+          #  if last < entry["date"]:
+           #     to_keep[_id] = entry
+        #else:
+         #   to_keep[_id] = entry
+
+    #return to_keep.items()
 
 
 def modifysuggestion(
