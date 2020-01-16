@@ -4,10 +4,11 @@ Connect to the sql data base and interact with it.
 Emails the admins (config/config.json) if an error occurs.
 """
 
-from builtins import str
 import datetime
 import json
 import logging
+from typing import List, Union
+
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
 
@@ -285,9 +286,7 @@ def add_list_operands(to_add, operands):
         operands.append(sql.or_(*disjunct_operands))
 
 
-def modifysuggestion(
-    _id, lexicon, msg="", status="", origid="", engine=None, db_entry=None
-):
+def modifysuggestion(_id, lexicon, msg="", status="", origid="", engine=None, db_entry=None):
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, suggestion=True)
@@ -353,6 +352,50 @@ def deletebulk(lexicon="", user=""):
 
     conn.execute(dbtable.delete().where(choice))
     conn.close()
+
+
+def get_entries_to_keep(lexicons: Union[str, List[str]], *, to_date=None, exclude_states=None):
+    """Retrieve entries from one or several lexicons to keep.
+
+    Arguments:
+        lexicons {Union[str, List[str]]} -- lexicon or lexicons to export
+
+    Keyword Arguments:
+        to_date {[type]} -- Optional date to limit the search (default: {None})
+
+    Returns:
+        Iterable -- [descrip
+    """
+    to_keep = {}
+    if isinstance(lexicons, str):
+        lexicons = [lexicons]
+
+    for lex in lexicons:
+        engine, db_entry = get_engine(lex, echo=False)
+        dbselect_kwargs = {"engine": engine, "db_entry": db_entry, "max_hits": -1}
+        if to_date:
+            dbselect_kwargs["to_date"] = to_date
+        for entry in dbselect(lex, **dbselect_kwargs):
+            _id = entry["id"]
+            if _id:  # don't add things without id, they are errors
+                if _id in to_keep:
+                    last = to_keep[_id]["date"]
+                    if last < entry["date"]:
+                        _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
+                        to_keep[_id] = entry
+                else:
+                    to_keep[_id] = entry
+            else:
+                _logger.warning("|sql no id| Found entry without id:")
+                _logger.warning("|sql no id| %s", entry)
+    # _logger.debug("to_keep = %s", to_keep)
+    if exclude_states:
+        if isinstance(exclude_states, str):
+            exclude_states = [exclude_states]
+        gen_out = ((i, v) for i, v in to_keep.items() if v["status"] not in exclude_states)
+    else:
+        gen_out = to_keep.items()
+    return gen_out
 
 
 class SQLNull(Exception):

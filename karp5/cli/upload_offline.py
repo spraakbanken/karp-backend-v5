@@ -208,8 +208,8 @@ def get_entries_to_keep_from_sql(lexicons):
                 else:
                     to_keep[_id] = entry
             else:
-                _logger.debug("|sql no id| Found entry without id:")
-                _logger.debug("|sql no id| %s", entry)
+                _logger.warning("|sql no id| Found entry without id:")
+                _logger.warning("|sql no id| %s", entry)
     # _logger.debug("to_keep = %s", to_keep)
     return to_keep
 

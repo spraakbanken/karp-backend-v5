@@ -6,6 +6,7 @@ import time
 import pytest
 
 from karp5.cli import upload_offline
+from karp5.dbhandler import dbhandler
 
 from karp5.tests.util import get_json, post_json
 
@@ -65,6 +66,37 @@ def test_update(client_w_foo):
 
     assert "diff" in result
     assert "field" in result["diff"][0]
+
+
+def test_delete_and_sql_to_keep(client_w_foo):
+    entry = {"lexiconName": "foo", "lexiconOrder": 2, "foo": "six"}
+
+    new_data = post_json(client_w_foo, "/add/foo", {"doc": entry, "message": "adding entry"})
+
+    assert "sql_loaded" in new_data
+    assert new_data["sql_loaded"] == 1
+    assert "es_loaded" in new_data
+    assert new_data["es_loaded"] == 1
+    assert "es_ans" in new_data
+    new_id = new_data["es_ans"]["_id"]
+    time.sleep(1)
+
+    rm_data = get_json(client_w_foo, f"/delete/foo/{new_id}")
+
+    assert "sql_loaded" in rm_data
+    assert rm_data["sql_loaded"] == 1
+    assert "es_loaded" in rm_data
+    assert rm_data["es_loaded"] == 1
+    assert "es_ans" in rm_data
+    assert new_id == rm_data["es_ans"]["_id"]
+    # time.sleep(1)
+
+    for i, val in dbhandler.get_entries_to_keep("foo"):
+        if i == new_id:
+            assert val["status"] == "removed"
+
+    for i, _ in dbhandler.get_entries_to_keep("foo", exclude_states="removed"):
+        assert i != new_id
 
 
 def test_print_latestversion_foo(cli_w_foo):

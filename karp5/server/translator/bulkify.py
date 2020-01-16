@@ -45,11 +45,11 @@ def bulkify_sql(data, bulk_info={}):
         for _id, item in list(data.items())
         if item["status"] != "removed"
     ]
-    result = []
-    for _id, item in list(data.items()):
-        if item["status"] != "removed":
-            data_doc = item["doc"]
-            es_doc = doc_to_es(data_doc, data_doc["lexiconName"], "bulk")
-            doc = {"_index": index, "_type": itype, "_source": es_doc, "_id": _id}
-            result.append(doc)
-    return result
+    # result = []
+    # for _id, item in list(data.items()):
+    #     if item["status"] != "removed":
+    #         data_doc = item["doc"]
+    #         es_doc = doc_to_es(data_doc, data_doc["lexiconName"], "bulk")
+    #         doc = {"_index": index, "_type": itype, "_source": es_doc, "_id": _id}
+    #         result.append(doc)
+    # return result
