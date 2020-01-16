@@ -351,33 +351,26 @@ def add_list_operands(to_add, operands):
         operands.append(sql.or_(*disjunct_operands))
 
 
-def get_entries_to_keep(lexicon):
-    to_keep = {}
-
+def get_entries_to_keep(lexicon, *, to_date=None):
     engine, db_entry = get_engine(lexicon, echo=False)
 
     _logger.debug("exporting entries from %s ", lexicon)
 
     old_id = None
-    for entry in dbselect_gen(
-        lexicon, engine=engine, db_entry=db_entry, max_hits=-1
-    ):
-        _id = entry["id"]
-        if _id == old_id:
+    dbselect_kwargs = {
+        "engine": engine,
+        "db_entry": db_entry,
+        "max_hits": -1
+    }
+    if to_date is not None:
+        dbselect_kwargs["to_date"] = to_date
+    for entry in dbselect_gen(lexicon, **dbselect_kwargs):
+        if entry["status"] == "removed" or entry["id"] == old_id:
             continue
         else:
-            old_id = _id
-            yield _id, entry
+            old_id = entry["id"]
+            yield entry
 
-        #if _id in to_keep:
-         #   last = to_keep[_id]["date"]
-
-          #  if last < entry["date"]:
-           #     to_keep[_id] = entry
-        #else:
-         #   to_keep[_id] = entry
-
-    #return to_keep.items()
 
 
 def modifysuggestion(
