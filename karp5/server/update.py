@@ -31,7 +31,7 @@ def checkuser():
 def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
     # delete by id
     try:
-        msg = request.args.get("message", ["removed"])
+        msg = request.args.get("message", "removed")
         es, index, typ = helpers.get_update_index(lexicon, suggestion=suggestion)
         ans_entry = es.get(index=index, doc_type=typ, id=_id)
         lexiconName = ans_entry["_source"]["lexiconName"]
