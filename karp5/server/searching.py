@@ -842,7 +842,7 @@ def export(lexicon):
     #to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     _logger.debug("exporting entries from %s ", lexicon)
-    entries = db.get_entries_to_keep(lexicon, to_date=date)
+    ans = db.get_entries_to_keep(lexicon, to_date=date)
 #    for entry in db.dbselect(
 #        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
 #    ):
@@ -856,9 +856,9 @@ def export(lexicon):
 #
 #    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
     size = settings["size"]
-    if type(size) is int:
+    if isinstance(size, int):
         #entries = itertools.islice(entries, size)
-        ans = itertools.islice(entries, size)
+        ans = itertools.islice(ans, size)
         #ans = ans[:size]
 
     _logger.debug("exporting %s entries", len(ans))
