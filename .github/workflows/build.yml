@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e .[dev]
       - name: Download elasticsearch
         run: |
           wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.5.4.tar.gz
@@ -47,11 +47,9 @@ jobs:
           flake8 karp5 setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Lint with pylint
         run: |
-          pip install pylint
           pylint --rcfile=.pylintrc --exit-zero karp5 setup.py run.py cli.py
       - name: Test with pytest
         run: |
-          pip install pytest pytest-cov elasticsearch_test-py
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
           pytest -vv --cov=karp5 --cov-report=term karp5/tests
           docker logs "${{ job.services.mysql.id }}"

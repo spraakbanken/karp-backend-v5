@@ -2,6 +2,7 @@
 """ Methods for querying the data base """
 import functools
 import copy
+import itertools
 import elasticsearch
 import logging
 import re
@@ -838,24 +839,27 @@ def export(lexicon):
             default=datetime(1999, 0o1, 0o1, 23, 59),
         )
 
-    to_keep = {}
+    #to_keep = {}
     engine, db_entry = db.get_engine(lexicon, echo=False)
     _logger.debug("exporting entries from %s ", lexicon)
-    for entry in db.dbselect(
-        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
-    ):
-        _id = entry["id"]
-        if _id in to_keep:
-            last = to_keep[_id]["date"]
-            if last < entry["date"]:
-                to_keep[_id] = entry
-        else:
-            to_keep[_id] = entry
-
-    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
+    ans = db.get_entries_to_keep(lexicon, to_date=date)
+#    for entry in db.dbselect(
+#        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
+#    ):
+#        _id = entry["id"]
+#        if _id in to_keep:
+#            last = to_keep[_id]["date"]
+#            if last < entry["date"]:
+#                to_keep[_id] = entry
+#        else:
+#            to_keep[_id] = entry
+#
+#    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
     size = settings["size"]
-    if type(size) is int:
-        ans = ans[:size]
+    if isinstance(size, int):
+        #entries = itertools.islice(entries, size)
+        ans = itertools.islice(ans, size)
+        #ans = ans[:size]
 
     _logger.debug("exporting %s entries", len(ans))
     if settings.get("format", ""):
@@ -874,14 +878,18 @@ def export(lexicon):
         def gen():
             start, stop = 0, divsize
             yield '{"%s": [' % lexicon
-            while start < len(ans):
-                _logger.debug("chunk %s - %s" % (start, stop))
-                if start > 1:
+            for i, obj in enumerate(ans):
+                if i > 0:
                     yield ","
-                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
-                # yield json.dumps(ans[start:stop])
-                start = stop
-                stop += divsize
+                yield json.dumps(obj)
+#            while start < len(ans):
+#                _logger.debug("chunk %s - %s" % (start, stop))
+#                if start > 1:
+#                    yield ","
+#                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
+#                # yield json.dumps(ans[start:stop])
+#                start = stop
+#                stop += divsize
             yield "]}"
 
         _logger.debug("streaming entries")

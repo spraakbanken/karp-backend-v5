@@ -67,6 +67,11 @@ def test_update(client_w_foo):
     assert "diff" in result
     assert "field" in result["diff"][0]
 
+    to_keep = dbhandler.get_entries_to_keep("foo")
+    for i, v in enumerate(to_keep, 1):
+        assert v is not None
+    assert i == 5
+
 
 def test_delete_and_sql_to_keep(client_w_foo):
     entry = {"lexiconName": "foo", "lexiconOrder": 2, "foo": "six"}
