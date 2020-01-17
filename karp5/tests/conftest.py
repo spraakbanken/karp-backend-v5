@@ -73,6 +73,18 @@ def fixture_cli_w_foo(cli_w_es):
     return cli_w_es
 
 
+@pytest.fixture(name="cli_w_large_lex", scope="session")
+def fixture_cli_w_large_lex(cli_w_es):
+    r_create = cli_w_es.create_mode("large_lex", "test")
+    assert r_create.exit_code == 0
+
+    r_publish = cli_w_es.publish_mode("large_lex", "test")
+    assert r_publish.exit_code == 0
+
+    time.sleep(1)
+    return cli_w_es
+
+
 @pytest.fixture(name="app_w_panacea", scope="session")
 def fixture_app_w_panacea(app_w_auth, cli_w_panacea):
     if cli_w_panacea is None:
@@ -95,3 +107,15 @@ def fixture_app_w_foo(app_w_auth, cli_w_foo):
 @pytest.fixture(scope="session")
 def client_w_foo(app_w_foo):
     return app_w_foo.test_client()
+
+
+@pytest.fixture(name="app_w_large_lex", scope="session")
+def fixture_app_w_large_lex(app_w_auth, cli_w_large_lex):
+    if cli_w_large_lex is None:
+        pytest.skip()
+    return app_w_auth
+
+
+@pytest.fixture(scope="session")
+def client_w_large_lex(app_w_large_lex):
+    return app_w_large_lex.test_client()
