@@ -212,7 +212,6 @@ def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
 
 
 def recover(alias, suffix, lexicon, create_new=True) -> bool:
-    # TODO test this
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """

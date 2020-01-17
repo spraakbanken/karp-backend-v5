@@ -52,7 +52,7 @@ def bulkify_from_sql(entries: Iterable[Dict], index: str, index_type: str):
             "_index": index,
             "_type": index_type,
             "_id": entry["id"],
-            "_source": doc_to_es(entry["doc"], entry["lexiconName"], "bulk"),
+            "_source": doc_to_es(entry["doc"], entry["doc"]["lexiconName"], "bulk"),
         }
         for entry in entries
     )
