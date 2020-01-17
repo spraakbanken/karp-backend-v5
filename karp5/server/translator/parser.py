@@ -618,6 +618,9 @@ def adapt_query(size, _from, es, query, kwargs):
         only the last 25 is being asked for).
         Naturally, these queries might be very time consuming
     """
+    _logger.debug(
+        "|adapt_query| size=%d, _from=%d, query=%s, kwargs=%s", size, _from, query, kwargs
+    )
     stop_num = size + max(1, _from)
 
     # If _from is a float ignore it. Typically this happens because size is
@@ -627,7 +630,7 @@ def adapt_query(size, _from, es, query, kwargs):
         del kwargs["from_"]
 
     # If the wanted number of hits is below the scan limit, do a normal search
-    if stop_num <= conf_mgr.app_config.SCAN_LIMIT:
+    if stop_num <= min(conf_mgr.app_config.SCAN_LIMIT, 10000):
         kwargs["body"] = query
         _logger.debug("|adapt_query| Will ask for %s", kwargs)
         return es.search(**kwargs)

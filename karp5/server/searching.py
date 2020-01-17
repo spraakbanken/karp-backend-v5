@@ -47,6 +47,7 @@ def query(page=0):
 
 def requestquery(page=0):
     """ The Function for querying our database """
+    _logger.debug("|requestquery| page = %d", page)
     # page is assumed to be 0 indexed here
     auth, permitted = validate_user(mode="read")
     try:

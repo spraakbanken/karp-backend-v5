@@ -23,6 +23,14 @@
     "mode": "foo",
     "order": 2
   },
+  "large_lex": {
+    "path": "data/large_lex/",
+    "no_escape": false,
+    "format": "json",
+    "usedtags": [],
+    "mode": "large_lex",
+    "order": 4
+  },
   "bar": {
     "path": "data/foo/",
     "no_escape": false,

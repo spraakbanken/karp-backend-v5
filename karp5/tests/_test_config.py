@@ -12,7 +12,7 @@ _tempfile = tempfile.NamedTemporaryFile(suffix=".db")
 
 class TestConfig(Config):
     TESTING = True
-    LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.INFO
     if KARP5_DBPASS is None:
         # Use sqlite if KARP5_DBPASS is not set
         # DATABASE_BASEURL = "sqlite://"

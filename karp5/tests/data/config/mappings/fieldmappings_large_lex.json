@@ -1,0 +1,6 @@
+{
+  "foo": ["foo"],
+  "foo.sort": ["foo.raw"],
+  "bar": ["foo"],
+  "bar.sort": ["foo.raw"]
+}
