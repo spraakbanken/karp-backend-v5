@@ -29,7 +29,7 @@ STATUS_CHANGE = sql.types.Enum("added", "changed", "removed", "imported")
 STATUS_SUGG = sql.types.Enum("waiting", "accepted", "rejected", "accepted_modified")
 
 
-def get_engine(lexicon, mode="", suggestion=False, echo=True):
+def get_engine(lexicon, mode=None, suggestion=False, echo=True):
     if mode:
         dburl = conf_mgr.get_mode_sql(mode)
     else:
@@ -357,13 +357,18 @@ def get_entries_to_keep_gen(lexicon, *, to_date=None):
 
     _logger.debug("exporting entries from %s ", lexicon)
 
-    old_id = None
     dbselect_kwargs = {"engine": engine, "db_entry": db_entry, "max_hits": -1}
     if to_date is not None:
         dbselect_kwargs["to_date"] = to_date
+
+    old_id = None
     for entry in dbselect_gen(lexicon, **dbselect_kwargs):
-        if entry["status"] == "removed" or entry["id"] == old_id:
+        if entry["id"] == old_id:
             print(f"skipping entry = {entry}")
+            continue
+        elif entry["status"] == "removed":
+            print(f"skipping entry = {entry}")
+            old_id = entry["id"]
             continue
         else:
             old_id = entry["id"]
