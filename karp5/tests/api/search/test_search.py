@@ -21,7 +21,7 @@ from karp5.tests.util import get_json
     ],
 )
 def test_search(client_w_panacea, command, q, mode, n_hits):
-    query = "/{command}?q={q}&mode={mode}".format(command=command, q=q, mode=mode)
+    query = f"/{command}?q={q}&mode={mode}"
     result = get_json(client_w_panacea, query)
 
     if command == "querycount":
