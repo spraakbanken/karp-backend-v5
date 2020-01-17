@@ -258,3 +258,15 @@ def test_apply_filter(gen, lex, filter_func, expected):
 
         assert x["_source"]["id"] == f["_source"]["id"]
         assert x["_source"]["lexicon"] == lex
+
+
+def test_recover(cli_w_panacea):
+    alias = "panacea"
+    alias_hits = get_es_search(alias)
+
+    suffix = "test_recover"
+    assert upload.recover(alias, suffix, alias)
+
+    recover_hits = get_es_search(mk_indexname(alias, suffix))
+
+    assert alias_hits == recover_hits

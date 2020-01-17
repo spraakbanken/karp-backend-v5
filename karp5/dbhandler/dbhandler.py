@@ -363,6 +363,7 @@ def get_entries_to_keep_gen(lexicon, *, to_date=None):
         dbselect_kwargs["to_date"] = to_date
     for entry in dbselect_gen(lexicon, **dbselect_kwargs):
         if entry["status"] == "removed" or entry["id"] == old_id:
+            print(f"skipping entry = {entry}")
             continue
         else:
             old_id = entry["id"]

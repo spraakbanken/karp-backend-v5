@@ -96,17 +96,27 @@ def test_delete_and_sql_to_keep(client_w_foo):
     assert new_id == rm_data["es_ans"]["_id"]
     # time.sleep(1)
 
+    new_id_is_found = False
     for i, val in dbhandler.get_entries_to_keep("foo"):
         if i == new_id:
             assert val["status"] == "removed"
+            new_id_is_found = True
+    assert new_id_is_found
 
     for i, _ in dbhandler.get_entries_to_keep("foo", exclude_states="removed"):
         assert i != new_id
 
+    for entry in dbhandler.get_entries_to_keep_gen("foo"):
+        print(f"entry = {entry}")
+        assert entry["status"] != "removed"
+
 
 def test_print_latestversion_foo(cli_w_foo):
+    for entry in dbhandler.get_entries_to_keep_gen("foo"):
+        print(f"entry = {entry}")
+        assert entry["status"] != "removed"
     fp = io.StringIO()
-    upload_offline.printlatestversion("foo", fp=fp)
+    upload_offline.printlatestversion("foo", fp=fp, with_id=True)
 
     data = json.loads(fp.getvalue())
 

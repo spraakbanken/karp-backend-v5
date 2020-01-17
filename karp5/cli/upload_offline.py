@@ -7,8 +7,6 @@ import os
 import sys
 from typing import IO, Optional, List, Union
 
-import six
-
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
 
@@ -19,7 +17,6 @@ from sb_json_tools import json_iter
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
 from karp5 import document
-from karp5.util.debug import print_err
 from karp5.server.translator import bulkify
 
 
@@ -190,31 +187,31 @@ def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
     return out_data
 
 
-def get_entries_to_keep_from_sql(lexicons):
-    to_keep = {}
-    if isinstance(lexicons, six.text_type):
-        lexicons = [lexicons]
+# def get_entries_to_keep_from_sql(lexicons):
+#     to_keep = {}
+#     if isinstance(lexicons, six.text_type):
+#         lexicons = [lexicons]
 
-    for lex in lexicons:
-        engine, db_entry = db.get_engine(lex, echo=False)
-        for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
-            _id = entry["id"]
-            if _id:  # don't add things without id, they are errors
-                if _id in to_keep:
-                    last = to_keep[_id]["date"]
-                    if last < entry["date"]:
-                        _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
-                        to_keep[_id] = entry
-                else:
-                    to_keep[_id] = entry
-            else:
-                _logger.warning("|sql no id| Found entry without id:")
-                _logger.warning("|sql no id| %s", entry)
-    # _logger.debug("to_keep = %s", to_keep)
-    return to_keep
+#     for lex in lexicons:
+#         engine, db_entry = db.get_engine(lex, echo=False)
+#         for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
+#             _id = entry["id"]
+#             if _id:  # don't add things without id, they are errors
+#                 if _id in to_keep:
+#                     last = to_keep[_id]["date"]
+#                     if last < entry["date"]:
+#                         _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
+#                         to_keep[_id] = entry
+#                 else:
+#                     to_keep[_id] = entry
+#             else:
+#                 _logger.warning("|sql no id| Found entry without id:")
+#                 _logger.warning("|sql no id| %s", entry)
+#     # _logger.debug("to_keep = %s", to_keep)
+#     return to_keep
 
 
-def recover(alias, suffix, lexicon, create_new=True):
+def recover(alias, suffix, lexicon, create_new=True) -> bool:
     # TODO test this
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
@@ -223,7 +220,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     # if not lexicon:
     #     lexicon = conf.keys()
     index = make_indexname(alias, suffix)
-    typ = conf_mgr.get_mode_type(alias)
+    index_type = conf_mgr.get_mode_type(alias)
     print("Save %s to %s" % (lexicon or "all", index))
 
     es = conf_mgr.elastic(alias)
@@ -231,41 +228,40 @@ def recover(alias, suffix, lexicon, create_new=True):
         # Create the index
         index_create(alias, index)
 
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-    print(len(to_keep), "entries to keep")
+    # to_keep = get_entries_to_keep_from_sql(lexicon)
+    # print(len(to_keep), "entries to keep")
+    entries = db.get_entries_to_keep_gen(lexicon)
 
-    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index, "type": typ})
-    try:
-        ok, err = es_helpers.bulk(es, data, request_timeout=30)
-    except Exception:
-        print(data)
-    if err:
-        msg = "Error during upload. %s documents successfully uploaded. \
-               Message: %s.\n"
-        raise Exception(msg % (ok, "\n".join(err)))
-    print("recovery done")
-
-
-def recover_add(index, suffix, lexicon):
-    # TODO test this
-    """ Recovers the data to ES, uses SQL as the trusted base version.
-        Find the last version of every SQL entry and send this to ES.
-        Adds the specified lexicons to an existing index
-    """
-
-    es = conf_mgr.elastic(index)
-    print("Save %s to %s" % (lexicon, index))
-
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-    print(len(to_keep), "entries to keep")
-
-    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index})
+    data = bulkify.bulkify_from_sql(entries, index, index_type)
     ok, err = es_helpers.bulk(es, data, request_timeout=30)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
                Message: %s.\n"
         raise Exception(msg % (ok, "\n".join(err)))
     print("recovery done")
+    return True
+
+
+# def recover_add(index, suffix, lexicon):
+#     # TODO test this
+#     """ Recovers the data to ES, uses SQL as the trusted base version.
+#         Find the last version of every SQL entry and send this to ES.
+#         Adds the specified lexicons to an existing index
+#     """
+
+#     es = conf_mgr.elastic(index)
+#     print("Save %s to %s" % (lexicon, index))
+
+#     to_keep = get_entries_to_keep_from_sql(lexicon)
+#     print(len(to_keep), "entries to keep")
+
+#     data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index})
+#     ok, err = es_helpers.bulk(es, data, request_timeout=30)
+#     if err:
+#         msg = "Error during upload. %s documents successfully uploaded. \
+#                Message: %s.\n"
+#         raise Exception(msg % (ok, "\n".join(err)))
+#     print("recovery done")
 
 
 def printlatestversion(
@@ -285,21 +281,18 @@ def printlatestversion(
     if fp is None:
         fp = sys.stdout
 
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-
-    if debug:
-        print_err("count", len(to_keep))
+    # to_keep = get_entries_to_keep_from_sql(lexicon)
+    entries = db.get_entries_to_keep_gen(lexicon)
 
     if with_id:
-        gen_out = (
-            {"_id": i, "_source": document.doc_to_es(val["doc"], lexicon, "bulk")}
-            for i, val in to_keep.items()
-            if val["status"] != "removed"
+        entries = (
+            {"_id": entry["id"], "_source": document.doc_to_es(entry["doc"], lexicon, "bulk")}
+            for entry in entries
         )
     else:
-        gen_out = (val["doc"] for val in to_keep.values() if val["status"] != "removed")
+        entries = (entry["doc"] for entry in entries)
 
-    json_iter.dump(gen_out, fp)
+    json_iter.dump(entries, fp)
 
 
 def publish_mode(mode, suffix):
