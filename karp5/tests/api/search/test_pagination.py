@@ -35,7 +35,7 @@ def test_pagination_panacea(client_w_panacea, start, size):
 # @given(start=st.integers(min_value=0), size=st.integers(min_value=0))
 def test_pagination_large_lex(client_w_large_lex, start, size):
     command = "query"
-    q = "extended||and|baseform|regexp|.*"
+    q = "extended||and|foo|regexp|.*"
     mode = "large_lex"
     query = f"/{command}?q={q}&mode={mode}&start={start}&size={size}"
 
