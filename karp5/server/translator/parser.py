@@ -49,9 +49,7 @@ def parse(settings=None, isfilter=False):
     mode = settings.get("mode")
     if command == "simple":
         settings["search_type"] = "dfs_query_then_fetch"
-        return freetext(
-            query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight
-        )
+        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight)
     elif command == "extended":
         filters = []  # filters will be put here
         fields = []
@@ -68,12 +66,7 @@ def parse(settings=None, isfilter=False):
         usefilter = "_score" not in settings.get("sort", "")
 
         return search(
-            p_ex,
-            filters,
-            fields,
-            isfilter=isfilter,
-            highlight=highlight,
-            usefilter=usefilter,
+            p_ex, filters, fields, isfilter=isfilter, highlight=highlight, usefilter=usefilter,
         )
     else:
         raise errors.QueryError(
@@ -164,29 +157,19 @@ def parse_extra(settings):
     if "sort" in request.args:
         # settings['sort'] = conf_mgr.lookup_multiple(request.args['sort'].split(','), mode)
         settings["sort"] = sum(
-            [
-                conf_mgr.lookup_multiple(s, mode)
-                for s in request.args["sort"].split(",")
-            ],
-            [],
+            [conf_mgr.lookup_multiple(s, mode) for s in request.args["sort"].split(",")], [],
         )
     if "page" in request.args:
         settings["page"] = min(int(request.args["page"]) - 1, 0)
     if "start" in request.args:
         settings["start"] = int(request.args["start"])
     if "buckets" in request.args:
-        settings["buckets"] = [
-            conf_mgr.lookup(r, mode) for r in request.args["buckets"].split(",")
-        ]
+        settings["buckets"] = [conf_mgr.lookup(r, mode) for r in request.args["buckets"].split(",")]
 
     if "show" in request.args:
         # settings['show'] = conf_mgr.lookup_multiple(request.args['show'][0].split(','), mode)
         settings["show"] = sum(
-            [
-                conf_mgr.lookup_multiple(s, mode)
-                for s in request.args["show"].split(",")
-            ],
-            [],
+            [conf_mgr.lookup_multiple(s, mode) for s in request.args["show"].split(",")], [],
         )
     # to be used in random
     if "show_all" in request.args:
@@ -237,7 +220,7 @@ def parse_ext(exp, exps, filters, mode, isfilter=False):
         # format the operands as specified in the extra src for each mode
         operands = [format_query(field, o) for o in operands]
     _logger.debug("construct from %s", operands)
-    _logger.debug("f_query {0!r}", f_query)
+    _logger.debug("f_query %s", f_query)
     q = f_query.construct_query(operands)
     if isfilter or f_query.isfilter:
         _logger.debug("filter %s, %s", q, filters)
@@ -422,13 +405,7 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
 
 
 def search(
-    exps,
-    filters,
-    fields,
-    isfilter=False,
-    highlight=False,
-    usefilter=False,
-    constant_score=True,
+    exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True,
 ):
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
@@ -446,9 +423,7 @@ def search(
     res = {}
     if usefilter and not isfilter:
         _logger.debug("case 1")
-        q_obj = construct_exp(
-            exps + filters, querytype="must", constant_score=constant_score
-        )
+        q_obj = construct_exp(exps + filters, querytype="must", constant_score=constant_score)
         q_obj = {"bool": q_obj}
 
     else:
@@ -466,9 +441,7 @@ def search(
             q_obj = {"bool": qs}
         else:
             _logger.debug("case 4")
-            q_obj = construct_exp(
-                exps, querytype="query", constant_score=constant_score
-            )
+            q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
             _logger.debug("got %s", q_obj)
 
     if constant_score and usefilter and not isfilter:
@@ -528,9 +501,7 @@ def random(settings):
     return elasticq
 
 
-def statistics(
-    settings, exclude=[], order={}, prefix="", show_missing=True, force_size=-1
-):
+def statistics(settings, exclude=[], order={}, prefix="", show_missing=True, force_size=-1):
     """ Construct a ES query for an statistics view (aggregated information).
 
         Contains the number of hits in each lexicon, grouped by POS.
