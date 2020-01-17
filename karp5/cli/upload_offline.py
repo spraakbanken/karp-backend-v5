@@ -46,7 +46,9 @@ def index_create(mode, index):
     data = conf_mgr.get_mapping(mode)
     try:
         _logger.debug("Creating index '%s' for mode '%s' with es=%s", index, mode, es)
-        ans = es.indices.create(index=index, body=data, request_timeout=30)
+        ans = es.indices.create(  # pylint: disable=unexpected-keyword-arg
+            index=index, body=data, request_timeout=30
+        )
     except esExceptions.TransportError as e:
         _logger.exception(e)
         raise Exception("Could not create index")
@@ -242,7 +244,7 @@ def recover(alias, suffix, lexicon, create_new=True) -> bool:
 
 
 # def recover_add(index, suffix, lexicon):
-#     # TODO test this
+#     # xTODO test this
 #     """ Recovers the data to ES, uses SQL as the trusted base version.
 #         Find the last version of every SQL entry and send this to ES.
 #         Adds the specified lexicons to an existing index
@@ -263,9 +265,7 @@ def recover(alias, suffix, lexicon, create_new=True) -> bool:
 #     print("recovery done")
 
 
-def printlatestversion(
-    lexicon: str, debug: bool = True, with_id: bool = False, fp: Optional[IO] = None
-):
+def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO] = None):
     """Dump the latest entries for a lexicon (or mode?).
 
        If with_id=True, then the results can be imported from cli.
@@ -308,48 +308,51 @@ def publish_mode(mode, suffix):
 
     try:
         print("remove old aliases")
-        es.indices.update_aliases('{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30)
-    except Exception:
+        es.indices.update_aliases(  # pylint: disable=unexpected-keyword-arg
+            '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
+        )  # pylint: disable=unexpected-keyword-arg
+    except esExceptions.ElasticsearchException:
         print("No previous aliased indices, could not do remove any")
         print(rem_actions)
 
-    return es.indices.update_aliases(
+    return es.indices.update_aliases(  # pylint: disable=unexpected-keyword-arg
         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
     )
 
 
-def publish_group(group, suffix):
-    # TODO for some reason, this sometimes removes siblings
-    # of the group from an mode. Eg. publish_group(saldo)
-    # may lead to 'saldogroup' not containing 'external'.
-    es = conf_mgr.elastic(group)
-    print(group, suffix)
-    if not conf_mgr.modes.get(group)["is_index"]:
-        for subgroup in conf_mgr.modes.get(group)["groups"]:
-            publish_group(subgroup, suffix)
+# TODO Is this used?
+# def publish_group(group, suffix):
+#     # xTODO for some reason, this sometimes removes siblings
+#     # of the group from an mode. Eg. publish_group(saldo)
+#     # may lead to 'saldogroup' not containing 'external'.
+#     es = conf_mgr.elastic(group)
+#     print(group, suffix)
+#     if not conf_mgr.modes.get(group)["is_index"]:
+#         for subgroup in conf_mgr.modes.get(group)["groups"]:
+#             publish_group(subgroup, suffix)
 
-    else:
-        name = make_indexname(group, suffix)
-        print("Publish %s as %s" % (name, group))
-        add_actions = []
-        rem_actions = []
-        for parent in conf_mgr.get_modes_that_include_mode(group):
-            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent))
-            rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent))
+#     else:
+#         name = make_indexname(group, suffix)
+#         print("Publish %s as %s" % (name, group))
+#         add_actions = []
+#         rem_actions = []
+#         for parent in conf_mgr.get_modes_that_include_mode(group):
+#             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent))
+#             rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent))
 
-        print("remove", rem_actions)
-        print("add", add_actions)
-        try:
-            print("remove old aliases")
-            es.indices.update_aliases(
-                '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
-            )
-        except Exception:
-            print("No previous aliased indices, could not do remove any")
-            print(rem_actions)
-        return es.indices.update_aliases(
-            '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
-        )
+#         print("remove", rem_actions)
+#         print("add", add_actions)
+#         try:
+#             print("remove old aliases")
+#             es.indices.update_aliases(
+#                 '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
+#             )
+#         except Exception:
+#             print("No previous aliased indices, could not do remove any")
+#             print(rem_actions)
+#         return es.indices.update_aliases(
+#             '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
+#         )
 
 
 def create_empty_index(mode, suffix):
@@ -580,8 +583,6 @@ def copy_alias_to_new_index(
             errors.append(item)
         else:
             success += 1
-    # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    # ans = es_helpers.reindex(es, source_index, target_index)
     if len(errors) == 0:
         print("Done! Reindexed {} entries".format(success))
         return True, None
@@ -630,8 +631,6 @@ def reindex_help(alias, source_index, target_index, create_index=True):
             success += 1
             print("ok = {},item = {}".format(ok, item))
         total += 1
-    # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    # ans = es_helpers.reindex(es, source_index, target_index)
     if success == total:
         _logger.info("Done! Reindexed %s entries", total)
         return True
@@ -644,30 +643,32 @@ def reindex_help(alias, source_index, target_index, create_index=True):
         return False
 
 
-def publish_all(suffix):
-    for alias, aliasconf in conf_mgr.modes.items():
-        # Only publish if it is a group, meta-aliases will point to the correct
-        # subaliases anyway.
-        if aliasconf["is_index"]:
-            publish_group(alias, suffix)
+# TODO Is this used?
+# def publish_all(suffix):
+#     for alias, aliasconf in conf_mgr.modes.items():
+#         # Only publish if it is a group, meta-aliases will point to the correct
+#         # subaliases anyway.
+#         if aliasconf["is_index"]:
+#             publish_group(alias, suffix)
 
 
-def make_structure():
-    add_actions = []
-    # TODO does not work, what is confelastic?
-    for alias, aliasconf in conf_mgr.modes.items():
-        # Only publish if it is a group, meta-aliases will point to the correct
-        # subaliases anyway.
-        es = conf_mgr.elastic(alias)
-        if not aliasconf.get("is_index"):
-            # if it is a mode (not just an index), remove the old pointers
-            add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
-        for group in aliasconf.get("groups", []):
-            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias))
+# TODO Is this used?
+# def make_structure():
+#     add_actions = []
+#     # xTODO does not work, what is confelastic?
+#     for alias, aliasconf in conf_mgr.modes.items():
+#         # Only publish if it is a group, meta-aliases will point to the correct
+#         # subaliases anyway.
+#         es = conf_mgr.elastic(alias)
+#         if not aliasconf.get("is_index"):
+#             # if it is a mode (not just an index), remove the old pointers
+#             add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
+#         for group in aliasconf.get("groups", []):
+#             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias))
 
-    return es.indices.update_aliases(
-        '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
-    )
+#     return es.indices.update_aliases(
+#         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
+#     )
 
 
 def delete_all():
@@ -676,7 +677,7 @@ def delete_all():
         es = conf_mgr.elastic(alias)
         try:
             es.indices.delete("*")
-        except Exception:
+        except esExceptions.ElasticsearchException:
             print("could not delete es data form mode %s" % alias)
         try:
             # delete all our lexicons in sql
@@ -693,7 +694,7 @@ def delete_mode(mode):
     try:
         # print('delete', '%s*' % mode)
         es.indices.delete("%s*" % mode)
-    except Exception:
+    except esExceptions.ElasticsearchException:
         print("could not delete es data form mode %s" % mode)
     try:
         # delete all our lexicons in sql
