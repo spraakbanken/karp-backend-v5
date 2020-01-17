@@ -669,6 +669,8 @@ def adapt_query(size, _from, es, query, kwargs):
         index = 0
 
         # Do a full scan of the query result and keep the sorting order
+        if "from_" in kwargs:
+            del kwargs["from_"]
         scan = EShelpers.scan(es, scroll="5m", preserve_order=True, **kwargs)
         hits = []
         for hit in scan:
