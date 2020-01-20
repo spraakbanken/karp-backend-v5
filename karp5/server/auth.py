@@ -95,7 +95,7 @@ def validate_user(mode="write"):
     auth_response = user_auth["authenticated"]
 
     allowed = []
-    for lex, val in list(user_auth["lexicon_list"].items()):
+    for lex, val in user_auth["lexicon_list"].items():
         if val[mode]:
             allowed.append(lex)
 
