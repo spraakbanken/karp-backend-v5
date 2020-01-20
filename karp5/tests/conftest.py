@@ -21,7 +21,6 @@ from karp5 import create_app  # noqa: E402
 from karp5.cli import cli as karp5_cli, setup_cli  # noqa: E402
 from karp5.config import conf_mgr  # noqa: E402
 
-from karp5.tests import auth_server
 from karp5.tests._test_config import TestConfig
 
 
@@ -41,7 +40,6 @@ def fixture_app():
 
 
 from karp5.tests.common_fixtures import (
-    fixture_app_w_auth,
     client,
     fixture_cli,
     fixture_cli_w_es,
@@ -86,10 +84,10 @@ def fixture_cli_w_large_lex(cli_w_es):
 
 
 @pytest.fixture(name="app_w_panacea", scope="session")
-def fixture_app_w_panacea(app_w_auth, cli_w_panacea):
+def fixture_app_w_panacea(app, cli_w_panacea):
     if cli_w_panacea is None:
         pytest.skip()
-    return app_w_auth
+    return app
 
 
 @pytest.fixture(scope="session")
@@ -98,10 +96,10 @@ def client_w_panacea(app_w_panacea):
 
 
 @pytest.fixture(name="app_w_foo", scope="session")
-def fixture_app_w_foo(app_w_auth, cli_w_foo):
+def fixture_app_w_foo(app, cli_w_foo):
     if cli_w_foo is None:
         pytest.skip()
-    return app_w_auth
+    return app
 
 
 @pytest.fixture(scope="session")
@@ -110,10 +108,10 @@ def client_w_foo(app_w_foo):
 
 
 @pytest.fixture(name="app_w_large_lex", scope="session")
-def fixture_app_w_large_lex(app_w_auth, cli_w_large_lex):
+def fixture_app_w_large_lex(app, cli_w_large_lex):
     if cli_w_large_lex is None:
         pytest.skip()
-    return app_w_auth
+    return app
 
 
 @pytest.fixture(scope="session")

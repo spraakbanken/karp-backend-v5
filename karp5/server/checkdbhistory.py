@@ -8,7 +8,7 @@ from sb_json_tools import jsondiff
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
-from karp5.server.auth import validate_user
+from karp5.context import auth
 
 from karp5.dbhandler.dbhandler import dbselect
 
@@ -17,11 +17,8 @@ _logger = logging.getLogger("karp5")
 
 def checkhistory(lexicon, lid):
     """ Shows the update log of an entry """
-    auth, permitted = validate_user(mode="read")
-    settings = {
-        "allowed": permitted,
-        "mode": conf_mgr.get_lexicon_mode(lexicon)
-    }
+    _, permitted = auth.validate_user(mode="read")
+    settings = {"allowed": permitted, "mode": conf_mgr.get_lexicon_mode(lexicon)}
     size = helpers.get_size(default=10, settings=settings)
     return jsonify({"updates": dbselect(lexicon, _id=lid, max_hits=size)})
 
@@ -29,7 +26,7 @@ def checkhistory(lexicon, lid):
 def checkuserhistory():
     """ Shows the updates a user has made """
     try:
-        auth, permitted = validate_user()
+        _, permitted = auth.validate_user()
         user = helpers.get_user()
     except AttributeError:
         raise errors.KarpGeneralError("No user name provided", "checkuserhistory")
@@ -50,7 +47,7 @@ def checkuserhistory():
 def checklexiconhistory(lexicon, date):
     """ Shows the updates on one lexicon """
     try:
-        auth, permitted = validate_user()
+        _, permitted = auth.validate_user()
         if lexicon not in permitted:
             raise errors.KarpAuthenticationError(
                 "You are not allowed to update lexicon %s" % lexicon
@@ -64,12 +61,7 @@ def checklexiconhistory(lexicon, date):
         return jsonify(
             {
                 "resource": lexicon,
-                "updates": dbselect(
-                    lexicon,
-                    status=status,
-                    from_date=date,
-                    max_hits=size
-                ),
+                "updates": dbselect(lexicon, status=status, from_date=date, max_hits=size),
             }
         )
     except Exception as e:
@@ -77,7 +69,7 @@ def checklexiconhistory(lexicon, date):
 
 
 def comparejson(lexicon, _id, fromdate="", todate=""):
-    auth, permitted = validate_user()
+    _, permitted = auth.validate_user()
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError("You are not allowed to update")
 

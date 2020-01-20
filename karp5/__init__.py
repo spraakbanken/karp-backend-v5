@@ -1,5 +1,3 @@
-
-
 __version__ = "__version__ = '5.20.1'"
 
 import pkg_resources
@@ -40,6 +38,12 @@ def create_app(config_class=Config):
 
     # if app.config['ELASTICSEARCH_URL']:
     #     conf_mgr.override_elastic_url(app.config['ELASTICSEARCH_URL'])
+    from karp5.context import auth
+
+    if config_class.TESTING:
+        auth.init("dummy")
+    else:
+        auth.init("std")
 
     from karp5.server.helper import flaskhelper
 
@@ -56,9 +60,7 @@ def create_app(config_class=Config):
     logger.setLevel(app.config["LOG_LEVEL"])
     print("log_fmt = {}".format(app.config["LOG_FMT"]))
     print("log_datefmt = {}".format(app.config["LOG_DATEFMT"]))
-    formatter = logging.Formatter(
-        fmt=app.config["LOG_FMT"], datefmt=app.config["LOG_DATEFMT"]
-    )
+    formatter = logging.Formatter(fmt=app.config["LOG_FMT"], datefmt=app.config["LOG_DATEFMT"])
 
     request_logger = logging.getLogger("karp5.requests")
     request_logger.setLevel(logging.INFO)
@@ -88,10 +90,7 @@ def create_app(config_class=Config):
         logger.addHandler(file_handler)
 
         request_file_handler = logging.handlers.TimedRotatingFileHandler(
-            os.path.join(log_dir, "karp5.requests.log"),
-            when="d",
-            interval=1,
-            backupCount=0,
+            os.path.join(log_dir, "karp5.requests.log"), when="d", interval=1, backupCount=0,
         )
         request_file_handler.setFormatter(request_formatter)
         request_logger.addHandler(request_file_handler)
