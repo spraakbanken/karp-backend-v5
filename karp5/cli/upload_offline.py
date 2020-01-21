@@ -7,8 +7,6 @@ import os
 import sys
 from typing import IO, Optional, List, Union
 
-import six
-
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
 
@@ -19,7 +17,6 @@ from sb_json_tools import json_iter
 import karp5.dbhandler.dbhandler as db
 from karp5.config import mgr as conf_mgr
 from karp5 import document
-from karp5.util.debug import print_err
 from karp5.server.translator import bulkify
 
 
@@ -49,7 +46,9 @@ def index_create(mode, index):
     data = conf_mgr.get_mapping(mode)
     try:
         _logger.debug("Creating index '%s' for mode '%s' with es=%s", index, mode, es)
-        ans = es.indices.create(index=index, body=data, request_timeout=30)
+        ans = es.indices.create(  # pylint: disable=unexpected-keyword-arg
+            index=index, body=data, request_timeout=30
+        )
     except esExceptions.TransportError as e:
         _logger.exception(e)
         raise Exception("Could not create index")
@@ -190,32 +189,31 @@ def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
     return out_data
 
 
-def get_entries_to_keep_from_sql(lexicons):
-    to_keep = {}
-    if isinstance(lexicons, six.text_type):
-        lexicons = [lexicons]
+# def get_entries_to_keep_from_sql(lexicons):
+#     to_keep = {}
+#     if isinstance(lexicons, six.text_type):
+#         lexicons = [lexicons]
 
-    for lex in lexicons:
-        engine, db_entry = db.get_engine(lex, echo=False)
-        for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
-            _id = entry["id"]
-            if _id:  # don't add things without id, they are errors
-                if _id in to_keep:
-                    last = to_keep[_id]["date"]
-                    if last < entry["date"]:
-                        _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
-                        to_keep[_id] = entry
-                else:
-                    to_keep[_id] = entry
-            else:
-                _logger.debug("|sql no id| Found entry without id:")
-                _logger.debug("|sql no id| %s", entry)
-    # _logger.debug("to_keep = %s", to_keep)
-    return to_keep
+#     for lex in lexicons:
+#         engine, db_entry = db.get_engine(lex, echo=False)
+#         for entry in db.dbselect(lex, engine=engine, db_entry=db_entry, max_hits=-1):
+#             _id = entry["id"]
+#             if _id:  # don't add things without id, they are errors
+#                 if _id in to_keep:
+#                     last = to_keep[_id]["date"]
+#                     if last < entry["date"]:
+#                         _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
+#                         to_keep[_id] = entry
+#                 else:
+#                     to_keep[_id] = entry
+#             else:
+#                 _logger.warning("|sql no id| Found entry without id:")
+#                 _logger.warning("|sql no id| %s", entry)
+#     # _logger.debug("to_keep = %s", to_keep)
+#     return to_keep
 
 
-def recover(alias, suffix, lexicon, create_new=True):
-    # TODO test this
+def recover(alias, suffix, lexicon, create_new=True) -> bool:
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
@@ -223,7 +221,7 @@ def recover(alias, suffix, lexicon, create_new=True):
     # if not lexicon:
     #     lexicon = conf.keys()
     index = make_indexname(alias, suffix)
-    typ = conf_mgr.get_mode_type(alias)
+    index_type = conf_mgr.get_mode_type(alias)
     print("Save %s to %s" % (lexicon or "all", index))
 
     es = conf_mgr.elastic(alias)
@@ -231,46 +229,43 @@ def recover(alias, suffix, lexicon, create_new=True):
         # Create the index
         index_create(alias, index)
 
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-    print(len(to_keep), "entries to keep")
+    # to_keep = get_entries_to_keep_from_sql(lexicon)
+    # print(len(to_keep), "entries to keep")
+    entries = db.get_entries_to_keep_gen(lexicon)
 
-    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index, "type": typ})
-    try:
-        ok, err = es_helpers.bulk(es, data, request_timeout=30)
-    except Exception:
-        print(data)
-    if err:
-        msg = "Error during upload. %s documents successfully uploaded. \
-               Message: %s.\n"
-        raise Exception(msg % (ok, "\n".join(err)))
-    print("recovery done")
-
-
-def recover_add(index, suffix, lexicon):
-    # TODO test this
-    """ Recovers the data to ES, uses SQL as the trusted base version.
-        Find the last version of every SQL entry and send this to ES.
-        Adds the specified lexicons to an existing index
-    """
-
-    es = conf_mgr.elastic(index)
-    print("Save %s to %s" % (lexicon, index))
-
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-    print(len(to_keep), "entries to keep")
-
-    data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index})
+    data = bulkify.bulkify_from_sql(entries, index, index_type)
     ok, err = es_helpers.bulk(es, data, request_timeout=30)
     if err:
         msg = "Error during upload. %s documents successfully uploaded. \
                Message: %s.\n"
         raise Exception(msg % (ok, "\n".join(err)))
     print("recovery done")
+    return True
 
 
-def printlatestversion(
-    lexicon: str, debug: bool = True, with_id: bool = False, fp: Optional[IO] = None
-):
+# def recover_add(index, suffix, lexicon):
+#     # xTODO test this
+#     """ Recovers the data to ES, uses SQL as the trusted base version.
+#         Find the last version of every SQL entry and send this to ES.
+#         Adds the specified lexicons to an existing index
+#     """
+
+#     es = conf_mgr.elastic(index)
+#     print("Save %s to %s" % (lexicon, index))
+
+#     to_keep = get_entries_to_keep_from_sql(lexicon)
+#     print(len(to_keep), "entries to keep")
+
+#     data = bulkify.bulkify_sql(to_keep, bulk_info={"index": index})
+#     ok, err = es_helpers.bulk(es, data, request_timeout=30)
+#     if err:
+#         msg = "Error during upload. %s documents successfully uploaded. \
+#                Message: %s.\n"
+#         raise Exception(msg % (ok, "\n".join(err)))
+#     print("recovery done")
+
+
+def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO] = None):
     """Dump the latest entries for a lexicon (or mode?).
 
        If with_id=True, then the results can be imported from cli.
@@ -285,21 +280,18 @@ def printlatestversion(
     if fp is None:
         fp = sys.stdout
 
-    to_keep = get_entries_to_keep_from_sql(lexicon)
-
-    if debug:
-        print_err("count", len(to_keep))
+    # to_keep = get_entries_to_keep_from_sql(lexicon)
+    entries = db.get_entries_to_keep_gen(lexicon)
 
     if with_id:
-        gen_out = (
-            {"_id": i, "_source": document.doc_to_es(val["doc"], lexicon, "bulk")}
-            for i, val in to_keep.items()
-            if val["status"] != "removed"
+        entries = (
+            {"_id": entry["id"], "_source": document.doc_to_es(entry["doc"], lexicon, "bulk")}
+            for entry in entries
         )
     else:
-        gen_out = (val["doc"] for val in to_keep.values() if val["status"] != "removed")
+        entries = (entry["doc"] for entry in entries)
 
-    json_iter.dump(gen_out, fp)
+    json_iter.dump(entries, fp)
 
 
 def publish_mode(mode, suffix):
@@ -316,48 +308,51 @@ def publish_mode(mode, suffix):
 
     try:
         print("remove old aliases")
-        es.indices.update_aliases('{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30)
-    except Exception:
+        es.indices.update_aliases(  # pylint: disable=unexpected-keyword-arg
+            '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
+        )  # pylint: disable=unexpected-keyword-arg
+    except esExceptions.ElasticsearchException:
         print("No previous aliased indices, could not do remove any")
         print(rem_actions)
 
-    return es.indices.update_aliases(
+    return es.indices.update_aliases(  # pylint: disable=unexpected-keyword-arg
         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
     )
 
 
-def publish_group(group, suffix):
-    # TODO for some reason, this sometimes removes siblings
-    # of the group from an mode. Eg. publish_group(saldo)
-    # may lead to 'saldogroup' not containing 'external'.
-    es = conf_mgr.elastic(group)
-    print(group, suffix)
-    if not conf_mgr.modes.get(group)["is_index"]:
-        for subgroup in conf_mgr.modes.get(group)["groups"]:
-            publish_group(subgroup, suffix)
+# TODO Is this used?
+# def publish_group(group, suffix):
+#     # xTODO for some reason, this sometimes removes siblings
+#     # of the group from an mode. Eg. publish_group(saldo)
+#     # may lead to 'saldogroup' not containing 'external'.
+#     es = conf_mgr.elastic(group)
+#     print(group, suffix)
+#     if not conf_mgr.modes.get(group)["is_index"]:
+#         for subgroup in conf_mgr.modes.get(group)["groups"]:
+#             publish_group(subgroup, suffix)
 
-    else:
-        name = make_indexname(group, suffix)
-        print("Publish %s as %s" % (name, group))
-        add_actions = []
-        rem_actions = []
-        for parent in conf_mgr.get_modes_that_include_mode(group):
-            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent))
-            rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent))
+#     else:
+#         name = make_indexname(group, suffix)
+#         print("Publish %s as %s" % (name, group))
+#         add_actions = []
+#         rem_actions = []
+#         for parent in conf_mgr.get_modes_that_include_mode(group):
+#             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (name, parent))
+#             rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (group, parent))
 
-        print("remove", rem_actions)
-        print("add", add_actions)
-        try:
-            print("remove old aliases")
-            es.indices.update_aliases(
-                '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
-            )
-        except Exception:
-            print("No previous aliased indices, could not do remove any")
-            print(rem_actions)
-        return es.indices.update_aliases(
-            '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
-        )
+#         print("remove", rem_actions)
+#         print("add", add_actions)
+#         try:
+#             print("remove old aliases")
+#             es.indices.update_aliases(
+#                 '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
+#             )
+#         except Exception:
+#             print("No previous aliased indices, could not do remove any")
+#             print(rem_actions)
+#         return es.indices.update_aliases(
+#             '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
+#         )
 
 
 def create_empty_index(mode, suffix):
@@ -588,8 +583,6 @@ def copy_alias_to_new_index(
             errors.append(item)
         else:
             success += 1
-    # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    # ans = es_helpers.reindex(es, source_index, target_index)
     if len(errors) == 0:
         print("Done! Reindexed {} entries".format(success))
         return True, None
@@ -638,8 +631,6 @@ def reindex_help(alias, source_index, target_index, create_index=True):
             success += 1
             print("ok = {},item = {}".format(ok, item))
         total += 1
-    # TODO when elasticsearch is updated to >=2.3: use es.reindex instead
-    # ans = es_helpers.reindex(es, source_index, target_index)
     if success == total:
         _logger.info("Done! Reindexed %s entries", total)
         return True
@@ -652,30 +643,32 @@ def reindex_help(alias, source_index, target_index, create_index=True):
         return False
 
 
-def publish_all(suffix):
-    for alias, aliasconf in conf_mgr.modes.items():
-        # Only publish if it is a group, meta-aliases will point to the correct
-        # subaliases anyway.
-        if aliasconf["is_index"]:
-            publish_group(alias, suffix)
+# TODO Is this used?
+# def publish_all(suffix):
+#     for alias, aliasconf in conf_mgr.modes.items():
+#         # Only publish if it is a group, meta-aliases will point to the correct
+#         # subaliases anyway.
+#         if aliasconf["is_index"]:
+#             publish_group(alias, suffix)
 
 
-def make_structure():
-    add_actions = []
-    # TODO does not work, what is confelastic?
-    for alias, aliasconf in conf_mgr.modes.items():
-        # Only publish if it is a group, meta-aliases will point to the correct
-        # subaliases anyway.
-        es = conf_mgr.elastic(alias)
-        if not aliasconf.get("is_index"):
-            # if it is a mode (not just an index), remove the old pointers
-            add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
-        for group in aliasconf.get("groups", []):
-            add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias))
+# TODO Is this used?
+# def make_structure():
+#     add_actions = []
+#     # xTODO does not work, what is confelastic?
+#     for alias, aliasconf in conf_mgr.modes.items():
+#         # Only publish if it is a group, meta-aliases will point to the correct
+#         # subaliases anyway.
+#         es = conf_mgr.elastic(alias)
+#         if not aliasconf.get("is_index"):
+#             # if it is a mode (not just an index), remove the old pointers
+#             add_actions.append('{"remove": {"index":"*", "alias":"%s"}}' % alias)
+#         for group in aliasconf.get("groups", []):
+#             add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (group, alias))
 
-    return es.indices.update_aliases(
-        '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
-    )
+#     return es.indices.update_aliases(
+#         '{"actions" : [%s]}' % ",".join(add_actions), request_timeout=30
+#     )
 
 
 def delete_all():
@@ -684,7 +677,7 @@ def delete_all():
         es = conf_mgr.elastic(alias)
         try:
             es.indices.delete("*")
-        except Exception:
+        except esExceptions.ElasticsearchException:
             print("could not delete es data form mode %s" % alias)
         try:
             # delete all our lexicons in sql
@@ -701,7 +694,7 @@ def delete_mode(mode):
     try:
         # print('delete', '%s*' % mode)
         es.indices.delete("%s*" % mode)
-    except Exception:
+    except esExceptions.ElasticsearchException:
         print("could not delete es data form mode %s" % mode)
     try:
         # delete all our lexicons in sql

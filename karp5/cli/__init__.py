@@ -189,9 +189,9 @@ def printlatestversion(lexicon, output):
 def exportlatestversion(lexicon, output):
     if output:
         with open(output, "w") as fp:
-            upload.printlatestversion(lexicon, debug=False, with_id=True, fp=fp)
+            upload.printlatestversion(lexicon, with_id=True, fp=fp)
     else:
-        upload.printlatestversion(lexicon, debug=False, with_id=True)
+        upload.printlatestversion(lexicon, with_id=True)
 
 
 # Commented since dangerous!

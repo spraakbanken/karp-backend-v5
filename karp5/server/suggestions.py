@@ -1,4 +1,3 @@
-
 from builtins import str
 from elasticsearch import exceptions as esExceptions
 from karp5 import errors
@@ -6,7 +5,7 @@ from karp5.dbhandler.dbhandler import dbselect
 from flask import request, jsonify
 from json import loads
 import logging
-from karp5.server.auth import validate_user
+from karp5.context import auth
 import karp5.server.helper.helpers as helpers
 from karp5.config import mgr as conf_mgr
 import karp5.server.update as update
@@ -20,7 +19,7 @@ def suggest(lexicon, _id):
 
 
 def checksuggestions():
-    auth, permitted = validate_user()
+    _, permitted = auth.validate_user()
     settings = {"allowed": permitted}
     helpers.get_querysettings(settings)
     size = settings.get("size", 50)
@@ -33,9 +32,7 @@ def checksuggestions():
     for lexicon in lexicons:
         # add updates from lexicons that are kept in sql
         if conf_mgr.get_lexicon_sql(lexicon):
-            updates.extend(
-                dbselect(lexicon, suggestion=True, status=status, max_hits=size)
-            )
+            updates.extend(dbselect(lexicon, suggestion=True, status=status, max_hits=size))
 
     return jsonify({"updates": updates})
 
@@ -60,9 +57,7 @@ def acceptmodified(lexicon, _id):
         request.get_data()
         data = loads(request.data)
         modified_doc = data
-        ans = savesuggestion(
-            lexicon, _id, status="accepted_modified", source=modified_doc
-        )
+        ans = savesuggestion(lexicon, _id, status="accepted_modified", source=modified_doc)
         return jsonify(ans)
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         _logger.exception(e)
@@ -84,13 +79,11 @@ def savesuggestion(lexicon, _id, status="accepted", source=""):
     sugg_index, typ = conf_mgr.get_lexicon_suggindex(lexicon)
     es = conf_mgr.elastic(lexicon=lexicon)
     suggestion = es.get(index=sugg_index, doc_type=typ, id=_id)
-    auth, permitted = validate_user()
+    _, permitted = auth.validate_user()
     set_lexicon = suggestion["_source"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, "rejectsuggestion", _id)
     if lexicon not in permitted:
-        raise errors.KarpAuthenticationError(
-            "You are not allowed to update lexicon %s" % lexicon
-        )
+        raise errors.KarpAuthenticationError("You are not allowed to update lexicon %s" % lexicon)
 
     origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
     origid = origin["origid"]
@@ -127,16 +120,12 @@ def rejectsuggestion(lexicon, _id):
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
     except Exception as e:
         # if error occurs here, the suggestion is not in sql
-        raise errors.KarpDbError(
-            "Rejection not found", "Rejection not found: %s" % str(e)
-        )
-    auth, permitted = validate_user()
+        raise errors.KarpDbError("Rejection not found", "Rejection not found: %s" % str(e))
+    _, permitted = auth.validate_user()
     set_lexicon = origin["doc"]["lexiconName"]
     helpers.check_lexiconName(lexicon, set_lexicon, "rejectsuggestion", _id)
     if lexicon not in permitted:
-        raise errors.KarpAuthenticationError(
-            "You are not allowed to update lexicon %s" % lexicon
-        )
+        raise errors.KarpAuthenticationError("You are not allowed to update lexicon %s" % lexicon)
     try:
         origin = dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)[0]
         # delete from suggestion index
@@ -169,8 +158,6 @@ def rejectsuggestion(lexicon, _id):
 def checksuggestion(lexicon, _id):
     # TODO add exception handling
     try:
-        return jsonify(
-            {"updates": dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)}
-        )
+        return jsonify({"updates": dbselect(lexicon, suggestion=True, _id=_id, max_hits=1)})
     except Exception as e:
         raise errors.KarpGeneralError(str(e))

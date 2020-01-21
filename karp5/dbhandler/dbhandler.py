@@ -4,10 +4,11 @@ Connect to the sql data base and interact with it.
 Emails the admins (config/config.json) if an error occurs.
 """
 
-from builtins import str
 import datetime
 import json
 import logging
+from typing import List, Union
+
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
 
@@ -28,7 +29,7 @@ STATUS_CHANGE = sql.types.Enum("added", "changed", "removed", "imported")
 STATUS_SUGG = sql.types.Enum("waiting", "accepted", "rejected", "accepted_modified")
 
 
-def get_engine(lexicon, mode="", suggestion=False, echo=True):
+def get_engine(lexicon, mode=None, suggestion=False, echo=True):
     if mode:
         dburl = conf_mgr.get_mode_sql(mode)
     else:
@@ -274,6 +275,72 @@ def dbselect(
         return []
 
 
+def dbselect_gen(
+    lexicon,
+    user="",
+    _id="",
+    from_date="",
+    to_date="",
+    exact_date="",
+    status=None,
+    max_hits=10,
+    engine=None,
+    db_entry=None,
+    suggestion=False,
+    mode="",
+):
+    # does not accept a list of lexicons anymore
+    if status is None:
+        status = []
+    try:
+        if engine is None or db_entry is None:
+            engine, db_entry = get_engine(lexicon, mode=mode, suggestion=suggestion)
+
+        conn = engine.connect()
+        operands = []
+        if user:
+            operands.append(db_entry.c.user == user)
+        if _id:
+            operands.append(db_entry.c.id == _id)
+        if from_date:
+            operands.append(db_entry.c.date >= from_date)
+        if to_date:
+            operands.append(db_entry.c.date <= to_date)
+        if exact_date:
+            operands.append(db_entry.c.date == exact_date)
+        if lexicon:
+            operands.append(db_entry.c.lexicon == lexicon)
+        add_list_operands([(status, db_entry.c.status)], operands)
+        selects = sql.select([db_entry]).where(sql.and_(*operands))
+        if max_hits > 0:
+            selects = selects.limit(max_hits)  # only get the first hits
+        selects = selects.order_by(db_entry.c.date.desc())  # sort by date
+        _logger.info("selects = %s", selects)
+        for entry in conn.execute(selects):
+            # transform the date into a string now to enforce isoformat
+            version = 8 if suggestion else 7
+            obj = {
+                "id": entry[0],
+                "date": str(entry[1]),
+                "user": entry[2],
+                "doc": json.loads(entry[3]),
+                "lexicon": entry[5],
+                "message": entry[4],
+                "status": entry[6],
+                "version": entry[version],
+            }
+            if suggestion:
+                obj["acceptmessage"] = entry[9]
+                obj["origid"] = entry[7]
+            yield obj
+        conn.close()
+        # return res
+
+    except SQLNull(lexicon):
+        _logger.warning("Attempt to search for %s in SQL, no db available", lexicon)
+        return
+
+
 def add_list_operands(to_add, operands):
     for vals, row_val in to_add:
         disjunct_operands = []
@@ -285,9 +352,30 @@ def add_list_operands(to_add, operands):
         operands.append(sql.or_(*disjunct_operands))
 
 
-def modifysuggestion(
-    _id, lexicon, msg="", status="", origid="", engine=None, db_entry=None
-):
+def get_entries_to_keep_gen(lexicon, *, to_date=None):
+    engine, db_entry = get_engine(lexicon, echo=False)
+
+    _logger.debug("exporting entries from %s ", lexicon)
+
+    dbselect_kwargs = {"engine": engine, "db_entry": db_entry, "max_hits": -1}
+    if to_date is not None:
+        dbselect_kwargs["to_date"] = to_date
+
+    old_id = None
+    for entry in dbselect_gen(lexicon, **dbselect_kwargs):
+        if entry["id"] == old_id:
+            print(f"skipping entry = {entry}")
+            continue
+        elif entry["status"] == "removed":
+            print(f"skipping entry = {entry}")
+            old_id = entry["id"]
+            continue
+        else:
+            old_id = entry["id"]
+            yield entry
+
+
+def modifysuggestion(_id, lexicon, msg="", status="", origid="", engine=None, db_entry=None):
     try:
         if engine is None or db_entry is None:
             engine, db_entry = get_engine(lexicon, suggestion=True)
@@ -353,6 +441,50 @@ def deletebulk(lexicon="", user=""):
 
     conn.execute(dbtable.delete().where(choice))
     conn.close()
+
+
+def get_entries_to_keep(lexicons: Union[str, List[str]], *, to_date=None, exclude_states=None):
+    """Retrieve entries from one or several lexicons to keep.
+
+    Arguments:
+        lexicons {Union[str, List[str]]} -- lexicon or lexicons to export
+
+    Keyword Arguments:
+        to_date {[type]} -- Optional date to limit the search (default: {None})
+
+    Returns:
+        Iterable -- [descrip
+    """
+    to_keep = {}
+    if isinstance(lexicons, str):
+        lexicons = [lexicons]
+
+    for lex in lexicons:
+        engine, db_entry = get_engine(lex, echo=False)
+        dbselect_kwargs = {"engine": engine, "db_entry": db_entry, "max_hits": -1}
+        if to_date:
+            dbselect_kwargs["to_date"] = to_date
+        for entry in dbselect(lex, **dbselect_kwargs):
+            _id = entry["id"]
+            if _id:  # don't add things without id, they are errors
+                if _id in to_keep:
+                    last = to_keep[_id]["date"]
+                    if last < entry["date"]:
+                        _logger.debug("|get_entries_to_keep_from_sql| Update entry.")
+                        to_keep[_id] = entry
+                else:
+                    to_keep[_id] = entry
+            else:
+                _logger.warning("|sql no id| Found entry without id:")
+                _logger.warning("|sql no id| %s", entry)
+    # _logger.debug("to_keep = %s", to_keep)
+    if exclude_states:
+        if isinstance(exclude_states, str):
+            exclude_states = [exclude_states]
+        gen_out = ((i, v) for i, v in to_keep.items() if v["status"] not in exclude_states)
+    else:
+        gen_out = to_keep.items()
+    return gen_out
 
 
 class SQLNull(Exception):

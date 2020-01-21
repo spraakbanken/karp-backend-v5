@@ -11,7 +11,7 @@ from flask import request, jsonify
 from json import dumps
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
-import karp5.server.auth as auth
+from karp5.context import auth
 import karp5.server.helper.helpers as helpers
 import karp5.server.translator.validatejson as validate
 from karp5.document import auto_update_document
@@ -31,7 +31,7 @@ def checkuser():
 def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
     # delete by id
     try:
-        msg = request.args.get("message", ["removed"])
+        msg = request.args.get("message", "removed")
         es, index, typ = helpers.get_update_index(lexicon, suggestion=suggestion)
         ans_entry = es.get(index=index, doc_type=typ, id=_id)
         lexiconName = ans_entry["_source"]["lexiconName"]
@@ -51,12 +51,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
             # _logger.debug("Delete " + msg)
             _logger.debug("delete from sql.\nmsg %s\nans_entry %s", msg, ans_entry)
             db_loaded, db_error = update_db(
-                _id,
-                ans_entry["_source"],
-                helpers.get_user(),
-                msg,
-                lexiconName,
-                status="removed",
+                _id, ans_entry["_source"], helpers.get_user(), msg, lexiconName, status="removed",
             )
             _logger.debug("updated db %s %s", db_loaded, db_error)
 
@@ -68,9 +63,7 @@ def delete_entry(lexicon, _id, sql=False, live=True, suggestion=False):
         # This exception has errors instead of error
         handle_update_error(e, {"id": _id}, helpers.get_user(), "delete")
         err = [er["create"]["error"] for er in e.errors]
-        raise errors.KarpElasticSearchError(
-            "Error during deletion %s.\n" % "\n".join(err)
-        )
+        raise errors.KarpElasticSearchError("Error during deletion %s.\n" % "\n".join(err))
 
     except (esExceptions.TransportError, esExceptions.RequestError) as e:
         # elasticsearch-py throws errors (TransportError)
@@ -130,9 +123,7 @@ def update_doc(lexicon, _id, data=None, live=True):
         _logger.warning("Looking for entry at the wrong place:")
         _logger.exception(e)
         msg = "The entry %s in lexicon %s was not found" % (_id, lexicon)
-        raise errors.KarpElasticSearchError(
-            msg, debug_msg=msg + " in lexicon " + lexicon
-        )
+        raise errors.KarpElasticSearchError(msg, debug_msg=msg + " in lexicon " + lexicon)
 
     if "lexiconName" in origin["_source"]:
         lexiconName = origin["_source"]["lexiconName"]
@@ -146,8 +137,7 @@ def update_doc(lexicon, _id, data=None, live=True):
 
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError(
-            "You are not allowed to modify the "
-            "lexicon %s, only %s" % (lexicon, permitted),
+            "You are not allowed to modify the " "lexicon %s, only %s" % (lexicon, permitted),
             status_code=403,
         )
 
@@ -160,26 +150,17 @@ def update_doc(lexicon, _id, data=None, live=True):
     try:
         if version is not None and version != -1:
             ans = es.index(
-                index=index,
-                doc_type=typ,
-                id=_id,
-                version=version,
-                body=es_doc,
-                op_type="index",
+                index=index, doc_type=typ, id=_id, version=version, body=es_doc, op_type="index",
             )
         else:
-            ans = es.index(
-                index=index, doc_type=typ, id=_id, body=es_doc, op_type="index"
-            )
+            ans = es.index(index=index, doc_type=typ, id=_id, body=es_doc, op_type="index")
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         # Transport error might be version conflict
         _logger.exception(e)
         _logger.debug("index: %s, type: %s, id: %s", index, typ, _id)
         handle_update_error(e, {"id": _id, "data": data}, user, "update")
-        raise errors.KarpElasticSearchError(
-            "Error during update. Message: %s.\n" % str(e)
-        )
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n" % str(e))
     except Exception as e:
         handle_update_error(e, {"id": _id, "data": data}, user, "update")
         raise errors.KarpElasticSearchError("Unexpected error during update.")
@@ -270,17 +251,13 @@ def add_multi_doc(lexicon, index=""):
             source = bulk[ix].get("_source")
             if isinstance(source, dict):
                 source = dumps(source)
-            sql_bulk.append(
-                (_id, source, user, "multi add - %s" % message, lexicon, "imported")
-            )
+            sql_bulk.append((_id, source, user, "multi add - %s" % message, lexicon, "imported"))
             ids.append(_id)
             ok += 1
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, "add")
-        raise errors.KarpElasticSearchError(
-            "Error during update. Message: %s.\n" % str(e)
-        )
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n" % str(e))
 
     db_loaded, db_error = db.update_bulk(lexicon, sql_bulk)
     if db_error:
@@ -313,9 +290,7 @@ def add_doc(lexicon, index="", _id=None, suggestion=False, data=None, live=True)
 
     # lexiconOrder = data_doc.get("lexiconOrder", None)
     if not lexiconName:
-        raise errors.KarpParsingError(
-            "The field lexiconName is empty, " "although it is required."
-        )
+        raise errors.KarpParsingError("The field lexiconName is empty, " "although it is required.")
 
     if suggestion:
         orgin_id = _id or True  # save as reference in db
@@ -357,9 +332,7 @@ def add_doc(lexicon, index="", _id=None, suggestion=False, data=None, live=True)
 
     except (esExceptions.RequestError, esExceptions.TransportError) as e:
         handle_update_error(e, data, user, "add")
-        raise errors.KarpElasticSearchError(
-            "Error during update. Message: %s.\n" % str(e)
-        )
+        raise errors.KarpElasticSearchError("Error during update. Message: %s.\n" % str(e))
     except Exception as e:
         raise errors.KarpGeneralError(str(e))
 

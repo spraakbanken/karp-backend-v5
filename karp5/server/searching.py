@@ -2,6 +2,7 @@
 """ Methods for querying the data base """
 import functools
 import copy
+import itertools
 import elasticsearch
 import logging
 import re
@@ -11,7 +12,7 @@ import json
 
 import karp5.dbhandler.dbhandler as db
 from karp5 import errors
-from karp5.server.auth import validate_user
+from karp5.context import auth
 from karp5.config import mgr as conf_mgr
 import karp5.server.helper.helpers as helpers
 
@@ -46,8 +47,9 @@ def query(page=0):
 
 def requestquery(page=0):
     """ The Function for querying our database """
+    _logger.debug("|requestquery| page = %d", page)
     # page is assumed to be 0 indexed here
-    auth, permitted = validate_user(mode="read")
+    auth_response, permitted = auth.validate_user(mode="read")
     try:
         # default values
         default = {"size": 25, "page": page, "version": "true"}
@@ -82,7 +84,7 @@ def requestquery(page=0):
     # size = min(settings['size'], setupconf.max_page)
     size = settings["size"]
     index, typ = conf_mgr.get_mode_index(mode)
-    exclude = conf_mgr.searchfield(mode, "secret_fields") if not auth else []
+    exclude = conf_mgr.searchfield(mode, "secret_fields") if not auth_response else []
     ans = parser.adapt_query(
         size,
         start,
@@ -135,10 +137,10 @@ def sortorder(settings, mode, querycommand):
 
 def querycount(page=0):
     # TODO error if buckets is used here
-    # TODO validate_user is also done once in requestquery
+    # TODO auth.validate_user is also done once in requestquery
     # but since we need the permitted dict, it is called
     # here as well
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     try:
         # TODO buckets should be gathered from some config
         stat_size = request.args.get("statsize", conf_mgr.app_config.MAX_PAGE)
@@ -186,7 +188,7 @@ def querycount(page=0):
 
 
 def test():
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     try:
         # default
         settings = parser.make_settings(permitted, {"size": 25, "page": 0})
@@ -199,7 +201,7 @@ def test():
 
 
 def explain():
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     try:
         # default
         settings = parser.make_settings(permitted, {"size": 25, "page": 0})
@@ -218,14 +220,14 @@ def explain():
 def minientry():
     """ Returns the counts and stats for the query """
     max_page = conf_mgr.app_config.MINIENTRY_PAGE
-    auth, permitted = validate_user(mode="read")
+    auth_response, permitted = auth.validate_user(mode="read")
     try:
         mode = parser.get_mode()
         default = {"show": conf_mgr.searchfield(mode, "minientry_fields"), "size": 25}
         settings = parser.make_settings(permitted, default)
         elasticq = parser.parse(settings)
         show = settings["show"]
-        if not auth:
+        if not auth_response:
             # show = show - exclude
             exclude = conf_mgr.searchfield(mode, "secret_fields")
             show = list(set(show).difference(exclude))
@@ -271,7 +273,7 @@ def minientry():
 
 
 def random():
-    auth, permitted = validate_user(mode="read")
+    auth_response, permitted = auth.validate_user(mode="read")
     try:
         mode = parser.get_mode()
         default = {"show": conf_mgr.searchfield(mode, "minientry_fields"), "size": 1}
@@ -283,7 +285,7 @@ def random():
         es_q = {"index": index, "body": elasticq, "size": settings["size"]}
         if settings["show"]:
             show = settings["show"]
-            if not auth:
+            if not auth_response:
                 # show = show - exclude
                 exclude = conf_mgr.searchfield(mode, "secret_fields")
                 show = list(set(show).difference(exclude))
@@ -307,7 +309,7 @@ def random():
 
 def statistics():
     """ Returns the counts and stats for the query """
-    auth, permitted = validate_user(mode="read")
+    auth_response, permitted = auth.validate_user(mode="read")
     try:
         mode = parser.get_mode()
         default = {
@@ -316,7 +318,7 @@ def statistics():
             "cardinality": False,
         }
         settings = parser.make_settings(permitted, default)
-        exclude = [] if auth else conf_mgr.searchfield(mode, "secret_fields")
+        exclude = [] if auth_response else conf_mgr.searchfield(mode, "secret_fields")
 
         elasticq, more = parser.statistics(settings, exclude=exclude)
         es = conf_mgr.elastic(mode=settings["mode"])
@@ -346,7 +348,7 @@ def statistics():
 
 def statlist():
     """ Returns the counts and stats for the query """
-    auth, permitted = validate_user(mode="read")
+    auth_response, permitted = auth.validate_user(mode="read")
     try:
         mode = parser.get_mode()
         _logger.debug("mode is %s", mode)
@@ -357,7 +359,7 @@ def statlist():
         }
         settings = parser.make_settings(permitted, default)
 
-        exclude = [] if auth else conf_mgr.searchfield(mode, "secret_fields")
+        exclude = [] if auth_response else conf_mgr.searchfield(mode, "secret_fields")
         elasticq, more = parser.statistics(settings, exclude=exclude, prefix="STAT_")
         es = conf_mgr.elastic(mode=settings["mode"])
         index, typ = conf_mgr.get_mode_index(settings["mode"])
@@ -442,7 +444,7 @@ def formatpost():
         raise errors.KarpParsingError(str(e))
 
     # set all allowed lexicons (to avoid authentication exception
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     # find the wanted format
     settings = parser.make_settings(permitted, {"size": 25})
     parser.parse_extra(settings)
@@ -477,7 +479,7 @@ def autocomplete():
         processed.
         The format of result depends on which flag that is set.
     """
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     # query = request.query_string
     try:
         settings = parser.make_settings(permitted, {"size": 1000})
@@ -601,7 +603,7 @@ def lexiconinfo(lexicon):
 # For debugging
 def testquery():
     """ Returns the query expressed in elastics search api """
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     try:
         # default
         settings = parser.make_settings(permitted, {"size": 25, "page": 0})
@@ -631,7 +633,7 @@ def get_context(lexicon):
     """ Find and return the alphabetically (or similar, as specified for the
     lexicon) context of a word/entry.
     """
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError(
             "You are not allowed to search the " "lexicon %s" % lexicon
@@ -817,7 +819,7 @@ def go_to_sortkey(hits, center_id):
 def export(lexicon):
     # TODO can user with only read permissions export all the lexicon?
     # (eg saol)
-    auth, permitted = validate_user(mode="read")
+    _, permitted = auth.validate_user(mode="read")
     if lexicon not in permitted:
         raise errors.KarpAuthenticationError(
             "You are not allowed to search the " "lexicon %s" % lexicon
@@ -838,50 +840,57 @@ def export(lexicon):
             default=datetime(1999, 0o1, 0o1, 23, 59),
         )
 
-    to_keep = {}
-    engine, db_entry = db.get_engine(lexicon, echo=False)
+    #to_keep = {}
+    # engine, db_entry = db.get_engine(lexicon, echo=False)
     _logger.debug("exporting entries from %s ", lexicon)
-    for entry in db.dbselect(
-        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
-    ):
-        _id = entry["id"]
-        if _id in to_keep:
-            last = to_keep[_id]["date"]
-            if last < entry["date"]:
-                to_keep[_id] = entry
-        else:
-            to_keep[_id] = entry
-
-    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
+    entries = db.get_entries_to_keep_gen(lexicon, to_date=date)
+#    for entry in db.dbselect(
+#        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
+#    ):
+#        _id = entry["id"]
+#        if _id in to_keep:
+#            last = to_keep[_id]["date"]
+#            if last < entry["date"]:
+#                to_keep[_id] = entry
+#        else:
+#            to_keep[_id] = entry
+#
+#    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
     size = settings["size"]
-    if type(size) is int:
-        ans = ans[:size]
+    if isinstance(size, int) and 0 <= size:
+        entries = itertools.islice(entries, size)
+        # ans = itertools.islice(ans, size)
+        #ans = ans[:size]
 
-    _logger.debug("exporting %s entries", len(ans))
+    # _logger.debug("exporting %s entries", len(ans))
     if settings.get("format", ""):
         toformat = settings.get("format")
         msg = "Unkown %s %s for mode %s" % ("format", toformat, mode)
         format_posts = conf_mgr.extra_src(mode, "exportformat", helpers.notdefined(msg))
-        lmf, err = format_posts(ans, lexicon, mode, toformat)
+        lmf, err = format_posts(entries, lexicon, mode, toformat)
         return Response(lmf, mimetype="text/xml")
 
     else:
-        divsize = 5000
-        if len(ans) < divsize:
-            _logger.debug("simply sending entries")
-            return jsonify({lexicon: ans})
+        # divsize = 5000
+        # if len(ans) < divsize:
+        #     _logger.debug("simply sending entries")
+        #     return jsonify({lexicon: ans})
 
         def gen():
-            start, stop = 0, divsize
+            # start, stop = 0, divsize
             yield '{"%s": [' % lexicon
-            while start < len(ans):
-                _logger.debug("chunk %s - %s" % (start, stop))
-                if start > 1:
+            for i, obj in enumerate(entries):
+                if i > 0:
                     yield ","
-                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
-                # yield json.dumps(ans[start:stop])
-                start = stop
-                stop += divsize
+                yield json.dumps(obj)
+#            while start < len(ans):
+#                _logger.debug("chunk %s - %s" % (start, stop))
+#                if start > 1:
+#                    yield ","
+#                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
+#                # yield json.dumps(ans[start:stop])
+#                start = stop
+#                stop += divsize
             yield "]}"
 
         _logger.debug("streaming entries")

@@ -81,5 +81,34 @@
         "boosts": [
             "foo"
         ]
+    },
+    "large_lex": {
+        "is_index": true,
+        "indexalias": "large_lex",
+        "secret_fields": [],
+        "src": "",
+        "suggestionalias": "barsuggestion",
+        "sort_by": [
+            "lexiconOrder",
+            "_score",
+            "foo.sort"
+        ],
+        "head_sort_field": [
+            "lexiconOrder"
+        ],
+        "autocomplete_field": [
+            "foo"
+        ],
+        "minientry_fields": [
+            "lexiconName",
+            "foo"
+        ],
+        "statistics_buckets": [
+            "lexiconName",
+            "foo"
+        ],
+        "boosts": [
+            "foo"
+        ]
     }
 }

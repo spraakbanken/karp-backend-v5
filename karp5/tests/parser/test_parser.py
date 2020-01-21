@@ -1,8 +1,8 @@
 from karp5.server.translator import parser
-from karp5.server import auth
+from karp5.context import auth
 
 args = {}
 
 
-def test_empty_call(app_w_auth):
+def test_empty_call(app):
     pass
