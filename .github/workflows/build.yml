@@ -46,12 +46,12 @@ jobs:
           pip install -e .[dev]
       - uses: actions/cache@v1
         name: Look for cached elasticsearch
-        id: cache-es-${{ matrix.es-version }}
+        id: cache-es
         with:
           path: elasticsearch-${{ matrix.es-version }}
           key: es-${{ matrix.es-version }}
       - name: Download elasticsearch
-        if: steps.cache-es-${{ matrix.es-version }}.outputs.cache-hit != 'true'
+        if: steps.cache-es.outputs.cache-hit != 'true'
         run: |
           wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${{ matrix.es-version }}.tar.gz
           tar -xzf elasticsearch-${{ matrix.es-version }}.tar.gz
