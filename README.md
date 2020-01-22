@@ -6,16 +6,13 @@
 [![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend)
 [![](https://github.com/spraakbanken/karp-backend/workflows/Build/badge.svg)](https://github.com/spraakbanken/karp-backend/actions)
 
-## Python 3 (branch: stage)
-[![Build Status](https://travis-ci.org/spraakbanken/karp-backend.svg?branch=stage)](https://travis-ci.org/spraakbanken/karp-backend)
-[![codecov](https://codecov.io/gh/spraakbanken/karp-backend/branch/stage/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend/branch/stage)
-
 **This package - code and documentation - is still under construction.**
 
 Karp is the lexical platform of Språkbanken.
+Now migrated to Python 3.6+.
 
 Karp in Docker
-=============
+==============
 For easy testing, use [Docker](https://docs.docker.com/engine/installation/) to run Karp-b.
 
 * Follow the steps given [here](https://github.com/spraakbanken/karp-docker)
