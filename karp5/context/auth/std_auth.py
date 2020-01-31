@@ -24,7 +24,7 @@ def check_user(force_lookup=False):
     """
     # Logged in, just return the lexicon list
     if not force_lookup and "username" in session:
-        _logger.debug("user has %s" % session)
+        _logger.debug("user has %s", session)
         return session
 
     # If there is no session for this user, check with the auth server
@@ -50,7 +50,7 @@ def check_user(force_lookup=False):
         server = conf_mgr.app_config.AUTH_SERVER
 
     try:
-        _logger.debug("Auth server: " + server)
+        _logger.debug("Auth server: %s", server)
         postdata = urllib.parse.urlencode(postdata)
         postdata = postdata.encode("ascii")
         contents = urlopen(server, postdata).read()
