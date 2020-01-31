@@ -67,17 +67,11 @@ clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
-prepare-release: venv setup.py
-	${VENV_ACTIVATE}; pip-compile --output-file=requirements.txt setup.py
-
 bump-version-patch:
 	bumpversion patch
-	make prepare-release
 
 bump-version-minor:
 	bumpversion minor
-	make prepare-release
 
 bump-version-major:
 	bumpversion major
-	make prepare-release
