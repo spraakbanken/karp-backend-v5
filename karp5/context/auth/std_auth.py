@@ -46,7 +46,7 @@ def check_user(force_lookup=False):
         postdata["username"] = user
         postdata["password"] = pw
         secret = conf_mgr.app_config.AUTH_SECRET
-        postdata["checksum"] = hashlib.md5(user + pw + secret).hexdigest()
+        postdata["checksum"] = hashlib.md5((user + pw + secret).encode("utf-8")).hexdigest()
         server = conf_mgr.app_config.AUTH_SERVER
 
     try:
