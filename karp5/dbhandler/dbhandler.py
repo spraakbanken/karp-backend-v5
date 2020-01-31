@@ -99,8 +99,8 @@ def update_test(_id, lexicon, doc, user, msg):
         conn = engine.connect()
         conn.execute(ins)
         return 1, ""
-    except SQLNull(lexicon):
-        return 0, ("Lexicon %s has no SQL instance" % lexicon)
+    except SQLNull as e:
+        return 0, (e.message)
     except Exception as e:
         return 0, handle_error(e, user, msg, doc)
 
@@ -270,8 +270,8 @@ def dbselect(
         conn.close()
         return res
 
-    except SQLNull(lexicon):
-        _logger.warning("Attempt to search for %s in SQL, no db available", lexicon)
+    except SQLNull as e:
+        _logger.warning("Attempt to search in SQL, no db available: %s", e.message)
         return []
 
 
@@ -336,8 +336,8 @@ def dbselect_gen(
         conn.close()
         # return res
 
-    except SQLNull(lexicon):
-        _logger.warning("Attempt to search for %s in SQL, no db available", lexicon)
+    except SQLNull as e:
+        _logger.warning("Attempt to search in SQL, no db available: %s", e.message)
         return
 
 
@@ -389,17 +389,15 @@ def modifysuggestion(_id, lexicon, msg="", status="", origid="", engine=None, db
             operands.append(db_entry.c.msg == msg)
         if origid:
             operands.append(db_entry.c.origid == origid)
-        update = (
+        update_cmd = (
             db_entry.update()
             .where(db_entry.c.id == _id)
             .values({"status": status, "acceptmsg": msg})
         )
-        conn.execute(update)
+        conn.execute(update_cmd)
         conn.close()
         return 1, ""
 
-    except SQLNull(lexicon):
-        return 0, ("Lexicon %s has no SQL instance" % lexicon)
     except Exception as e:
         return 0, handle_error(e, "--modification--", msg, "--modified--")
 
@@ -491,4 +489,8 @@ class SQLNull(Exception):
     """ Tells that there is no SQL instance """
 
     def __init__(self, lex):
-        Exception.__init__(self, "No SQL db available for %s" % lex)
+        self.message = "No SQL db available for %s" % lex
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"SQLNull: {self.message}"
