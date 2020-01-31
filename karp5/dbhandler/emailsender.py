@@ -1,4 +1,3 @@
-
 from builtins import str
 import smtplib
 import six
@@ -16,17 +15,17 @@ def send_notification(email, subject, message):
     # From https://docs.python.org/2/library/email-examples.html
     if not conf_mgr.app_config.SENDER_EMAIL or not conf_mgr.app_config.SMTP_SERVER:
         _logger.warning("No email configured.")
-        _logger.warning(" To: {}".format(email))
-        _logger.warning(" Subject: {}".format(subject))
-        _logger.warning(" Message: {}".format(message))
+        _logger.warning(" To: %s", email)
+        _logger.warning(" Subject: %s", subject)
+        _logger.warning(" Message: %s", message)
     sender_email = conf_mgr.app_config.SENDER_EMAIL
     try:
         if isinstance(message, six.text_type):
             message = message.encode("utf-8")
-        msg = MIMEText(message)
+        msg = MIMEText(message, _charset="utf-8")
         msg["Subject"] = subject
         msg["From"] = sender_email
-        if type(email) is list:
+        if isinstance(email, list):
             emailstring = ", ".join(email)
             emaillist = email
         else:
@@ -36,7 +35,7 @@ def send_notification(email, subject, message):
         smtp_server = "localhost"
         if conf_mgr.app_config.SMTP_SERVER:
             smtp_server = conf_mgr.app_config.SMTP_SERVER
-        _logger.debug("Using smtp server: {}".format(smtp_server))
+        _logger.debug("Using smtp server: %s", smtp_server)
         s = smtplib.SMTP(smtp_server)
         s.sendmail(sender_email, emaillist, msg.as_string())
         s.quit()
