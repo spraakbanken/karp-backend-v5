@@ -109,7 +109,7 @@ def parse_extra(settings):
         "date",
         "statsize",
     ]
-    for k in list(request.args.keys()):
+    for k in request.args.keys():
         if k not in available:
             raise errors.QueryError(
                 "Option not recognized: %s.\
