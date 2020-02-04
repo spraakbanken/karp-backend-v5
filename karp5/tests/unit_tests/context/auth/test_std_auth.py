@@ -40,6 +40,9 @@ def test_check_user_valid_user(app):
         ):
             mk_auth_req_mock.return_value = {
                 "authenticated": True,
+                "permitted_resources": {
+                    "lexica": {"a": {"read": True, "write": True, "admin": True}}
+                },
             }
             result = check_user()
             mk_auth_req_mock.assert_called_with(
@@ -53,3 +56,9 @@ def test_check_user_valid_user(app):
             )
             assert "username" in result
             assert result["username"] == username
+            assert result["authenticated"]
+            assert "lexicon_list" in result
+            assert "a" in result["lexicon_list"]
+            assert isinstance(result["lexicon_list"]["a"], dict)
+            assert "auth_response" in result
+
