@@ -62,3 +62,38 @@ def test_check_user_valid_user(app):
             assert isinstance(result["lexicon_list"]["a"], dict)
             assert "auth_response" in result
 
+
+def test_check_user_invalid_user(app):
+    with patch("karp5.context.auth.std_auth.make_auth_request") as mk_auth_req_mock:
+        username = "invalid_user"
+        password = "pwd"
+        creds = base64.b64encode(b"invalid_user:pwd").decode("utf-8")
+        with app.test_request_context(
+            "/query?q=simple||hej", headers={"Authorization": "Basic " + creds}
+        ):
+            mk_auth_req_mock.return_value = {
+                "authenticated": False,
+                "permitted_resources": {
+                    "lexica": {"open": {"read": True, "write": False, "admin": False}}
+                },
+            }
+            result = check_user()
+            mk_auth_req_mock.assert_called_with(
+                conf_mgr.app_config.AUTH_SERVER,
+                {
+                    "include_open_resources": "true",
+                    "username": username,
+                    "password": password,
+                    "checksum": "8832a3ca67946278bcc74e138cd0718d",
+                },
+            )
+            assert "username" in result
+            assert result["username"] == username
+            assert not result["authenticated"]
+            assert "lexicon_list" in result
+            assert "open" in result["lexicon_list"]
+            assert isinstance(result["lexicon_list"]["open"], dict)
+            assert result["lexicon_list"]["open"]["read"]
+            assert not result["lexicon_list"]["open"]["write"]
+            assert not result["lexicon_list"]["open"]["admin"]
+            assert "auth_response" in result
