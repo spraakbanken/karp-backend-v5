@@ -39,3 +39,11 @@ def test_parse_extra_unsupported_request_args(app):
         settings = {}
         with pytest.raises(parser.errors.QueryError):
             parser.parse_extra(settings)
+
+
+def test_parse_extra_minimum_successful(app):
+    with app.test_request_context("/query?q=simple||hej"):
+        settings = {"mode": "karp", "allowed": ["any"]}  # must exist in conf_mgr
+        p_extra = parser.parse_extra(settings)
+
+        assert p_extra == {"term": {"lexiconName": "any"}}
