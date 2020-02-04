@@ -1,0 +1,25 @@
+from karp5.server.translator import parser
+from karp5.config import conf_mgr
+
+
+def test_make_settings_empty_call():
+    settings = parser.make_settings(None, {})
+
+    assert settings["allowed"] is None
+    assert settings["mode"] == conf_mgr.app_config.STANDARDMODE
+
+
+def test_make_settings_append_field():
+    settings = parser.make_settings(None, {"extra": "added"})
+
+    assert settings["allowed"] is None
+    assert settings["mode"] == conf_mgr.app_config.STANDARDMODE
+    assert "extra" in settings
+    assert settings["extra"] == "added"
+
+
+def test_make_settings_change_mode():
+    settings = parser.make_settings(None, {"mode": "new"})
+
+    assert settings["allowed"] is None
+    assert settings["mode"] == "new"
