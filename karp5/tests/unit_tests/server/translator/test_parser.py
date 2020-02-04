@@ -1,3 +1,5 @@
+import pytest
+
 from karp5.server.translator import parser
 from karp5.config import conf_mgr
 
@@ -23,3 +25,10 @@ def test_make_settings_change_mode():
 
     assert settings["allowed"] is None
     assert settings["mode"] == "new"
+
+
+def test_parse_extra_empty_call(app):
+    with app.test_request_context("/query?q=simple||hej"):
+        settings = {}
+        with pytest.raises(parser.errors.AuthenticationError):
+            parser.parse_extra(settings)
