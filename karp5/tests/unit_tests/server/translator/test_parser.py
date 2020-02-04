@@ -32,3 +32,10 @@ def test_parse_extra_empty_call(app):
         settings = {}
         with pytest.raises(parser.errors.AuthenticationError):
             parser.parse_extra(settings)
+
+
+def test_parse_extra_unsupported_request_args(app):
+    with app.test_request_context("/query?q=simple||hej&invalid=really"):
+        settings = {}
+        with pytest.raises(parser.errors.QueryError):
+            parser.parse_extra(settings)
