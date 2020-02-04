@@ -32,3 +32,14 @@ def test_parse_extra_empty_call(app):
         settings = {}
         with pytest.raises(parser.errors.AuthenticationError):
             parser.parse_extra(settings)
+
+
+def test_parse_extra_minimum_successful(app):
+    with app.test_request_context("/query?q=simple||hej"):
+        settings = {
+            "mode": "karp",  # must exist in conf_mgr
+            "allowed": ["any"]
+        }
+        p_extra = parser.parse_extra(settings)
+
+        assert p_extra == {"term": {"lexiconName": "any"}}
