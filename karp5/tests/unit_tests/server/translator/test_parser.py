@@ -47,3 +47,10 @@ def test_parse_extra_minimum_successful(app):
         p_extra = parser.parse_extra(settings)
 
         assert p_extra == {"term": {"lexiconName": "any"}}
+
+
+def test_construct_exp_empty_call():
+    assert parser.construct_exp([]) == ""
+
+
+
