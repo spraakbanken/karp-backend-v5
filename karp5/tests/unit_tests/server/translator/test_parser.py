@@ -61,4 +61,46 @@ def test_construct_exp_empty_call():
     assert parser.construct_exp([]) == ""
 
 
+def test_parse_empty_call(app):
+    with app.test_request_context("/query?q=a"):
+        with pytest.raises(parser.errors.AuthenticationError):
+            parser.parse()
+
+
+def test_parse_no_q(app):
+    with app.test_request_context("/query"):
+        settings = {"mode": "karp", "allowed": ["any"]}
+        with pytest.raises(parser.errors.QueryError):
+            parser.parse(settings)
+
+
+def test_parse_q_simple(app):
+    text = "hej"
+    lexicon = "any"
+    with app.test_request_context(f"/query?q=simple||{text}"):
+        settings = {"mode": "karp", "allowed": [lexicon]}
+        result = parser.parse(settings)
+        expected = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "bool": {
+                                "should": [
+                                    {"match": {"_all": {"operator": "and", "query": text}}},
+                                    {"match": {"lemma_german": {"boost": 200, "query": text}}},
+                                    {
+                                        "match": {
+                                            "english.lemma_english": {"boost": 100, "query": text}
+                                        }
+                                    },
+                                ]
+                            }
+                        },
+                        {"term": {"lexiconName": "any"}},
+                    ]
+                }
+            }
+        }
+        assert result == expected
 

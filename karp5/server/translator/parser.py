@@ -44,7 +44,9 @@ def parse(settings=None, isfilter=False):
         settings = {}
     # isfilter is used for minientries and some queries to statistics
     # only one query is allowed
-    query = request.args.get("q", [""]) or request.args.get("query")
+    query = request.args.get("q") or request.args.get("query")
+    if query is None:
+        raise errors.QueryError("No query is provided.")
     # query = query.decode('utf8')  # use utf8, same as lexiconlist
     p_extra = parse_extra(settings)
     command, query = query.split("||", 1)
