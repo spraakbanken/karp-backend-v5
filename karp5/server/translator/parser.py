@@ -53,9 +53,13 @@ def parse(settings=None, isfilter=False):
     settings["query_command"] = command
     highlight = settings.get("highlight", False)
     mode = settings.get("mode")
+    if not settings.get("user_is_authorized", False):
+        filter_unauth_user = conf_mgr.filter_for_unauth_user(mode)
+        if filter_unauth_user:
+            filter_unauth_user = {"term": filter_unauth_user}
     if command == "simple":
         settings["search_type"] = "dfs_query_then_fetch"
-        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight)
+        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight, filters=filter_unauth_user)
     elif command == "extended":
         filters = []  # filters will be put here
         fields = []

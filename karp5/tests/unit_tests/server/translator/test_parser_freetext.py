@@ -63,7 +63,7 @@ def test_freetext_with_filters():
                     {"match": {"lemma_german": {"boost": 200, "query": text}}},
                     {"match": {"english.lemma_english": {"boost": 100, "query": text}}},
                 ],
-                "filter": [{"term": filters}],
+                "filter": filters,
             }
         }
     }

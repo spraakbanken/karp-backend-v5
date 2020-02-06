@@ -74,7 +74,7 @@ def test_parse_no_q(app):
             parser.parse(settings)
 
 
-def test_parse_q_simple(app):
+def test_parse_q_simple_mode_karp(app):
     text = "hej"
     lexicon = "any"
     with app.test_request_context(f"/query?q=simple||{text}"):
@@ -104,3 +104,33 @@ def test_parse_q_simple(app):
         }
         assert result == expected
 
+
+def test_parse_q_simple_mode_foo_no_user(app):
+    text = "hej"
+    lexicon = "any"
+    with app.test_request_context(f"/query?q=simple||{text}"):
+        settings = {"mode": "foo", "allowed": [lexicon]}
+        result = parser.parse(settings)
+        expected = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "bool": {
+                                "should": [
+                                    {"match": {"_all": {"operator": "and", "query": text}}},
+                                    {"match": {"foo": {"boost": 100, "query": text}}},
+                                ]
+                            }
+                        },
+                        {"term": {"lexiconName": "any"}},
+                    ],
+                    "filter": {
+                        "term": {
+                            "status": "ok"
+                        }
+                    }
+                }
+            }
+        }
+        assert result == expected
