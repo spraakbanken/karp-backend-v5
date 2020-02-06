@@ -22,8 +22,12 @@ def get_mode():
     return request.args.get("mode", conf_mgr.app_config.STANDARDMODE)
 
 
-def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, "mode": conf_mgr.app_config.STANDARDMODE}
+def make_settings(permitted, in_settings, user_is_authorized=False):
+    settings = {
+        "allowed": permitted,
+        "mode": conf_mgr.app_config.STANDARDMODE,
+        "user_is_authorized": user_is_authorized,
+    }
     settings.update(in_settings)
     return settings
 

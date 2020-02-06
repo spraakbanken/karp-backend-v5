@@ -9,6 +9,7 @@ def test_make_settings_empty_call():
 
     assert settings["allowed"] is None
     assert settings["mode"] == conf_mgr.app_config.STANDARDMODE
+    assert not settings["user_is_authorized"]
 
 
 def test_make_settings_append_field():
@@ -25,6 +26,13 @@ def test_make_settings_change_mode():
 
     assert settings["allowed"] is None
     assert settings["mode"] == "new"
+
+
+@pytest.mark.parametrize("authorized", [False, True])
+def test_make_settings_set_user_is_authorized(authorized):
+    settings = parser.make_settings(None, {}, user_is_authorized=authorized)
+
+    assert settings["user_is_authorized"] == authorized
 
 
 def test_parse_extra_empty_call(app):
