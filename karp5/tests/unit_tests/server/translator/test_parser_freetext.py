@@ -9,12 +9,11 @@ def test_freetext_minimum():
     expected = {
         "query": {
             "bool": {
-                "should": [[
+                "should": [
                     {"match": {"_all": {"operator": "and", "query": text}}},
                     {"match": {"lemma_german": {"boost": 200, "query": text}}},
-                    {"match": {"english.lemma_english": {"boost": 100, "query": text}}}
-                    ]
-                    ]
+                    {"match": {"english.lemma_english": {"boost": 100, "query": text}}},
+                ]
             }
         }
     }

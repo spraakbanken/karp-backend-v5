@@ -393,7 +393,7 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
         qs.append({"match": {field: {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
-    q = {"bool": {"should": [qs]}}
+    q = {"bool": {"should": qs}}
     if extra:
         q = {"bool": {"must": [q, extra]}}
     if isfilter:
