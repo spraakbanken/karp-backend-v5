@@ -1,5 +1,5 @@
 {
-   "mappings": {
+    "mappings": {
         "lexicalentry": {
             "properties": {
                 "lexiconName": {
@@ -10,7 +10,14 @@
                 },
                 "foo": {
                     "type": "text",
-                    "fields": {"raw": {"type": "keyword"}}
+                    "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "text"
                 }
             }
         }

@@ -369,7 +369,7 @@ def parse_operation(etype, op, isfilter=False):
     return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
-def freetext(text, mode, extra=None, isfilter=False, highlight=False):
+def freetext(text, mode, extra=None, isfilter=False, highlight=False, filters=None):
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
         text is the text to search for
@@ -379,8 +379,6 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
         Returns a query object to be sent to elastic search
 
     """
-    if extra is None:
-        extra = {}
     if "format_query" in conf_mgr.mode_fields(mode):
         # format the query text as specified in settings
         text = conf_mgr.formatquery(mode, "anything", text)
@@ -400,6 +398,9 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
         q = {"bool": {"must": [q, extra]}}
     if isfilter:
         return {"filter": q}
+
+    if filters:
+        q["bool"]["filter"] = filters
 
     res = {"query": q}
     if highlight:
