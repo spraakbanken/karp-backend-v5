@@ -9,6 +9,14 @@ def test_search_get_context(app):
     assert result == expected
 
 
+def test_search_get_pre_post(app):
+    exps = [{'match_phrase': {'lexiconName': 'panacea'}},   {'range': {'lemma_german.raw': {'gte': 'Abbau'}}}]
+    with app.test_request_context("/getcontext/panacea"):
+        result = parser.search(exps, [], [], usefilter=False, constant_score=True)
+    expected = {'query': {'bool': {'must': [{'match_phrase':  {'lexiconName': 'panacea'}}, {'range': {'lemma_german.raw': {'gte': 'Abbau'}}}]}}}
+    assert result == expected
+
+
 def test_search_autocomplete_q(app):
     exp = {
         "bool": {
