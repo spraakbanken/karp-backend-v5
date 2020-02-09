@@ -1,6 +1,17 @@
 {
-  "foo": ["foo"],
-  "foo.sort": ["foo.raw"],
-  "bar": ["foo"],
-  "bar.sort": ["foo.raw"]
+  "foo": [
+    "foo"
+  ],
+  "foo.sort": [
+    "foo.raw"
+  ],
+  "status": [
+    "status"
+  ],
+  "bar": [
+    "foo"
+  ],
+  "bar.sort": [
+    "foo.raw"
+  ]
 }

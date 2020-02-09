@@ -18,6 +18,13 @@ from karp5.config import mgr as conf_mgr  # noqa: E402
 _logger = logging.getLogger("karp5")
 
 
+def make_auth_request(url, postdata):
+    _logger.debug("Auth server: %s", url)
+    postdata = urllib.parse.urlencode(postdata)
+    postdata = postdata.encode("ascii")
+    contents = urlopen(url, postdata).read()
+    return json.loads(contents)
+
 def check_user(force_lookup=False):
     """Authenticates a user against an authentication server.
        Returns a dictionary with permitted resources for the user
@@ -50,12 +57,13 @@ def check_user(force_lookup=False):
         server = conf_mgr.app_config.AUTH_SERVER
 
     try:
-        _logger.debug("Auth server: %s", server)
-        postdata = urllib.parse.urlencode(postdata)
-        postdata = postdata.encode("ascii")
-        contents = urlopen(server, postdata).read()
-        # _logger.debug("Auth answer: "+str(contents))
-        auth_response = json.loads(contents)
+        # _logger.debug("Auth server: %s", server)
+        # postdata = urllib.parse.urlencode(postdata)
+        # postdata = postdata.encode("ascii")
+        # contents = urlopen(server, postdata).read()
+        # # _logger.debug("Auth answer: "+str(contents))
+        # auth_response = json.loads(contents)
+        auth_response = make_auth_request(server, postdata)
     except HTTPError as e:
         _logger.error(e)
         raise errors.KarpAuthenticationError("Could not contact authentication server.")

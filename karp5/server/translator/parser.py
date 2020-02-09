@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """ Responsible for the translation from the query api to elastic queries """
 
-from builtins import range
+from collections import defaultdict
+import itertools
 import logging
 import re
+from typing import List
 
-from collections import defaultdict
 from elasticsearch import helpers as EShelpers
 from flask import request
 
@@ -22,8 +23,12 @@ def get_mode():
     return request.args.get("mode", conf_mgr.app_config.STANDARDMODE)
 
 
-def make_settings(permitted, in_settings):
-    settings = {"allowed": permitted, "mode": conf_mgr.app_config.STANDARDMODE}
+def make_settings(permitted, in_settings, user_is_authorized=False):
+    settings = {
+        "allowed": permitted,
+        "mode": conf_mgr.app_config.STANDARDMODE,
+        "user_is_authorized": user_is_authorized,
+    }
     settings.update(in_settings)
     return settings
 
@@ -40,16 +45,22 @@ def parse(settings=None, isfilter=False):
         settings = {}
     # isfilter is used for minientries and some queries to statistics
     # only one query is allowed
-    query = request.args.get("q", [""]) or request.args.get("query")
+    query = request.args.get("q") or request.args.get("query")
+    if query is None:
+        raise errors.QueryError("No query is provided.")
     # query = query.decode('utf8')  # use utf8, same as lexiconlist
     p_extra = parse_extra(settings)
     command, query = query.split("||", 1)
     settings["query_command"] = command
     highlight = settings.get("highlight", False)
     mode = settings.get("mode")
+    if not settings.get("user_is_authorized", False):
+        filter_unauth_user = conf_mgr.filter_for_unauth_user(mode)
+        if filter_unauth_user:
+            filter_unauth_user = {"term": filter_unauth_user}
     if command == "simple":
         settings["search_type"] = "dfs_query_then_fetch"
-        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight)
+        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight, filters=filter_unauth_user)
     elif command == "extended":
         filters = []  # filters will be put here
         fields = []
@@ -109,7 +120,7 @@ def parse_extra(settings):
         "date",
         "statsize",
     ]
-    for k in list(request.args.keys()):
+    for k in request.args.keys():
         if k not in available:
             raise errors.QueryError(
                 "Option not recognized: %s.\
@@ -312,9 +323,8 @@ def common_path(fields):
          "a.b.d": ["a.b.d.f"]
          }"
     """
-    import itertools as i
 
-    grouped = i.groupby(
+    grouped = itertools.groupby(
         sorted(fields, key=lambda x: (len(x.split(".")), "".join(x))),
         key=lambda x: x.split(".")[:-1],
     )
@@ -363,7 +373,7 @@ def parse_operation(etype, op, isfilter=False):
     return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
-def freetext(text, mode, extra=None, isfilter=False, highlight=False):
+def freetext(text, mode, extra=None, isfilter=False, highlight=False, filters=None):
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
         text is the text to search for
@@ -373,8 +383,6 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
         Returns a query object to be sent to elastic search
 
     """
-    if extra is None:
-        extra = {}
     if "format_query" in conf_mgr.mode_fields(mode):
         # format the query text as specified in settings
         text = conf_mgr.formatquery(mode, "anything", text)
@@ -389,11 +397,14 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
         qs.append({"match": {field: {"query": text, "boost": boost_score}}})
         boost_score -= 100
 
-    q = {"bool": {"should": [qs]}}
+    q = {"bool": {"should": qs}}
     if extra:
         q = {"bool": {"must": [q, extra]}}
     if isfilter:
         return {"filter": q}
+
+    if filters:
+        q["bool"]["filter"] = filters
 
     res = {"query": q}
     if highlight:
@@ -405,7 +416,7 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False):
 
 
 def search(
-    exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True,
+        exps: List, filters: List, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True,
 ):
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
@@ -415,32 +426,44 @@ def search(
         Returns a string, representing complete elasticsearch object
     """
     _logger.debug("start parsing expss %s \n filters %s ", exps, filters)
-    if isfilter:
-        filters += exps  # add to filter list
-        exps = []  # nothing left to put in query
+    # if isfilter:
+    #    filters += exps  # add to filter list
+    #    exps = []  # nothing left to put in query
 
     # extended queries: always use filter, scoring is never used
     res = {}
     if usefilter and not isfilter:
-        _logger.debug("case 1")
-        q_obj = construct_exp(exps + filters, querytype="must", constant_score=constant_score)
-        q_obj = {"bool": q_obj}
+        _logger.info("case 1")
+        if constant_score:
+            q_obj = construct_exp(exps + filters, querytype="must", constant_score=constant_score)
+            q_obj = {"bool": q_obj}
+        else:
+            q_obj = {
+                "query": {
+                    "bool": {
+                        "filter": filters,
+                        "must": exps
+                    }
+                }
+            }
 
     else:
         _logger.debug("construct %s ", filters)
         f_obj = construct_exp(filters, querytype="filter")
-        _logger.debug("got %s\n\n", f_obj)
+        _logger.info("got %s\n\n", f_obj)
         if isfilter:
-            _logger.debug("case 2")
-            q_obj = f_obj
+            _logger.info("case 2")
+            # q_obj = {"query": f_obj}
+            q_obj = {"query": {"bool": {"filter":  exps + filters}}}
 
         elif f_obj and exps:
-            _logger.debug("case 3")
+            _logger.info("case 3")
             qs = construct_exp(exps, querytype="must", constant_score=constant_score)
-            qs.update(f_obj)
-            q_obj = {"bool": qs}
+            # qs.update(f_obj)
+            qs["filter"] = filters
+            q_obj = {"query": {"bool": qs}}
         else:
-            _logger.debug("case 4")
+            _logger.info("case 4")
             q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
             _logger.debug("got %s", q_obj)
 
@@ -482,8 +505,7 @@ def construct_exp(exps, querytype="filter", constant_score=True):
         if querytype == "must":
             return {"must": exps}
 
-        combinedquery = "filter" if querytype == "must" else querytype
-        return {combinedquery: {"bool": {"must": exps}}}
+        return {querytype: {"bool": {"must": exps}}}
     # otherwise just put the expression in a query
     if constant_score:
         query = {querytype: {"constant_score": exps}}
@@ -581,7 +603,7 @@ def statistics(settings, exclude=[], order={}, prefix="", show_missing=True, for
             to_add_exist["aggs"] = to_add
             to_add_missing["aggs"] = to_add
 
-        for key, val in list(bucket_settings.items()):
+        for key, val in bucket_settings.items():
             to_add_exist[terms][key] = val
             if key == "order":
                 to_add_missing["missing"][key] = val
@@ -644,7 +666,7 @@ def adapt_query(size, _from, es, query, kwargs):
         # Construct an empty query to ES, to get an return object
         # and the total number of hits
         q_kwargs = {"size": 0, "from_": 0}
-        for k, v in list(kwargs.items()):
+        for k, v in kwargs.items():
             if k == "query":
                 q_kwargs["body"] = v
             elif k not in ["size", "from_"]:

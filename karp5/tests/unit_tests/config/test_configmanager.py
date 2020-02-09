@@ -62,3 +62,11 @@ def test_get_modes_that_include_mode(app, mode, facit):
         assert m in facit
     for f in facit:
         assert f in modes
+
+
+@pytest.mark.parametrize("mode,expected", [
+    ("karp", None),
+    ("foo", {"status": "ok"}),
+])
+def test_filter_for_unauth_user(app, mode, expected):
+    assert conf_mgr.filter_for_unauth_user(mode) == expected
