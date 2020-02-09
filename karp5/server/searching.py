@@ -101,7 +101,7 @@ def requestquery(page=0):
         },
     )
 
-    _logger.debug("|requestquery| #hits ={n_hits}".format(n_hits=len(ans["hits"])))
+    #_logger.debug("|requestquery| #hits ={n_hits}".format(n_hits=len(ans["hits"])))
 
     if settings.get("highlight", False):
         clean_highlight(ans)
