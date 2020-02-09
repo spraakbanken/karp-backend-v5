@@ -511,6 +511,7 @@ def autocomplete():
             autocomplete_fields = conf_mgr.searchfield(mode, "autocomplete_field")
             fields = {"exists": {"field": autocomplete_field}}
             # last argument is the 'fields' used for highlightning
+            _logger.info("exp = %s, fields = %s, resource = %s", exp, fields, resource)
             elasticq = parser.search([exp, fields, resource], [], "", usefilter=True)
             _logger.debug("Will send %s", elasticq)
 
