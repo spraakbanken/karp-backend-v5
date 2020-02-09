@@ -101,3 +101,7 @@ Thumbs.db
 # Editor settings #
 ###################
 .vscode/
+
+# Temporary files #
+####
+tmp/
