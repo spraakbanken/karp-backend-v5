@@ -5,7 +5,7 @@ def test_search_get_context(app):
     exps = [{'match_phrase': {'lexiconName':      'panacea'}}]
     with app.test_request_context("/getcontext/panacea"):
         result = parser.search(exps, [], [], usefilter=True, constant_score=False)
-    expected = {'bool': {'must':                  [{'match_phrase': {'lexiconName': 'panacea'}}]}}
+    expected = {"query": {'bool': {'must':              [{'match_phrase': {'lexiconName': 'panacea'}}]}}}
     assert result == expected
 
 
@@ -13,7 +13,7 @@ def test_search_get_pre_post(app):
     exps = [{'match_phrase': {'lexiconName': 'panacea'}},   {'range': {'lemma_german.raw': {'gte': 'Abbau'}}}]
     with app.test_request_context("/getcontext/panacea"):
         result = parser.search(exps, [], [], usefilter=False, constant_score=True)
-    expected = {'query': {'bool': {'must': [{'match_phrase':  {'lexiconName': 'panacea'}}, {'range': {'lemma_german.raw': {'gte': 'Abbau'}}}]}}}
+    expected = {'query': {'bool': {"filter": [{'match_phrase':  {'lexiconName': 'panacea'}}, {'range': {'lemma_german.raw': {'gte': 'Abbau'}}}]}}}
     assert result == expected
 
 
@@ -68,13 +68,11 @@ def test_search_autocomplete_q(app):
         result = parser.search(exps, filters, fields, usefilter=True)
     expected = {
         'query': {
-        'constant_score': {
-        'filter': {
             'bool': {
-                'must': [
+                "filter": [
                     {'bool': {
                         'should': [
-                            {'term': {'lemma_german': {'boost': '500', 'value':      'sig'}}},
+                            {'term': {'lemma_german': {'boost': '500', 'value': 'sig'}}},
                             {'match_phrase': {'lemma_german': 'sig'}},
                             {'match_phrase': {'english.lemma_english': 'sig'}}
                         ]
@@ -92,7 +90,5 @@ def test_search_autocomplete_q(app):
                 ]
                 }
             }
-        }
-        }
         }
     assert result == expected

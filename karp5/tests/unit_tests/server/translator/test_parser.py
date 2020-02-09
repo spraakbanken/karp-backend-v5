@@ -163,7 +163,7 @@ def test_search_empty_input():
 
     result = parser.search(exps, filters, fields)
 
-    expected = ""
+    expected = {}
 
     assert result == expected
 
@@ -172,11 +172,38 @@ def test_search_autocomplete():
     pass
 
 
+# @pytest.mark.parametrize("exps,filters", [
+#     ({"match": {"field": "value"}},  {"term": {"status": "ok"}}),
+# ])
+# @pytest.mark.parametrize("constant_score", (True, False))
+# def test_search_case1_dict(exps, filters, constant_score):
+#     fields = None
+#     isfilter = False
+#     highlight = False
+#     usefilter = True
+#
+#     result = parser.search(
+#         exps,
+#         filters,
+#         fields,
+#         isfilter,
+#         highlight,
+#         usefilter,
+#         constant_score
+#     )
+#     if constant_score:
+#         expected = {'query': {"bool": {'filter': exps + filters}}}
+#     else:
+#         expected = {"query": {"bool": {"filter": filters, "must": exps}}}
+#
+#     assert result == expected
+
+
 @pytest.mark.parametrize("exps,filters", [
-    ({"match": {"field": "value"}},  {"term": {"status": "ok"}}),
+    ([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),
 ])
 @pytest.mark.parametrize("constant_score", (True, False))
-def test_search_case1_dict(exps, filters, constant_score):
+def test_search_case1(exps, filters, constant_score):
     fields = None
     isfilter = False
     highlight = False
@@ -192,61 +219,36 @@ def test_search_case1_dict(exps, filters, constant_score):
         constant_score
     )
     if constant_score:
-        expected = {'query': {"bool": {'filter': exps + filters}}}
+        expected = {"query": {'bool': {"filter": exps + filters}}}
     else:
-        expected = {"query": {"bool": {"filter": filters, "must": exps}}}
+        expected = {'query': {"bool": {'filter': filters, 'must': exps}}}
 
     assert result == expected
 
 
-@pytest.mark.parametrize("exps,filters", [
-    ([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),
-])
-def test_search_case1_list(exps, filters):
-    fields = None
-    isfilter = False
-    highlight = False
-    usefilter = True
-    constant_score = True
-
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
-
-    expected = {'query': {'constant_score': {'filter': {'bool': {'must': exps + filters}}}}}
-
-    assert result == expected
-
-
-@pytest.mark.parametrize("exps,filters", [
-    ([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),
-])
-def test_search_case1_list_no_constant_score(exps, filters):
-    fields = None
-    isfilter = False
-    highlight = False
-    usefilter = True
-    constant_score = False
-
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
-
-    expected = {'query': {"bool": {'filter': filters, 'must': exps}}}
-
-    assert result == expected
+# @pytest.mark.parametrize("exps,filters", [
+#     ([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),
+# ])
+# def test_search_case1_list_no_constant_score(exps, filters):
+#     fields = None
+#     isfilter = False
+#     highlight = False
+#     usefilter = True
+#     constant_score = False
+#
+#     result = parser.search(
+#         exps,
+#         filters,
+#         fields,
+#         isfilter,
+#         highlight,
+#         usefilter,
+#         constant_score
+#     )
+#
+#     expected = {'query': {"bool": {'filter': filters, 'must': exps}}}
+#
+#     assert result == expected
 
 
 @pytest.mark.parametrize("usefilter", [True, False])
@@ -301,28 +303,28 @@ def test_search_case2_list(exps, filters, usefilter, constant_score):
     assert result == expected
 
 
-def test_search_case3_dict():
-    exps = {"match": {"field": "value"}}
-    filters = {"term": {"status": "ok"}}
-    fields = None
-    isfilter = False
-    highlight = False
-    usefilter = False
-    constant_score = True
-
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
-
-    expected = {"query": {"bool": {'filter': {'constant_score': filters}, "must": {"constant_score": exps}}}}
-
-    assert result == expected
+# def test_search_case3_dict():
+#     exps = {"match": {"field": "value"}}
+#     filters = {"term": {"status": "ok"}}
+#     fields = None
+#     isfilter = False
+#     highlight = False
+#     usefilter = False
+#     constant_score = True
+#
+#     result = parser.search(
+#         exps,
+#         filters,
+#         fields,
+#         isfilter,
+#         highlight,
+#         usefilter,
+#         constant_score
+#     )
+#
+#     expected = {"query": {"bool": {'filter': {'constant_score': filters}, "must": {"constant_score": exps}}}}
+#
+#     assert result == expected
 
 
 def test_search_case3_list():
@@ -374,15 +376,15 @@ def test_search_case3_list_no_constant_score():
 
 
 @pytest.mark.parametrize("exps,filters", [
-    ("a", None),
-    (None, "b"),
+    ([{"match": {"field": "value"}}], None),
+    (None, [{"term": {"status": "ok"}}]),
 ])
-def test_search_case4(exps, filters):
+@pytest.mark.parametrize("constant_score", [True, False])
+def test_search_case4(exps, filters, constant_score):
     fields = None
     isfilter = False
     highlight = False
     usefilter = False
-    constant_score = True
 
     result = parser.search(
         exps,
@@ -393,11 +395,10 @@ def test_search_case4(exps, filters):
         usefilter,
         constant_score
     )
-
     if exps:
-        expected = {"query": {"constant_score": "a"}}
+        expected = {"query": {"bool": {"filter" if constant_score else "must": exps}}}
     else:
-        expected = ""
+        expected = {}
 
     assert result == expected
 

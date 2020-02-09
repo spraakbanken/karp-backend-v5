@@ -435,43 +435,53 @@ def search(
     if usefilter and not isfilter:
         _logger.info("case 1")
         if constant_score:
-            q_obj = construct_exp(exps + filters, querytype="must", constant_score=constant_score)
-            q_obj = {"bool": q_obj}
+            # q_obj = construct_exp(exps + filters, querytype="must", constant_score=constant_score)
+            res = {"query": {"bool": {"filter": exps + filters}}}
         else:
-            q_obj = {
+            res = {
                 "query": {
                     "bool": {
-                        "filter": filters,
                         "must": exps
                     }
                 }
             }
+            if filters:
+                res["query"]["bool"]["filter"] = filters
 
     else:
         _logger.debug("construct %s ", filters)
-        f_obj = construct_exp(filters, querytype="filter")
-        _logger.info("got %s\n\n", f_obj)
+        # f_obj = construct_exp(filters, querytype="filter")
+        # _logger.info("got %s\n\n", f_obj)
         if isfilter:
             _logger.info("case 2")
             # q_obj = {"query": f_obj}
-            q_obj = {"query": {"bool": {"filter":  exps + filters}}}
+            res = {"query": {"bool": {"filter":  exps + filters}}}
 
-        elif f_obj and exps:
+        elif filters and exps:
             _logger.info("case 3")
-            qs = construct_exp(exps, querytype="must", constant_score=constant_score)
-            # qs.update(f_obj)
-            qs["filter"] = filters
-            q_obj = {"query": {"bool": qs}}
+            if constant_score:
+                qs = {"filter": exps + filters}
+            else:
+                qs = construct_exp(exps, querytype="must", constant_score=constant_score)
+                # qs.update(f_obj)
+                qs["filter"] = filters
+            res = {"query": {"bool": qs}}
         else:
             _logger.info("case 4")
-            q_obj = construct_exp(exps, querytype="query", constant_score=constant_score)
-            _logger.debug("got %s", q_obj)
+            if not exps:
+                res = {}
+            elif constant_score:
+                res = {"query": {"bool": {"filter": exps}}}
+            else:
+                res = {"query": {"bool": {"must": exps}}}
+            # res = construct_exp(exps, querytype="query", constant_score=constant_score)
+            # _logger.debug("got %s", q_obj)
 
-    if constant_score and usefilter and not isfilter:
-        res["constant_score"] = {"filter": q_obj}
-        res = {"query": res}
-    else:
-        res = q_obj
+    # if constant_score and usefilter and not isfilter:
+        # res["constant_score"] = {"filter": q_obj}
+        # res = {"query": res}
+    # else:
+        # res = q_obj
     if highlight:
         high_fields = {}
         for field_q in fields:
