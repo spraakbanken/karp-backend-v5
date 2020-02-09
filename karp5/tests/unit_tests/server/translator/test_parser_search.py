@@ -1,6 +1,14 @@
 from karp5.server.translator import parser
 
 
+def test_search_get_context(app):
+    exps = [{'match_phrase': {'lexiconName':      'panacea'}}]
+    with app.test_request_context("/getcontext/panacea"):
+        result = parser.search(exps, [], [], usefilter=True, constant_score=False)
+    expected = {'bool': {'must':                  [{'match_phrase': {'lexiconName': 'panacea'}}]}}
+    assert result == expected
+
+
 def test_search_autocomplete_q(app):
     exp = {
         "bool": {
@@ -57,11 +65,11 @@ def test_search_autocomplete_q(app):
             'bool': {
                 'must': [
                     {'bool': {
-                        'should': [[
+                        'should': [
                             {'term': {'lemma_german': {'boost': '500', 'value':      'sig'}}},
                             {'match_phrase': {'lemma_german': 'sig'}},
                             {'match_phrase': {'english.lemma_english': 'sig'}}
-                        ]]
+                        ]
                     }},
                     {'exists': {'field': 'lemma_german'}},
                     {'bool': {

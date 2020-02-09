@@ -562,7 +562,7 @@ def autocompletequery(mode, boost, q):
     for boost_field in conf_mgr.searchfield(mode, "boosts"):
         look_in.append({"match_phrase": {boost_field: q}})
 
-    exp = {"bool": {"should": [look_in]}}
+    exp = {"bool": {"should": look_in}}
 
     return exp
 
@@ -709,7 +709,7 @@ def get_context(lexicon):
     # Construct queries to ES
     exps = []
     # the query string from the user
-    querystring = settings.get("q", "").decode("utf8")
+    querystring = settings.get("q", "")
     parser.parse_ext("and|resource|equals|%s" % lexicon, exps, [], mode)
     if querystring:
         if querystring.startswith("simple"):
