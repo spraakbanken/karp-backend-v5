@@ -9,3 +9,7 @@ def test_autocomplete_with_q(client_w_panacea):
     #https://ws.spraakbanken.gu.se/ws/karp/v5/autocomplete?q=kasus&resource=saldom,dalin,hellqvist
     #https://ws.spraakbanken.gu.se/ws/karp/v5/autocomplete?q=kasta&resource=saldom
 
+
+def test_getcontext_panacea(client_w_panacea):
+    result = get_json(client_w_panacea, "getcontext/panacea")
+    assert result is None

@@ -677,6 +677,7 @@ def get_context(lexicon):
         exps = []
         parser.parse_ext("and|resource|equals|%s" % lexicon, exps, [], mode)
         center_q = parser.search(exps, [], [], usefilter=True, constant_score=False)
+        _logger.info("exps: %s, center_q: %s", exps, center_q)
         center_q = {"query": center_q}
         lexstart = es.search(
             index=index,
@@ -770,7 +771,7 @@ def get_pre_post(
         "and|%s|%s|%s" % (sortfieldname, op[place]["op"], sortvalue), exps, [], mode
     )
     elasticq_q = parser.search(exps, [], [], usefilter=False, constant_score=True)
-
+    _logger.info("exps: %s, elasticq_q: %s", exps, elasticq_q)
     # +1 to compensate for the word itself being in the context
     size = settings["size"] + 1
     show = conf_mgr.searchfield(mode, "minientry_fields")
