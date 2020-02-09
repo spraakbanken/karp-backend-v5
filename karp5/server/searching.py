@@ -516,7 +516,7 @@ def autocomplete():
 
             es = conf_mgr.elastic(mode=mode)
             _logger.debug("_source: %s", autocomplete_field)
-            _logger.debug(elasticq)
+            _logger.info("elasticq: %s", elasticq)
             index, typ = conf_mgr.get_mode_index(mode)
             ans = parser.adapt_query(
                 settings["size"],
