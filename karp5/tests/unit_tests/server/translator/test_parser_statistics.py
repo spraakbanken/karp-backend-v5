@@ -39,31 +39,7 @@ def test_build_es_search():
             }
         }
     }
-    es_s = es_dsl.Search().filter("exists", field="pos_german")
-    q_statistics = es_dsl.A("q_statistics")
-    lexiconOrder = es_dsl.A("terms", field="lexiconOrder")
-    lexiconOrder.aggs.bucket("lexiconName", es_dsl.A("terms", field="lexiconName"))
-    q_statistics.aggs.bucket("lexiconOrder", lexiconOrder)
-    es_s.aggs.bucket("q_statistics", q_statistics)
-    assert expected_q == es_s.to_dict()
-    s = es_dsl.Search.from_dict(expected_q)
-
-
-def test_es_search_aggs_filter():
-    es_dict = {
-        "aggs": {
-            "name": {
-                "terms": {
-                    "name": "joe"
-                }
-            }
-        },
-        "filter": [
-            {"exists": {"field": "surname"}}
-            ]
-    }
-    es_dsl.Search.from_dict(es_dict)
-
+    #s = es_dsl.Search.from_dict(expected_q)
 
 def test_statistics_querycount(app):
     stat_size = 1000
@@ -153,6 +129,72 @@ def test_statistics_querycount(app):
             }
         }
     }
+    expected_q = {
+        'aggs': {
+            'q_statistics': {
+                'aggs': {
+                    'lexiconOrder': {
+                        'aggs': {
+                            'lexiconName': {
+                                'terms': {
+                                    'field': 'lexiconName',
+                                    'shard_size': 27000,
+                                    'size': 1000
+                                }
+                            }
+                        },
+                        'terms': {
+                            'field': 'lexiconOrder',
+                            'shard_size': 27000,
+                            'size': 1000
+                        }
+                    }
+                },
+                'filter': {
+                    'bool': {
+                        'must': [
+                            {
+                                'exists': {
+                                    'field': 'pos_german'
+                                }
+                            },
+                            {
+                                'bool': {
+                                    'should': [
+                                        {
+                                            'term': {
+                                                'lexiconName': 'bar'
+                                            }
+                                        },
+                                        {
+                                            'term': {
+                                            'lexiconName': 'foo'
+                                            }
+                                        },
+                                        {
+                                            'term': {
+                                                'lexiconName': 'large_lex'
+                                            }
+                                        },
+                                        {
+                                            'term': {
+                                                'lexiconName': 'panacea'
+                                            }
+                                        },
+                                        {
+                                            'term':{
+                                                'lexiconName': 'panacea_links'
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
     expected_more = [
         (
             {
@@ -179,8 +221,8 @@ def test_statistics_querycount(app):
             'lexiconOrder'
         )
     ]
-    es_count_q = es_dsl.Search.from_dict(count_q)
+    es_expected_q = es_dsl.Search.from_dict(expected_q)
     assert count_q == expected_q
     assert more == expected_more
-    es_expected_q = es_dsl.Search.from_dict(expected_q)
+    es_count_q = es_dsl.Search.from_dict(count_q)
     assert es_count_q == es_expected_q
