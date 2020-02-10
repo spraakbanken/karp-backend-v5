@@ -498,7 +498,6 @@ class ConfigManager(object):
         else:
             use_fields = self.fields
         mappings = use_fields.get(mode, {})
-        _logger.info("mappings = %s", mappings)
         group = re.search("(.*)((.bucket)|(.search)|(.sort))$", field)
         if field in mappings:
             return mappings[field]

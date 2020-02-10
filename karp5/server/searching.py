@@ -370,7 +370,7 @@ def statlist():
             index=index, body=elasticq, search_type="query_then_fetch", size=0
         )
         tables = []
-        for key, val in list(ans["aggregations"]["q_statistics"].items()):
+        for key, val in ans["aggregations"]["q_statistics"].items():
             if key.startswith("STAT_"):
                 tables.extend(generate_table(val, []))
         # the length of tables might be longer than size, so truncate it
@@ -414,7 +414,7 @@ def generate_table(dictionary, table):
     name = dictionary.get("key", "")
     end = True
     tables = []
-    for key, val in list(dictionary.items()):
+    for key, val in dictionary.items():
         if key.startswith("STAT_"):
             end = False
             tables.extend(generate_table(val, table + [name]))
@@ -570,7 +570,7 @@ def clean_highlight(ans):
     stop_offset = 9  # The number of extra tokens added by the <em> tags
     for n, hit in enumerate(ans.get("hits", {}).get("hits", [])):
         # _logger.debug('CLEAN hit %s\n\n\n' % hit)
-        for field, texts in list(hit.get("highlight", {}).items()):
+        for field, texts in hit.get("highlight", {}).items():
             # _logger.debug('CLEAN texts %s: %s' % (field, texts))
             if field == "lexiconName":
                 del ans["hits"]["hits"][n]["highlight"][field]

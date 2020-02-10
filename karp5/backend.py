@@ -209,7 +209,7 @@ def init(route):
             else:
                 modes[val["mode"]] = ["%s (%s)" % (name, val["order"])]
         olist = ""
-        for mode, kids in list(modes.items()):
+        for mode, kids in modes.items():
             olist += "<li>%s<ul>%s</ul></li>" % (
                 mode,
                 "\n".join("<li>%s</li>" % kid for kid in kids),
