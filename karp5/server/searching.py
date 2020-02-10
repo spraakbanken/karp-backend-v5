@@ -158,7 +158,7 @@ def querycount(page=0):
         mode = settings["mode"]
         es = conf_mgr.elastic(mode=mode)
         index, typ = conf_mgr.get_mode_index(mode)
-        _logger.debug("|querycount| Will ask %s", count_elasticq)
+        _logger.info("|querycount| Will ask %s", count_elasticq)
         count_ans = es.search(
             index=index,
             body=count_elasticq,
@@ -167,9 +167,8 @@ def querycount(page=0):
             size=25,  # stat_size
         )
         _logger.debug("ANNE: count_ans: %s\n", count_ans)
-        distribution = count_ans["aggregations"]["q_statistics"]["lexiconOrder"][
-            "buckets"
-        ]
+        distribution = count_ans["aggregations"]["q_statistics"]["lexiconOrder"]["buckets"]
+
     except errors.KarpException as e:  # pass on karp exceptions
         _logger.exception(e)
         raise
