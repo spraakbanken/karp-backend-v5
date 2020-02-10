@@ -581,7 +581,7 @@ def statistics(settings, exclude=[], order={}, prefix="", show_missing=True, for
             to_add_exist["aggs"] = to_add
             to_add_missing["aggs"] = to_add
 
-        for key, val in list(bucket_settings.items()):
+        for key, val in bucket_settings.items():
             to_add_exist[terms][key] = val
             if key == "order":
                 to_add_missing["missing"][key] = val
@@ -606,7 +606,7 @@ def statistics(settings, exclude=[], order={}, prefix="", show_missing=True, for
     else:
         agg = to_add
 
-    for key, val in list(q.items()):
+    for key, val in q.items():
         agg["q_statistics"][key] = val
 
     return {"aggs": agg}, more
@@ -644,7 +644,7 @@ def adapt_query(size, _from, es, query, kwargs):
         # Construct an empty query to ES, to get an return object
         # and the total number of hits
         q_kwargs = {"size": 0, "from_": 0}
-        for k, v in list(kwargs.items()):
+        for k, v in kwargs.items():
             if k == "query":
                 q_kwargs["body"] = v
             elif k not in ["size", "from_"]:
