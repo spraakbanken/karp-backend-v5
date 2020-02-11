@@ -27,7 +27,7 @@ def test_freetext_minimum():
 def test_freetext_with_extra():
     text = None
     mode = "karp"
-    extra = {"extra": "extra"}
+    extra = {"term":{"extra": "extra"}}
     result = freetext(text, mode, extra=extra)
 
     expected = {
@@ -56,7 +56,7 @@ def test_freetext_with_extra():
 def test_freetext_with_filters():
     text = None
     mode = "karp"
-    filters = {"extra": "extra"}
+    filters = [{"term": {"extra": "extra"}}]
     result = freetext(text, mode, filters=filters)
 
     expected = {
@@ -67,7 +67,7 @@ def test_freetext_with_filters():
                     {"match": {"lemma_german": {"boost": 200, "query": text}}},
                     {"match": {"english.lemma_english": {"boost": 100, "query": text}}},
                 ],
-                "filter": filters,
+                "filter": filters[0],
             }
         }
     }

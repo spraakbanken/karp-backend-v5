@@ -52,7 +52,7 @@ dev-run: install-dev
 	${VENV_ACTIVATE}; python run.py dev
 
 lint-syntax-errors: install-dev
-	${VENV_ACTIVATE}; flake8 karp5 setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics ${FLAKE8_FLAGS}
+	${VENV_ACTIVATE}; flake8 karp5 setup.py run.py cli.py --count --select=E9,F63,F7,F82,E1125 --show-source --statistics ${FLAKE8_FLAGS}
 
 test: install-dev clean-pyc lint-syntax-errors
 	${VENV_ACTIVATE}; pytest -vv --cov=karp5 --cov-report=term-missing karp5/tests

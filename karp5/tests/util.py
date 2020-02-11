@@ -5,9 +5,11 @@ import elasticsearch_dsl as es_dsl
 
 
 def assert_es_search(first, second):
+    print(f"first = {first}")
+    print(f"second = {second}")
     es_first = es_dsl.Search.from_dict(first)
     es_second = es_dsl.Search.from_dict(second)
-    assert es_first.to_dict() == es_second.to_dict()
+    assert es_first == es_second
 
 
 def get_json(client, path: str):

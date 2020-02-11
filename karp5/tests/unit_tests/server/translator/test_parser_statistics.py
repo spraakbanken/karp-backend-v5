@@ -4,6 +4,8 @@ import elasticsearch_dsl as es_dsl
 
 from karp5.server.translator import parser
 
+from karp5.tests.util import assert_es_search
+
 
 def test_statistics_empty_call():
     pass
@@ -39,7 +41,8 @@ def test_build_es_search():
             }
         }
     }
-    #s = es_dsl.Search.from_dict(expected_q)
+    # s = es_dsl.Search.from_dict(expected_q)
+
 
 def test_statistics_querycount(app):
     stat_size = 1000
@@ -154,11 +157,6 @@ def test_statistics_querycount(app):
                     'bool': {
                         'must': [
                             {
-                                'exists': {
-                                    'field': 'pos_german'
-                                }
-                            },
-                            {
                                 'bool': {
                                     'should': [
                                         {
@@ -188,7 +186,12 @@ def test_statistics_querycount(app):
                                         }
                                     ]
                                 }
-                            }
+                            },
+                            {
+                                'exists': {
+                                    'field': 'pos_german'
+                                }
+                            },
                         ]
                     }
                 }
@@ -221,8 +224,6 @@ def test_statistics_querycount(app):
             'lexiconOrder'
         )
     ]
-    es_expected_q = es_dsl.Search.from_dict(expected_q)
+    assert_es_search(count_q, expected_q)
     assert count_q == expected_q
     assert more == expected_more
-    es_count_q = es_dsl.Search.from_dict(count_q)
-    assert es_count_q == es_expected_q

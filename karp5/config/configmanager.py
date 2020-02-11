@@ -192,6 +192,9 @@ class ConfigManager(object):
         for _, mode_settings in self.modes.items():
             mode_settings["elastic_url"] = elastic_url
 
+    def filter_for_unauth_user(self, mode):
+        return self.modes[mode].get("filter_for_unauth_user")
+
     def get_mode_sql(self, mode):
         """[summary]
 

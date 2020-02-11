@@ -80,7 +80,8 @@
         ],
         "boosts": [
             "foo"
-        ]
+        ],
+        "filter_for_unauth_user": {"status": "ok"}
     },
     "large_lex": {
         "is_index": true,
