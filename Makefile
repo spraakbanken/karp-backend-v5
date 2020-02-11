@@ -1,24 +1,27 @@
-.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log
+.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log test-all
 
 .DEFAULT: test
 
 PYTHON = python3
 PLATFORM := ${shell uname -o}
+INVENV_PATH = ${shell which invenv}
 
 ${info Platform: ${PLATFORM}}
+${info invenv: ${INVENV_PATH}}
+
 ifeq (${VIRTUAL_ENV},)
   VENV_NAME = .venv
-  VENV_BIN = ${VENV_NAME}/bin
 else
   VENV_NAME = ${VIRTUAL_ENV}
-  VENV_BIN = ${VENV_NAME}/bin
 endif
 ${info Using ${VENV_NAME}}
 
-ifeq (${VIRTUAL_ENV},)
-  VENV_ACTIVATE = . ${VENV_BIN}/activate
+VENV_BIN = ${VENV_NAME}/bin
+
+ifeq (${INVENV_PATH},)
+  INVENV = export VIRTUAL_ENV="${VENV_NAME}"; export PATH="${VENV_BIN}:${PATH}"; unset PYTHON_HOME;
 else
-  VENV_ACTIVATE = true
+  INVENV = invenv -C ${VENV_NAME}
 endif
 
 ifeq (${PLATFORM}, Android)
@@ -30,48 +33,56 @@ endif
 venv: ${VENV_NAME}/made
 
 install: venv ${VENV_NAME}/req.installed
-install-dev: venv ${VENV_NAME}/req-dev.installed
+install-test: venv install ${VENV_NAME}/req-test.installed
+install-dev: venv install-test ${VENV_NAME}/req-dev.installed
 
 ${VENV_NAME}/made:
 	test -d ${VENV_NAME} || ${PYTHON} -m venv ${VENV_NAME}
-	${VENV_ACTIVATE}; pip install pip-tools
+	${INVENV} pip install pip-tools
 	@touch $@
 
 ${VENV_NAME}/req.installed: requirements.txt
-	${VENV_ACTIVATE}; pip install -Ur $<
+	${INVENV} pip install -Ur $<
 	@touch $@
 
-${VENV_NAME}/req-dev.installed: setup.py
-	${VENV_ACTIVATE}; pip install -e .[dev]
+${VENV_NAME}/req-test.installed: setup.py setup.cfg
+	${INVENV} pip install -e .[test]
+	@touch $@
+
+${VENV_NAME}/req-dev.installed: setup.py setup.cfg
+	${INVENV} pip install -e .[dev]
 	@touch $@
 
 run: install
-	${VENV_ACTIVATE}; python run.py 8081
+	${INVENV} python run.py 8081
 
 dev-run: install-dev
-	${VENV_ACTIVATE}; python run.py dev
+	${INVENV} python run.py dev
 
-lint-syntax-errors: install-dev
-	${VENV_ACTIVATE}; flake8 karp5 setup.py run.py cli.py --count --select=E9,F63,F7,F82,E1125 --show-source --statistics ${FLAKE8_FLAGS}
+lint-syntax-errors: install-test
+	${INVENV} flake8 karp5 setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics ${FLAKE8_FLAGS}
 
-test: install-dev clean-pyc lint-syntax-errors
-	${VENV_ACTIVATE}; pytest -vv --cov=karp5 --cov-report=term-missing karp5/tests
+test: install-test clean-pyc
+	${INVENV} pytest -vv karp5/tests/unit_tests
 
-test-log: install-dev clean-pyc
-	${VENV_ACTIVATE}; pytest --cov=karp5 --cov-report=term-missing karp5/tests > pytest.log
+test-all: install-test clean-pyc
+	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing karp5/tests
 
-lint: install-dev
-	${VENV_ACTIVATE}; pylint --rcfile .pylintrc karp5 setup.py cli.py run.py
+test-log: install-test clean-pyc
+	${INVENV} pytest --cov=karp5 --cov-report=term-missing karp5/tests > pytest.log
+
+lint: install
+	${INVENV} pylint --rcfile .pylintrc karp5 setup.py cli.py run.py
 
 clean: clean-pyc
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} \;
 
 bump-version-patch:
-	bumpversion patch
+	${INVENV} bumpversion patch
 
 bump-version-minor:
-	bumpversion minor
+	${INVENV} bumpversion minor
 
 bump-version-major:
-	bumpversion major
+	${INVENV} bumpversion major
