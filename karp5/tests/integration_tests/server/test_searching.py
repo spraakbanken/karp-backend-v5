@@ -248,4 +248,5 @@ def test_getcontext_panacea(client_w_panacea):
     pre = []
     assert result["pre"] == pre
     assert result["center"]["_source"] == center_source
-    assert result["post"] == post
+    for post_entry, expected in zip(result["post"], post):
+        assert post_entry["_source"] == expected["_source"]
