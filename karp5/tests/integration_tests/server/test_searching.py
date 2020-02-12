@@ -97,7 +97,154 @@ def test_getcontext_panacea(client_w_panacea):
         'lexiconOrder': 0,
         'pos_german': 'No'
     }
-    post = []
+    post = [
+        {
+            '_id': 'qLsaOXABkxee4U0WZNC1',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {
+                'english': [
+                    {
+                        'lemma_english': 'image'
+                    },
+                    {
+                        'lemma_english': 'copy'
+                    }
+                ],
+               'lemma_german': 'Abbild',
+               'lexiconName': 'panacea'
+            },
+            '_type': 'lexicalentry',
+            'sort': ['Abbild']
+        },
+        {
+            '_id': 'yrsaOXABkxee4U0WZdFo',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {
+                'english': [
+                    {'lemma_english': 'figure'},
+                    {'lemma_english': 'projection'},
+                    {'lemma_english': 'illustration'},
+                    {'lemma_english': 'image'},
+                    {'lemma_english': 'mapping'}
+                ],
+                'lemma_german': 'Abbildung',
+                'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Abbildung']
+        },
+        {
+            '_id': '-bsaOXABkxee4U0WYMj7',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {
+                'english': [
+                    {'lemma_english': 'termination'},
+                    {'lemma_english': 'disconnection'},
+                    {'lemma_english': 'demolition'},
+                    {'lemma_english': 'abortion'},
+                    {'lemma_english': 'breaking-off'},
+                    {'lemma_english': 'abort'}
+                ],
+                'lemma_german': 'Abbruch',
+                'lexiconName': 'panacea'
+            },
+            '_type': 'lexicalentry',
+            'sort': ['Abbruch']
+        },
+        {
+            '_id': 'V7saOXABkxee4U0WXsJb',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {
+                'english': [
+                    {'lemma_english': 'cover'},
+                    {'lemma_english': 'coverage'},
+                    {'lemma_english': 'covering'}
+                ],
+                'lemma_german': 'Abdeckung',
+                'lexiconName': 'panacea'
+            },
+            '_type': 'lexicalentry',
+            'sort': ['Abdeckung']
+        },
+        {
+            '_id': 'lbsaOXABkxee4U0WZM4c',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {
+                'english': [
+                    {'lemma_english': 'imprint'},
+                    {'lemma_english': 'impression'},
+                    {'lemma_english': 'printing'},
+                    {'lemma_english': 'print'},
+                    {'lemma_english': 'copy'}
+                ],
+                'lemma_german': 'Abdruck',
+                'lexiconName': 'panacea'
+            },
+            '_type': 'lexicalentry',
+            'sort': ['Abdruck']
+        },
+        {
+            '_id': 'LbsaOXABkxee4U0WYMZl',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {'english': [{'lemma_english': 'dinner'},
+                                    {'lemma_english': 'supper'}],
+                        'lemma_german': 'Abendessen',
+                        'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Abendessen']},
+           {'_id': 'ebsaOXABkxee4U0WX8SF',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {'english': [{'lemma_english': 'adventure'},
+                                    {'lemma_english': 'affair'},
+                                    {'lemma_english': 'venture'}],
+                        'lemma_german': 'Abenteuer',
+                        'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Abenteuer']},
+           {'_id': 'AbsaOXABkxee4U0WXMHw',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {'english': [{'lemma_english': 'deprivation'},
+                                    {'lemma_english': 'denial'}],
+                        'lemma_german': 'Aberkennung',
+                        'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Aberkennung']},
+           {'_id': '-7saOXABkxee4U0WZdJp',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {'english': [{'lemma_english': 'refuse'},
+                                    {'lemma_english': 'waste'},
+                                    {'lemma_english': 'offal'},
+                                    {'lemma_english': 'rubbish'},
+                                    {'lemma_english': 'drop'},
+                                    {'lemma_english': 'trash'},
+                                    {'lemma_english': 'litter'},
+                                    {'lemma_english': 'scrap'},
+                                    {'lemma_english': 'discard'},
+                                    {'lemma_english': 'garbage'},
+                                    {'lemma_english': 'release'}],
+                        'lemma_german': 'Abfall',
+                        'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Abfall']},
+           {'_id': 'KLsaOXABkxee4U0WWb_M',
+            '_index': 'panacea_test_upload_02',
+            '_score': None,
+            '_source': {'english': [{'lemma_english': 'intercept'},
+                           {'lemma_english': 'interception'}],
+               'lemma_german': 'Abfangen',
+               'lexiconName': 'panacea'},
+            '_type': 'lexicalentry',
+            'sort': ['Abfangen']
+        }
+    ]
     pre = []
     assert result["pre"] == pre
     assert result["center"]["_source"] == center_source
