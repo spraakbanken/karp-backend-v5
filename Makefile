@@ -1,4 +1,4 @@
-.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log test-all lint-no-fail
+.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log test-cov lint-no-fail
 
 .DEFAULT: test
 
@@ -65,7 +65,7 @@ lint-syntax-errors: install-test
 test: install-test clean-pyc
 	${INVENV} pytest -vv karp5/tests/unit_tests
 
-test-all: install-test clean-pyc
+test-cov: install-test clean-pyc
 	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing karp5/tests
 
 test-log: install-test clean-pyc
