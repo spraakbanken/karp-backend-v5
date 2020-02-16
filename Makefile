@@ -1,4 +1,4 @@
-.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log test-all
+.PHONY: test clean clean-pyc run dev-run lint lint-syntax-errors test-log test-all lint-no-fail
 
 .DEFAULT: test
 
@@ -73,6 +73,9 @@ test-log: install-test clean-pyc
 
 lint: install
 	${INVENV} pylint --rcfile .pylintrc karp5 setup.py cli.py run.py
+
+lint-no-fail: install
+	${INVENV} pylint --rcfile .pylintrc --exit-zero karp5 setup.py cli.py run.py
 
 clean: clean-pyc
 clean-pyc:

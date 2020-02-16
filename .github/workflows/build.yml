@@ -67,7 +67,7 @@ jobs:
           flake8 karp5 setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Lint with pylint
         run: |
-          make lint
+          make lint-no-fail
           # pylint --rcfile=.pylintrc --exit-zero karp5 setup.py run.py cli.py
       - name: Test with pytest
         run: |
