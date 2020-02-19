@@ -41,18 +41,42 @@ def check_user(force_lookup=False):
             raise errors.KarpAuthenticationError(
                 "Incorrect username or password.", "Make sure that they are properly encoded",
             )
-
+    user_parts = user.split("__")
+    if len(user_parts) > 1:
+        user = user_parts[0]
+        user_lex = user_parts[1]
+    else:
+        user_lex = None
     lexlist = {}
 
     for name, val in conf_mgr.lexicons.items():
-        lexlist[name] = {"read": True, "write": True, "admin": True}
+        if user_lex:
+            lexlist[name] = {"read": False, "write": False, "admin": False}
+            if name == user_lex:
+                if user == "read":
+                    lexlist[name] = {"read": True, "write": False, "admin": False}
+                elif user == "write":
+                    lexlist[name] = {"read": True, "write": True, "admin": False}
+                elif user == "admin":
+                    lexlist[name] = {"read": True, "write": True, "admin": True}
+            elif name != user_lex and user == "invalid":
+                lexlist[name] = {"read": True, "write": False, "admin": False}
+        else:
+            if user == "invalid":
+                lexlist[name] = {"read": False, "write": False, "admin": False}
+            elif user == "read":
+                lexlist[name] = {"read": True, "write": False, "admin": False}
+            elif user == "write":
+                lexlist[name] = {"read": True, "write": True, "admin": False}
+            else:
+                lexlist[name] = {"read": True, "write": True, "admin": True}
 
     print("lexlist = {}".format(lexlist))
 
     auth_response = {
         "permitted_resources": {"lexica": lexlist},
         "username": user,
-        "authenticated": True,
+        "authenticated": user != "invalid",
     }
 
     lexitems = auth_response.get("permitted_resources", {})

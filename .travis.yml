@@ -15,9 +15,9 @@ python:
   - "3.8"
 
 install:
-  - pip install -e .[dev]
+  - pip install -e .[test]
 script:
-  - pytest --cov=karp5 --cov-report=term karp5/tests
+  - pytest -vv --cov=karp5 --cov-report=term karp5/tests
 after_success:
   - codecov
   - coveralls

@@ -2,21 +2,25 @@
     {
         "lexiconName": "foo",
         "lexiconOrder": 2,
-        "foo": "one"
+        "foo": "one",
+        "status": "ok"
     },
     {
         "lexiconName": "foo",
         "lexiconOrder": 2,
-        "foo": "two"
+        "foo": "two",
+        "status": "stop"
     },
     {
         "lexiconName": "foo",
         "lexiconOrder": 2,
-        "foo": "three"
+        "foo": "three",
+        "status": "ok"
     },
     {
         "lexiconName": "foo",
         "lexiconOrder": 2,
-        "foo": "four"
+        "foo": "four",
+        "status": "stop"
     }
 ]

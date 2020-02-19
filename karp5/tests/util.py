@@ -1,5 +1,32 @@
+"""Testing utils."""
+from base64 import b64encode
 import json
 import os
+
+import elasticsearch_dsl as es_dsl
+
+
+def mk_headers(username: str):
+    """Create Authorization header for user.
+
+    Arguments:
+        username {str} -- the username to use
+
+    Returns:
+        {dict} -- The Authorization header to use
+    """
+    headers = {
+        "Authorization": "Basic " + b64encode(username.encode("utf-8") + b":pwd").decode("utf-8")
+    }
+    return headers
+
+
+def assert_es_search(first, second):
+    print(f"first = {first}")
+    print(f"second = {second}")
+    es_first = es_dsl.Search.from_dict(first)
+    es_second = es_dsl.Search.from_dict(second)
+    assert es_first == es_second
 
 
 def get_json(client, path: str):

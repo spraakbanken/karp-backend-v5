@@ -192,6 +192,9 @@ class ConfigManager(object):
         for _, mode_settings in self.modes.items():
             mode_settings["elastic_url"] = elastic_url
 
+    def filter_for_unauth_user(self, mode):
+        return self.modes[mode].get("filter_for_unauth_user")
+
     def get_mode_sql(self, mode):
         """[summary]
 
@@ -498,7 +501,6 @@ class ConfigManager(object):
         else:
             use_fields = self.fields
         mappings = use_fields.get(mode, {})
-        _logger.info("mappings = %s", mappings)
         group = re.search("(.*)((.bucket)|(.search)|(.sort))$", field)
         if field in mappings:
             return mappings[field]
