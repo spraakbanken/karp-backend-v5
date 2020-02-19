@@ -34,28 +34,11 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/cache@v1
-        name: Look for cached dependencies
-        id: cache-pip
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.cfg') }}-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ hashFiles('**/setup.cfg') }}-
-            ${{ runner.os }}-pip-
       - name: Install dependencies
-        # if: steps.cache-pip.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           make install-dev
-      # - uses: actions/cache@v1
-      #   name: Look for cached elasticsearch
-      #   id: cache-es
-      #   with:
-      #     path: elasticsearch-${{ matrix.es-version }}
-      #     key: es-${{ matrix.es-version }}
       - name: Download elasticsearch
-        # if: steps.cache-es.outputs.cache-hit != 'true'
         run: |
           wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${{ matrix.es-version }}.tar.gz
           tar -xzf elasticsearch-${{ matrix.es-version }}.tar.gz
