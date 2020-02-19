@@ -117,7 +117,7 @@ def requestquery(page=0):
 
 
 def sortorder(settings, mode, querycommand):
-    if not settings.get("sort", ""):
+    if not settings.get("sort"):
         if querycommand == "simple":
             # default: group by lexicon, then sort by score
             sort = conf_mgr.searchfield(mode, "sort_by")
