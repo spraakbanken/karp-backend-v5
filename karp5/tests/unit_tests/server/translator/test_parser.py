@@ -129,6 +129,7 @@ def test_parse_q_simple_mode_karp(app):
 
 
 def test_parse_q_simple_mode_foo_no_user(app):
+    """Used in karp5.server.searching.requestquery when User is not authorized"""
     text = "hej"
     lexicon = "any"
     with app.test_request_context(f"/query?q=simple||{text}"):
@@ -146,13 +147,64 @@ def test_parse_q_simple_mode_foo_no_user(app):
                                 ]
                             }
                         },
-                        {"term": {"lexiconName": "any"}},
+                        {"term": {"lexiconName": lexicon}},
                     ],
+                    "filter": {"term": {"status": "ok"}},
+                }
+            }
+        }
+        assert_es_search(result, expected)
+        assert result == expected
+
+
+def test_parse_q_extended_mode_foo_no_user(app):
+    """Used in karp5.server.searching.requestquery when User is not authorized"""
+    text = "hej"
+    lexicon = "any"
+    with app.test_request_context(f"/query?q=extended||and|foo|equals|{text}"):
+        settings = {"mode": "foo", "allowed": [lexicon]}
+        result = parser.parse(settings)
+
+        expected = {
+            "query": {
+                "constant_score": {
                     "filter": {
-                        "term": {
-                            "status": "ok"
+                        "bool": {
+                            "must": [
+                                {"term": {"lexiconName": lexicon}},
+                                {"match_phrase": {"foo": text}},
+                                {"term": {"status": "ok"}},
+                            ]
                         }
                     }
+                }
+            }
+        }
+        assert_es_search(result, expected)
+        assert result == expected
+
+
+def test_parse_q_simple_mode_foo_user(app):
+    """Used in karp5.server.searching.requestquery when User is authorized"""
+    text = "hej"
+    lexicon = "any"
+    with app.test_request_context(f"/query?q=simple||{text}"):
+        settings = {"mode": "foo", "allowed": [lexicon], "user_is_authorized": True}
+        result = parser.parse(settings)
+        expected = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "bool": {
+                                "should": [
+                                    {"match": {"_all": {"operator": "and", "query": text}}},
+                                    {"match": {"foo": {"boost": 100, "query": text}}},
+                                ]
+                            }
+                        },
+                        {"term": {"lexiconName": "any"}},
+                    ]
                 }
             }
         }
@@ -204,9 +256,9 @@ def test_search_autocomplete():
 #     assert result == expected
 
 
-@pytest.mark.parametrize("exps,filters", [
-    ([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),
-])
+@pytest.mark.parametrize(
+    "exps,filters", [([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),]
+)
 @pytest.mark.parametrize("constant_score", (True, False))
 def test_search_case1(exps, filters, constant_score):
     fields = None
@@ -214,34 +266,13 @@ def test_search_case1(exps, filters, constant_score):
     highlight = False
     usefilter = True
 
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
+    result = parser.search(exps, filters, fields, isfilter, highlight, usefilter, constant_score)
     if constant_score:
-        expected = {"query": {'bool': {"filter": exps + filters}}}
-        expected = {
-            "query": {
-                "constant_score": {
-                    "filter": {
-                        "bool": {
-                            "must": exps + filters
-                            }
-                        }
-                    }
-                    }}
+        expected = {"query": {"bool": {"filter": exps + filters}}}
+        expected = {"query": {"constant_score": {"filter": {"bool": {"must": exps + filters}}}}}
     else:
-        expected = {'query': {"bool": {'filter': filters, 'must': exps}}}
-        expected = {
-            "bool": {
-                "must": exps + filters
-            }
-        }
+        expected = {"query": {"bool": {"filter": filters, "must": exps}}}
+        expected = {"bool": {"must": exps + filters}}
 
     assert_es_search(result, expected)
     assert result == expected
@@ -297,12 +328,8 @@ def test_search_case1(exps, filters, constant_score):
 #     assert result == expected
 
 
-@pytest.mark.parametrize("exps", [
-    ([{"match": {"field": "value"}}]),
-])
-@pytest.mark.parametrize("filters", [
-    ([{"term": {"status": "ok"}}]),
-])
+@pytest.mark.parametrize("exps", [([{"match": {"field": "value"}}]),])
+@pytest.mark.parametrize("filters", [([{"term": {"status": "ok"}}]),])
 @pytest.mark.parametrize("usefilter", [True, False])
 @pytest.mark.parametrize("constant_score", [True, False])
 def test_search_case2_list(exps, filters, usefilter, constant_score):
@@ -310,18 +337,10 @@ def test_search_case2_list(exps, filters, usefilter, constant_score):
     isfilter = True
     highlight = False
 
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
+    result = parser.search(exps, filters, fields, isfilter, highlight, usefilter, constant_score)
 
     expected = {"query": {"bool": {"filter": exps + filters}}}
-    expected = {'filter': {'bool': {'must': exps + filters}}}
+    expected = {"filter": {"bool": {"must": exps + filters}}}
     assert_es_search(result, expected)
 
     assert result == expected
@@ -360,37 +379,13 @@ def test_search_case3_list():
     usefilter = False
     constant_score = True
 
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
+    result = parser.search(exps, filters, fields, isfilter, highlight, usefilter, constant_score)
 
-    expected = {"query": {"bool": {'filter': exps + filters}}}
+    expected = {"query": {"bool": {"filter": exps + filters}}}
     expected = {
-        'bool': {
-            'must': [
-                {
-                    'match': {
-                        'field': 'value'
-                    }
-                }
-            ],
-            'filter': {
-                'bool': {
-                    'must': [
-                        {
-                            'term': {
-                                'status': 'ok'
-                            }
-                        }
-                    ]
-                }
-            }
+        "bool": {
+            "must": [{"match": {"field": "value"}}],
+            "filter": {"bool": {"must": [{"term": {"status": "ok"}}]}},
         }
     }
     assert_es_search(result, expected)
@@ -406,37 +401,13 @@ def test_search_case3_list_no_constant_score():
     usefilter = False
     constant_score = False
 
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
+    result = parser.search(exps, filters, fields, isfilter, highlight, usefilter, constant_score)
 
-    expected = {"query": {"bool": {'filter': filters, "must": exps}}}
+    expected = {"query": {"bool": {"filter": filters, "must": exps}}}
     expected = {
-        'bool': {
-            'must': [
-                {
-                    'match': {
-                        'field': 'value'
-                    }
-                }
-            ],
-            'filter': {
-                'bool': {
-                    'must': [
-                        {
-                            'term': {
-                                'status': 'ok'
-                            }
-                        }
-                    ]
-                }
-            }
+        "bool": {
+            "must": [{"match": {"field": "value"}}],
+            "filter": {"bool": {"must": [{"term": {"status": "ok"}}]}},
         }
     }
 
@@ -444,10 +415,9 @@ def test_search_case3_list_no_constant_score():
     assert result == expected
 
 
-@pytest.mark.parametrize("exps,filters", [
-    ([{"match": {"field": "value"}}], None),
-    (None, [{"term": {"status": "ok"}}]),
-])
+@pytest.mark.parametrize(
+    "exps,filters", [([{"match": {"field": "value"}}], None), (None, [{"term": {"status": "ok"}}]),]
+)
 @pytest.mark.parametrize("constant_score", [True, False])
 def test_search_case4(exps, filters, constant_score):
     fields = None
@@ -455,24 +425,10 @@ def test_search_case4(exps, filters, constant_score):
     highlight = False
     usefilter = False
 
-    result = parser.search(
-        exps,
-        filters,
-        fields,
-        isfilter,
-        highlight,
-        usefilter,
-        constant_score
-    )
+    result = parser.search(exps, filters, fields, isfilter, highlight, usefilter, constant_score)
     if exps:
         expected = {"query": {"bool": {"filter" if constant_score else "must": exps}}}
-        expected = {
-            "query": {
-                "bool": {
-                    "must": exps
-                }
-            }
-        }
+        expected = {"query": {"bool": {"must": exps}}}
     else:
         expected = {}
 

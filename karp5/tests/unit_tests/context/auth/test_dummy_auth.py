@@ -4,12 +4,7 @@ import pytest
 
 from karp5.context.auth.dummy_auth import check_user
 
-
-def mk_headers(username: str):
-    headers = {
-        "Authorization": "Basic " + b64encode(username.encode("utf-8") + b":pwd").decode("utf-8")
-    }
-    return headers
+from karp5.tests.util import mk_headers
 
 
 def test_check_user_w_no_user(app):
@@ -113,9 +108,7 @@ def test_check_user_w_invalid_user_w_lex(app, lexicon):
 
 
 @pytest.mark.parametrize("lexicon", ["foo"])
-@pytest.mark.parametrize("username", [
-    "read", "write", "admin"
-])
+@pytest.mark.parametrize("username", ["read", "write", "admin"])
 def test_check_user_w_user_w_lex(app, lexicon, username):
     headers = mk_headers(f"{username}__{lexicon}")
     with app.test_request_context("/", headers=headers):

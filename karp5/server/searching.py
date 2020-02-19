@@ -39,9 +39,7 @@ def query(page=0):
         raise
     except Exception as e:  # catch *all* exceptions and show for user
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            str(e), user_msg=str(e), query=request.query_string
-        )
+        raise errors.KarpGeneralError(str(e), user_msg=str(e), query=request.query_string)
 
 
 def requestquery(page=0):
@@ -57,9 +55,7 @@ def requestquery(page=0):
     except QueryError as e:
         _logger.exception(e)
         raise errors.KarpQueryError(
-            "Parse error - " + e.message,
-            debug_msg=e.debug_msg,
-            query=request.query_string,
+            "Parse error - " + e.message, debug_msg=e.debug_msg, query=request.query_string,
         )
     except AuthenticationError as e:
         _logger.exception(e)
@@ -70,9 +66,7 @@ def requestquery(page=0):
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpQueryError(
-            "Could not parse data", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpQueryError("Could not parse data", debug_msg=e, query=request.query_string)
     mode = settings["mode"]
     sort = sortorder(settings, mode, settings.get("query_command", ""))
     if "start" in settings:
@@ -123,11 +117,7 @@ def sortorder(settings, mode, querycommand):
             sort = conf_mgr.searchfield(mode, "sort_by")
         else:
             # default for extended query: exclude _score
-            sort = [
-                field
-                for field in conf_mgr.searchfield(mode, "sort_by")
-                if field != "_score"
-            ]
+            sort = [field for field in conf_mgr.searchfield(mode, "sort_by") if field != "_score"]
     else:
         sort = conf_mgr.searchfield(mode, "head_sort_field") + settings["sort"]
 
@@ -166,9 +156,7 @@ def querycount(page=0):
             size=25,  # stat_size
         )
         _logger.debug("ANNE: count_ans: %s\n", count_ans)
-        distribution = count_ans["aggregations"]["q_statistics"]["lexiconOrder"][
-            "buckets"
-        ]
+        distribution = count_ans["aggregations"]["q_statistics"]["lexiconOrder"]["buckets"]
     except errors.KarpException as e:  # pass on karp exceptions
         _logger.exception(e)
         raise
@@ -180,9 +168,7 @@ def querycount(page=0):
     except Exception as e:  # catch *all* exceptions
         # Remember that 'buckets' is not allowed here! %s"
         _logger.exception(e)
-        raise errors.KarpQueryError(
-            "Could not parse data", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpQueryError("Could not parse data", debug_msg=e, query=request.query_string)
     return jsonify({"query": q_ans, "distribution": distribution})
 
 
@@ -190,12 +176,12 @@ def test():
     user_is_authorized, permitted = auth.validate_user(mode="read")
     try:
         # default
-        settings = parser.make_settings(permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized)
+        settings = parser.make_settings(
+            permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized
+        )
         elasticq = parser.parse(settings)
     except QueryError as e:
-        raise errors.KarpQueryError(
-            "Parse error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     return jsonify({"elastic_json_query": elasticq})
 
 
@@ -203,12 +189,12 @@ def explain():
     user_is_authorized, permitted = auth.validate_user(mode="read")
     try:
         # default
-        settings = parser.make_settings(permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized)
+        settings = parser.make_settings(
+            permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized
+        )
         elasticq = parser.parse(settings)
     except QueryError as e:
-        raise errors.KarpQueryError(
-            "Parse error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpQueryError("Parse error", debug_msg=e, query=request.query_string)
     es = conf_mgr.elastic(mode=settings["mode"])
     index, typ = conf_mgr.get_mode_index(settings["mode"])
     ex_ans = es.indices.validate_query(index=index, body=elasticq, explain=True)
@@ -266,9 +252,7 @@ def minientry():
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            "Unknown error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def random():
@@ -301,9 +285,7 @@ def random():
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            "Unknown error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def statistics():
@@ -326,9 +308,7 @@ def statistics():
 
         # TODO allow more than 100 000 hits here?
         _logger.debug("stat body %s", elasticq)
-        ans = es.search(
-            index=index, body=elasticq, search_type="query_then_fetch", size=0
-        )
+        ans = es.search(index=index, body=elasticq, search_type="query_then_fetch", size=0)
         ans["is_more"] = is_more
         return jsonify(ans)
     except AuthenticationError as e:
@@ -340,9 +320,7 @@ def statistics():
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            "Unknown error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def statlist():
@@ -365,9 +343,7 @@ def statlist():
         is_more = check_bucketsize(more, settings["size"], index, es)
         # TODO allow more than 100 000 hits here?
         size = settings["size"]
-        ans = es.search(
-            index=index, body=elasticq, search_type="query_then_fetch", size=0
-        )
+        ans = es.search(index=index, body=elasticq, search_type="query_then_fetch", size=0)
         tables = []
         for key, val in ans["aggregations"]["q_statistics"].items():
             if key.startswith("STAT_"):
@@ -389,17 +365,13 @@ def statlist():
     except Exception as e:  # catch *all* exceptions
         # raise
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            "Unknown error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 def check_bucketsize(bucket_sizes, size, index, es):
     is_more = {}
     for sizebucket, bucketname in bucket_sizes:
-        countans = es.search(
-            index=index, body=sizebucket, size=0, search_type="query_then_fetch"
-        )
+        countans = es.search(index=index, body=sizebucket, size=0, search_type="query_then_fetch")
         _logger.debug("countans %s", countans)
         bucketsize = countans["aggregations"]["more"]["value"]
         _logger.debug("bucketsize = (%s, %s) ", bucketsize, type(bucketsize))
@@ -456,12 +428,8 @@ def formatpost():
         if not isinstance(data, list):
             data = [data]
         errmsg = "Unkown format %s for mode %s" % (settings["format"], mode)
-        format_list = conf_mgr.extra_src(
-            mode, "format_list", helpers.notdefined(errmsg)
-        )
-        ok, html = format_list(
-            data, conf_mgr.elastic(mode=mode), settings["format"], index
-        )
+        format_list = conf_mgr.extra_src(mode, "format_list", helpers.notdefined(errmsg))
+        ok, html = format_list(data, conf_mgr.elastic(mode=mode), settings["format"], index)
         return jsonify({"all": len(data), "ok": ok, "data": html})
 
     else:
@@ -481,7 +449,9 @@ def autocomplete():
     user_is_authorized, permitted = auth.validate_user(mode="read")
     # query = request.query_string
     try:
-        settings = parser.make_settings(permitted, {"size": 1000}, user_is_authorized=user_is_authorized)
+        settings = parser.make_settings(
+            permitted, {"size": 1000}, user_is_authorized=user_is_authorized
+        )
         mode = parser.get_mode()
         resource = parser.parse_extra(settings)
         if "q" in request.args or "query" in request.args:
@@ -494,6 +464,11 @@ def autocomplete():
             _logger.debug("qs %s", qs)
             multi = True
 
+        filters = []  # filters will be put here
+        if not settings.get("user_is_authorized", False):
+            filter_unauth_user = conf_mgr.filter_for_unauth_user(mode)
+            if filter_unauth_user is not None:
+                filters.append({"term": filter_unauth_user})
         # use utf8, escape '"'
         qs = [re.sub('"', '\\"', q) for q in qs]
 
@@ -510,7 +485,7 @@ def autocomplete():
             autocomplete_fields = conf_mgr.searchfield(mode, "autocomplete_field")
             fields = {"exists": {"field": autocomplete_field}}
             # last argument is the 'fields' used for highlightning
-            elasticq = parser.search([exp, fields, resource], [], "", usefilter=True)
+            elasticq = parser.search([exp, fields, resource], filters, "", usefilter=True)
             _logger.debug("Will send %s", elasticq)
 
             es = conf_mgr.elastic(mode=mode)
@@ -522,11 +497,7 @@ def autocomplete():
                 0,
                 es,
                 elasticq,
-                {
-                    "size": settings["size"],
-                    "index": index,
-                    "_source": autocomplete_fields,
-                },
+                {"size": settings["size"], "index": index, "_source": autocomplete_fields,},
             )
             # save the results for multi
             res[q] = ans
@@ -544,9 +515,7 @@ def autocomplete():
         raise
     except Exception as e:  # catch *all* exceptions
         _logger.exception(e)
-        raise errors.KarpGeneralError(
-            "Unknown error", debug_msg=e, query=request.query_string
-        )
+        raise errors.KarpGeneralError("Unknown error", debug_msg=e, query=request.query_string)
 
 
 # standard autocomplete
@@ -560,7 +529,7 @@ def autocompletequery(mode, boost, q):
     for boost_field in conf_mgr.searchfield(mode, "boosts"):
         look_in.append({"match_phrase": {boost_field: q}})
 
-    exp = {"bool": {"should": [look_in]}}
+    exp = {"bool": {"should": look_in}}
 
     return exp
 
@@ -577,9 +546,7 @@ def clean_highlight(ans):
                 newtexts = chain(*[re.finditer("<em>(.*?)</em>", t) for t in texts])
                 spans = []
                 for new in newtexts:
-                    spans.append(
-                        (new.group(1), new.span()[0], new.span()[1] - stop_offset)
-                    )
+                    spans.append((new.group(1), new.span()[0], new.span()[1] - stop_offset))
                 ans["hits"]["hits"][n]["highlight"][field] = spans
     ans["hits"]["highlight"] = "ON"
 
@@ -605,7 +572,9 @@ def testquery():
     user_is_authorized, permitted = auth.validate_user(mode="read")
     try:
         # default
-        settings = parser.make_settings(permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized)
+        settings = parser.make_settings(
+            permitted, {"size": 25, "page": 0}, user_is_authorized=user_is_authorized
+        )
         elasticq = parser.parse(settings)
         mode = settings["mode"]
         if not settings.get("sort", ""):
@@ -613,11 +582,7 @@ def testquery():
             sort = conf_mgr.searchfield(mode, "sort_by")
         else:
             sort = settings["sort"]
-        start = (
-            settings["start"]
-            if "start" in settings
-            else settings["page"] * settings["size"]
-        )
+        start = settings["start"] if "start" in settings else settings["page"] * settings["size"]
         elasticq = parser.parse()
         return json.dumps(elasticq) + json.dumps(
             {"sort": sort, "_from": start, "size": settings["size"], "version": "true"}
@@ -638,7 +603,9 @@ def get_context(lexicon):
             "You are not allowed to search the " "lexicon %s" % lexicon
         )
     # make default settings
-    settings = parser.make_settings(permitted, {"size": 10, "resource": lexicon}, user_is_authorized=user_is_authorized)
+    settings = parser.make_settings(
+        permitted, {"size": 10, "resource": lexicon}, user_is_authorized=user_is_authorized
+    )
     # parse parameter settings
     parser.parse_extra(settings)
 
@@ -661,21 +628,36 @@ def get_context(lexicon):
     # get the field name of the head sort field. Used for searching
     sortfieldname = sortfieldnames[0]
 
+    filters = []  # filters will be put here
+    print(f"mode = {mode}")
+    if not settings.get("user_is_authorized", False):
+        filter_unauth_user = conf_mgr.filter_for_unauth_user(mode)
+        print(f"filter_unauth_user = {filter_unauth_user}")
+        if filter_unauth_user is not None:
+            filters.append({"term": filter_unauth_user})
+        print(f"filters = {filters}")
+
     # find the center entry (by its id)
     if "center" in settings:
         center_id = settings["center"]
+        id_query = {"term": {"_id": center_id}}
+        if filters:
+            body_query = {"query": {"bool": {"must": id_query, "filter": filters}}}
+        else:
+            body_query = {"query": id_query}
+
         lexstart = es.search(
             index=index,
             doc_type=typ,
             size=1,
-            body={"query": {"term": {"_id": center_id}}},
+            body=body_query,
             sort=["%s:asc" % f for f in sortfield],
         )
     # if no center id is given, pick the first entry of the lexicon
     else:
         exps = []
         parser.parse_ext("and|resource|equals|%s" % lexicon, exps, [], mode)
-        center_q = parser.search(exps, [], [], usefilter=True, constant_score=False)
+        center_q = parser.search(exps, filters, [], usefilter=True, constant_score=False)
         center_q = {"query": center_q}
         lexstart = es.search(
             index=index,
@@ -695,13 +677,13 @@ def get_context(lexicon):
         raise errors.KarpElasticSearchError("Could not find entry %s" % center_id)
 
     centerentry = lexstart["hits"]["hits"][0]
-    _logger.debug("center %s, %s", centerentry, centerentry["_id"])
+    _logger.info("center %s, %s", centerentry, centerentry["_id"])
     origentry_sort = [key for key in centerentry["sort"] if key is not None][0]
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
     # TODO test this!
     sortvalue = util.escape_control(origentry_sort)
-    _logger.debug(u"Orig entry escaped key %s", sortvalue)
+    _logger.debug("Orig entry escaped key %s", sortvalue)
 
     # Construct queries to ES
     exps = []
@@ -763,12 +745,13 @@ def get_pre_post(
     es,
     index,
     place="post",
+    filters=None,
 ):
     op = {"post": {"op": "gte", "sort": "asc"}, "pre": {"op": "lte", "sort": "desc"}}
-    parser.parse_ext(
-        "and|%s|%s|%s" % (sortfieldname, op[place]["op"], sortvalue), exps, [], mode
+    parser.parse_ext("and|%s|%s|%s" % (sortfieldname, op[place]["op"], sortvalue), exps, [], mode)
+    elasticq_q = parser.search(
+        exps, filters if filters else [], [], usefilter=False, constant_score=True
     )
-    elasticq_q = parser.search(exps, [], [], usefilter=False, constant_score=True)
 
     # +1 to compensate for the word itself being in the context
     size = settings["size"] + 1
@@ -819,12 +802,14 @@ def export(lexicon):
     # TODO can user with only read permissions export all the lexicon?
     # (eg saol)
     user_is_authorized, permitted = auth.validate_user(mode="read")
-    if lexicon not in permitted:
+    if not user_is_authorized or lexicon not in permitted:
         raise errors.KarpAuthenticationError(
-            "You are not allowed to search the " "lexicon %s" % lexicon
+            "You are not allowed to export the lexicon '%s'" % lexicon
         )
 
-    settings = parser.make_settings(permitted, {"size": -1, "resource": lexicon}, user_is_authorized=user_is_authorized)
+    settings = parser.make_settings(
+        permitted, {"size": -1, "resource": lexicon}, user_is_authorized=user_is_authorized
+    )
     parser.parse_extra(settings)
     date = settings.get("date", "")
     mode = settings.get("mode", "")
@@ -834,29 +819,27 @@ def export(lexicon):
 
         # parse the date as inclusive (including the whole selected day)
         date = dateP.parse(
-            date,
-            dateP.parserinfo(yearfirst=True),
-            default=datetime(1999, 0o1, 0o1, 23, 59),
+            date, dateP.parserinfo(yearfirst=True), default=datetime(1999, 0o1, 0o1, 23, 59),
         )
 
     # to_keep = {}
     # engine, db_entry = db.get_engine(lexicon, echo=False)
     _logger.debug("exporting entries from %s ", lexicon)
     entries = db.get_entries_to_keep_gen(lexicon, to_date=date)
-#    for entry in db.dbselect(
-#        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
-#    ):
-#        _id = entry["id"]
-#        if _id in to_keep:
-#            last = to_keep[_id]["date"]
-#            if last < entry["date"]:
-#                to_keep[_id] = entry
-#        else:
-#            to_keep[_id] = entry
-#
-#    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
+    #    for entry in db.dbselect(
+    #        lexicon, engine=engine, db_entry=db_entry, max_hits=-1, to_date=date
+    #    ):
+    #        _id = entry["id"]
+    #        if _id in to_keep:
+    #            last = to_keep[_id]["date"]
+    #            if last < entry["date"]:
+    #                to_keep[_id] = entry
+    #        else:
+    #            to_keep[_id] = entry
+    #
+    #    ans = [val["doc"] for val in list(to_keep.values()) if val["status"] != "removed"]
     size = settings["size"]
-    if isinstance(size, int) and 0 <= size:
+    if isinstance(size, int) and size >= 0:
         entries = itertools.islice(entries, size)
         # ans = itertools.islice(ans, size)
         # ans = ans[:size]
@@ -882,14 +865,14 @@ def export(lexicon):
                 if i > 0:
                     yield ","
                 yield json.dumps(obj)
-#            while start < len(ans):
-#                _logger.debug("chunk %s - %s" % (start, stop))
-#                if start > 1:
-#                    yield ","
-#                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
-#                # yield json.dumps(ans[start:stop])
-#                start = stop
-#                stop += divsize
+            #            while start < len(ans):
+            #                _logger.debug("chunk %s - %s" % (start, stop))
+            #                if start > 1:
+            #                    yield ","
+            #                yield ",".join([json.dumps(obj) for obj in ans[start:stop]])
+            #                # yield json.dumps(ans[start:stop])
+            #                start = stop
+            #                stop += divsize
             yield "]}"
 
         _logger.debug("streaming entries")
