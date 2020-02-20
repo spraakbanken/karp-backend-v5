@@ -677,7 +677,7 @@ def get_context(lexicon):
         raise errors.KarpElasticSearchError("Could not find entry %s" % center_id)
 
     centerentry = lexstart["hits"]["hits"][0]
-    _logger.info("center %s, %s", centerentry, centerentry["_id"])
+    _logger.debug("center %s, %s", centerentry, centerentry["_id"])
     origentry_sort = [key for key in centerentry["sort"] if key is not None][0]
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
@@ -704,12 +704,12 @@ def get_context(lexicon):
         sortfield,
         sortfieldname,
         sortvalue,
-        origentry_sort,
         mode,
-        settings,
+        settings["size"],
         es,
         index,
         place="post",
+        filters=filters,
     )
     hits_pre = get_pre_post(
         preexps,
@@ -717,12 +717,12 @@ def get_context(lexicon):
         sortfield,
         sortfieldname,
         sortvalue,
-        origentry_sort,
         mode,
-        settings,
+        settings["size"],
         es,
         index,
         place="pre",
+        filters=filters,
     )
     return jsonify(
         {
@@ -739,9 +739,8 @@ def get_pre_post(
     sortfield,
     sortfieldname,
     sortvalue,
-    origentry_sort,
     mode,
-    settings,
+    size: int,
     es,
     index,
     place="post",
@@ -754,12 +753,12 @@ def get_pre_post(
     )
 
     # +1 to compensate for the word itself being in the context
-    size = settings["size"] + 1
+    size = size + 1
     show = conf_mgr.searchfield(mode, "minientry_fields")
     for _i, _v in enumerate(show):
         if _v == "Corpus_unit_id.raw":
             show[_i] = "Corpus_unit_id"
-    _logger.debug("searching.py:get_pre_post show = {0}".format(show))
+    _logger.debug("searching.py:get_pre_post show = %s", show)
     # TODO size*3 (magic number) because many entries may have the same sort
     # value (eg homographs in saol)
     ans = parser.adapt_query(
