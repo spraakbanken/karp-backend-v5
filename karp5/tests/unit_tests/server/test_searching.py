@@ -159,6 +159,7 @@ def test_get_context(app, lexicon, user_is_authorized, with_center):
             assert get_pre_post_mock.call_count == 2
 
             for call_args in get_pre_post_mock.call_args_list:
+                print(f"call_args = {call_args}")
                 assert "place" in call_args.kwargs
                 assert "filters" in call_args.kwargs
                 assert call_args.kwargs["filters"] == expected_filters
