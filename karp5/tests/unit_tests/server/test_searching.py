@@ -160,10 +160,11 @@ def test_get_context(app, lexicon, user_is_authorized, with_center):
 
             for call_args in get_pre_post_mock.call_args_list:
                 print(f"call_args = {call_args}")
-                assert "place" in call_args.kwargs
-                assert "filters" in call_args.kwargs
-                assert call_args.kwargs["filters"] == expected_filters
-                assert isinstance(call_args.args[6], int)
+                args, kwargs = call_args
+                assert "place" in kwargs
+                assert "filters" in kwargs
+                assert kwargs["filters"] == expected_filters
+                assert isinstance(args[6], int)
 
 
 @pytest.mark.parametrize("place", ["post", "pre"])
@@ -208,10 +209,11 @@ def test_get_pre_post_foo(app, place, user_is_authorized):
         expected_sort = ["{}:{}".format(sortfield[0], "asc" if place == "post" else "desc")]
 
         adapt_query_mock.assert_called_once()
-        assert adapt_query_mock.call_args.args[0] == expected_size
-        assert adapt_query_mock.call_args.args[3] == expected_elasticq
-        assert adapt_query_mock.call_args.args[4]["size"] == expected_size
-        assert adapt_query_mock.call_args.args[4]["sort"] == expected_sort
+        args, _ = adapt_query_mock.call_args
+        assert args[0] == expected_size
+        assert args[3] == expected_elasticq
+        assert args[4]["size"] == expected_size
+        assert args[4]["sort"] == expected_sort
 
 
 def test_export_foo_unauth_user(app):
