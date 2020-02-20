@@ -17,7 +17,8 @@ def test_autocompletequery(app):
     assert result == expected
 
 
-def test_autocomplete_foo_no_user(app):
+@pytest.mark.parametrize("user_is_authorized", [False, True])
+def test_autocomplete_foo(app, user_is_authorized):
     q = "any"
     mode = "foo"
     path = f"/autocomplete?q={q}&mode={mode}"
@@ -27,67 +28,29 @@ def test_autocomplete_foo_no_user(app):
         ) as adapt_query_mock, mock.patch(
             "karp5.config.conf_mgr.elastic", return_value="ES"
         ), mock.patch(
-            "karp5.context.auth.validate_user", return_value=(False, ["foo"])
+            "karp5.context.auth.validate_user", return_value=(user_is_authorized, ["foo"])
         ):
             searching.autocomplete()
-            expected_elasticq = {
-                "query": {
-                    "constant_score": {
-                        "filter": {
-                            "bool": {
-                                "must": [
-                                    {
-                                        "bool": {
-                                            "should": [
-                                                {"term": {"foo": {"boost": "500", "value": "any"}}},
-                                                {"match_phrase": {"foo": "any"}},
-                                            ]
-                                        }
-                                    },
-                                    {"exists": {"field": "foo"}},
-                                    {"term": {"lexiconName": "foo"}},
-                                    {"term": {"status": "ok"}},
-                                ]
-                            }
-                        }
+            expected_must = [
+                {
+                    "bool": {
+                        "should": [
+                            {"term": {"foo": {"boost": "500", "value": "any"}}},
+                            {"match_phrase": {"foo": "any"}},
+                        ]
                     }
-                }
-            }
-            adapt_query_mock.assert_called_with(
-                1000, 0, "ES", expected_elasticq, {"size": 1000, "index": mode, "_source": [mode]}
-            )
-
-
-def test_autocomplete_foo_w_user(app):
-    q = "any"
-    mode = "foo"
-    path = f"/autocomplete?q={q}&mode={mode}"
-    with app.test_request_context(path):
-        with mock.patch("karp5.server.searching.jsonify", return_value=None), mock.patch(
-            "karp5.server.translator.parser.adapt_query", return_value=None
-        ) as adapt_query_mock, mock.patch(
-            "karp5.config.conf_mgr.elastic", return_value="ES"
-        ), mock.patch(
-            "karp5.context.auth.validate_user", return_value=(True, ["foo"])
-        ):
-            searching.autocomplete()
+                },
+                {"exists": {"field": "foo"}},
+                {"term": {"lexiconName": "foo"}},
+            ]
+            if not user_is_authorized:
+                expected_must.append({"term": {"status": "ok"}})
             expected_elasticq = {
                 "query": {
                     "constant_score": {
                         "filter": {
                             "bool": {
-                                "must": [
-                                    {
-                                        "bool": {
-                                            "should": [
-                                                {"term": {"foo": {"boost": "500", "value": "any"}}},
-                                                {"match_phrase": {"foo": "any"}},
-                                            ]
-                                        }
-                                    },
-                                    {"exists": {"field": "foo"}},
-                                    {"term": {"lexiconName": "foo"}},
-                                ]
+                                "must": expected_must
                             }
                         }
                     }

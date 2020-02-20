@@ -125,7 +125,8 @@ def test_statistics_querycount(app):
     assert more == expected_more
 
 
-def test_statistics_foo_no_user(app):
+@pytest.mark.parametrize("user_is_authorized", [False, True])
+def test_statistics_foo(app, user_is_authorized):
     """Called in karp5.server.searching.requestquery"""
     field = "foo"
     stat_size = 1000
@@ -133,6 +134,7 @@ def test_statistics_foo_no_user(app):
         "buckets": ["lexiconOrder", "lexiconName"],
         "size": stat_size,
         "allowed": ["bar", "foo", "large_lex", "panacea", "panacea_links"],
+        "user_is_authorized": user_is_authorized
     }
     path = f"/querycount?q=extended||and|{field}|exists&mode=foo"
     with app.test_request_context(path):
@@ -143,36 +145,36 @@ def test_statistics_foo_no_user(app):
             force_size=stat_size,
         )
 
+    expected_filter_must = [
+        {
+            "bool": {
+                "should": [
+                    {"term": {"lexiconName": lex}}
+                    for lex in settings["allowed"]
+                ]
+            }
+        }
+    ]
+    if not user_is_authorized:
+        expected_filter_must.append({"term": {"status": "ok"}})
+    expected_filter_must.append({"exists": {"field": field}})
+
     expected_q = {
         "aggs": {
             "q_statistics": {
                 "aggs": {
                     "lexiconOrder": {
-                        "terms": {"field": "lexiconOrder", "size": 1000, "shard_size": 27000},
+                        "terms": {"field": "lexiconOrder", "size": stat_size, "shard_size": 27000},
                         "aggs": {
                             "lexiconName": {
-                                "terms": {"field": "lexiconName", "size": 1000, "shard_size": 27000}
+                                "terms": {"field": "lexiconName", "size": stat_size, "shard_size": 27000}
                             }
                         },
                     }
                 },
                 "filter": {
                     "bool": {
-                        "must": [
-                            {
-                                "bool": {
-                                    "should": [
-                                        {"term": {"lexiconName": "bar"}},
-                                        {"term": {"lexiconName": "foo"}},
-                                        {"term": {"lexiconName": "large_lex"}},
-                                        {"term": {"lexiconName": "panacea"}},
-                                        {"term": {"lexiconName": "panacea_links"}},
-                                    ]
-                                }
-                            },
-                            {"term": {"status": "ok"}},
-                            {"exists": {"field": field}},
-                        ]
+                        "must": expected_filter_must
                     }
                 },
             }
@@ -186,64 +188,3 @@ def test_statistics_foo_no_user(app):
     assert count_q == expected_q
     assert more == expected_more
 
-
-def test_statistics_foo_w_user(app):
-    """Called in karp5.server.searching.requestquery"""
-    field = "foo"
-    stat_size = 1000
-    settings = {
-        "buckets": ["lexiconOrder", "lexiconName"],
-        "size": stat_size,
-        "allowed": ["bar", "foo", "large_lex", "panacea", "panacea_links"],
-        "user_is_authorized": True,
-    }
-    path = f"/querycount?q=extended||and|{field}|exists&mode=foo"
-    with app.test_request_context(path):
-        count_q, more = parser.statistics(
-            settings,
-            order={"lexiconOrder": ("_key", "asc")},
-            show_missing=False,
-            force_size=stat_size,
-        )
-
-    expected_q = {
-        "aggs": {
-            "q_statistics": {
-                "aggs": {
-                    "lexiconOrder": {
-                        "terms": {"field": "lexiconOrder", "size": 1000, "shard_size": 27000},
-                        "aggs": {
-                            "lexiconName": {
-                                "terms": {"field": "lexiconName", "size": 1000, "shard_size": 27000}
-                            }
-                        },
-                    }
-                },
-                "filter": {
-                    "bool": {
-                        "must": [
-                            {
-                                "bool": {
-                                    "should": [
-                                        {"term": {"lexiconName": "bar"}},
-                                        {"term": {"lexiconName": "foo"}},
-                                        {"term": {"lexiconName": "large_lex"}},
-                                        {"term": {"lexiconName": "panacea"}},
-                                        {"term": {"lexiconName": "panacea_links"}},
-                                    ]
-                                }
-                            },
-                            {"exists": {"field": field}},
-                        ]
-                    }
-                },
-            }
-        }
-    }
-    expected_more = [
-        ({"aggs": {"more": {"cardinality": {"field": "lexiconName"}}}}, "lexiconName"),
-        ({"aggs": {"more": {"cardinality": {"field": "lexiconOrder"}}}}, "lexiconOrder"),
-    ]
-    assert_es_search(count_q, expected_q)
-    assert count_q == expected_q
-    assert more == expected_more
