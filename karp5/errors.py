@@ -4,23 +4,17 @@
 """
 
 
-
 class KarpException(Exception):
     """ The super class, copied from flask:
         http://flask.pocoo.org/docs/0.10/patterns/apierrors/
     """
 
-    def __init__(
-        self, message, debug_msg=None, status_code=None, user_msg=None, payload=None
-    ):
+    def __init__(self, message, debug_msg=None, status_code=None, user_msg=None, payload=None):
         super().__init__()
         self.message = message
         self.debug_msg = debug_msg or message
         self.user_msg = user_msg
-        if status_code is not None:
-            self.status_code = status_code
-        else:
-            self.status_code = 400
+        self.status_code = status_code or 400
         self.payload = payload
 
     def to_dict(self):
@@ -31,31 +25,16 @@ class KarpException(Exception):
     def __str__(self):
         return "%s %s" % (self.status_code, self.message)
 
-    def _get_message(self):
-        return self._message
-
-    def _set_message(self, message):
-        self._message = message
-
-    message = property(_get_message, _set_message)
-
 
 class KarpAuthenticationError(KarpException):
     """ Used for errors given by the auth server """
 
     def __init__(self, message, debug_msg=None, status_code=None, payload=None):
-        if debug_msg is None:
-            self.debug_msg = "Authentication Exception: " + message
-        else:
-            self.debug_msg = debug_msg
-        if status_code is None:
-            status_code = 401
-        KarpException.__init__(
-            self,
+        super().__init__(
             "Authentication Exception: " + message,
-            debug_msg,
-            status_code,
-            payload,
+            debug_msg=debug_msg,
+            status_code=status_code or 401,
+            payload=payload,
         )
 
 
@@ -72,9 +51,7 @@ class KarpDbError(KarpException):
     """ Used for errors given by the sql data base """
 
     def __init__(self, message, debug_msg=None, status_code=None, payload=None):
-        KarpException.__init__(
-            self, "SQL Error: %s" % message, debug_msg, status_code, payload
-        )
+        KarpException.__init__(self, "SQL Error: %s" % message, debug_msg, status_code, payload)
 
 
 class KarpParsingError(KarpException):
@@ -94,18 +71,14 @@ class KarpQueryError(KarpException):
     """ Used for errors given when trying to parse the query string. """
 
     def __init__(
-        self,
-        message,
-        query=None,
-        debug_msg=None,
-        status_code=None,
-        user_msg=None,
-        payload=None,
+        self, message, query=None, debug_msg=None, status_code=None, user_msg=None, payload=None,
     ):
-        msg = 'Query was "%s"' % query
-        KarpException.__init__(
-            self,
-            "Query Error: %s. %s" % (message, msg),
+        if query:
+            msg = f"Query was '{query}'"
+        else:
+            msg = "No query."
+        super().__init__(
+            f"Query Error: {message}. {msg}",
             debug_msg=debug_msg,
             status_code=status_code,
             payload=payload,
@@ -124,31 +97,22 @@ class KarpGeneralError(KarpException):
     # Note: all General Errors are invisible to client for now
 
     def __init__(
-        self,
-        message,
-        user_msg=None,
-        debug_msg=None,
-        query=None,
-        status_code=None,
-        payload=None,
+        self, message, user_msg=None, debug_msg=None, query=None, status_code=None, payload=None,
     ):
         """ message: is shown when exception is raised
             debug_msg: will only be shown in log (level=debug)
             user_msg: will be send to user
         """
-        self.user_msg = user_msg
         if not message:
             message = "Unknown error."
         if query:
-            KarpException.__init__(
-                self,
-                "Error: %s. Query was: %s" % (message, query),
-                debug_msg,
-                status_code,
-                user_msg,
-                payload,
-            )
+            message = f"Error: {message}. Query was: {query}"
         else:
-            KarpException.__init__(
-                self, "Error: %s" % message, debug_msg, status_code, user_msg, payload
-            )
+            message = f"Error: {message}"
+        super().__init__(
+            message,
+            debug_msg=debug_msg,
+            status_code=status_code,
+            user_msg=user_msg,
+            payload=payload,
+        )
