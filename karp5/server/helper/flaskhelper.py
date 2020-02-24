@@ -138,7 +138,7 @@ def init_errorhandler(app):
                 request.full_path,
                 user,
                 e_type,
-                error.message,
+                str(error),
                 data,
             )
             _logger.exception(s)
@@ -158,7 +158,7 @@ def init_errorhandler(app):
                     return error.message, status_code
 
             else:
-                _logger.exception(error.message)
+                _logger.exception(error)
                 return "Oops, something went wrong\n", 500
 
         except Exception:
@@ -175,5 +175,6 @@ def init_errorhandler(app):
             if conf_mgr.app_config.ADMIN_EMAILS:
 
                 email.send_notification(conf_mgr.app_config.ADMIN_EMAILS, title, msg)
-            open(logdir + "KARPERR" + time.strftime("%Y%m%d"), "a").write(msg)
+            #open(logdir + "KARPERR" + time.strftime("%Y%m%d"), "a").write(msg)
+            _logger.error(msg)
             return "Oops, something went wrong\n", 500
