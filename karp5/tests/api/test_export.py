@@ -1,7 +1,7 @@
 """Test the export endpoint."""
 from hypothesis import given, settings, strategies as st
 
-from karp5.tests.util import get_json
+from karp5.tests.util import get_json  # pytype: disable=import-error
 
 
 def test_export_panacea(client_w_panacea):
