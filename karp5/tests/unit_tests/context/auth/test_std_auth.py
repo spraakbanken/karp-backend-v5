@@ -2,7 +2,7 @@ import base64
 import hashlib
 from unittest.mock import patch, Mock
 
-from karp5.context.auth import std_auth
+from karp5.context.auth import std_auth  # pytype: disable=import-error
 from karp5.config import conf_mgr
 
 
