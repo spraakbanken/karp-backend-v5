@@ -48,10 +48,7 @@ jobs:
           echo "ES_HOME=`realpath elasticsearch-${{ matrix.es-version }}`" >> .env
           cat .env
       - name: Lint with flake8 for syntax errors
-        run: |
-          pip install flake8
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 karp5 setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
+        run: make lint-syntax-errors
       - name: Lint with pylint
         run: make lint-no-fail
       - name: Typecheck with pytype

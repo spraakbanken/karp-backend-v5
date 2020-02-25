@@ -64,14 +64,10 @@ jobs:
           echo "ES_HOME=`realpath elasticsearch-${{ matrix.es-version }}`" >> .env
           cat .env
       - name: Lint with flake8 for syntax errors
-        run: |
-          pip install flake8
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 karp5 setup.py wsgi.py --count --select=E9,F63,F7,F82 --show-source --statistics
-      - name: Lint with pylint
-        run: |
-          make lint-no-fail
-          # pylint --rcfile=.pylintrc --exit-zero karp5 setup.py run.py cli.py
+        run: make lint-syntax-errors
+      - name: Typecheck with pytype
+        if: matrix.python-version != '3.8'
+        run: make type-check
       - name: Test with pytest
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
