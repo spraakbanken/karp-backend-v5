@@ -38,7 +38,7 @@ def init(auth_name: str):
 
         check_user = dummy_auth.check_user
     else:
-        from . import (  # pylint: disable=import-outside-toplevel
+        from . import (  # pylint: disable=import-outside-toplevel # pytype: disable=import-error
             std_auth,
         )  # pytype: disable=import-error
 
