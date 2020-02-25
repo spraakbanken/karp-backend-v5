@@ -35,6 +35,7 @@ venv: ${VENV_NAME}/made
 install: venv ${VENV_NAME}/req.installed
 install-test: venv install ${VENV_NAME}/req-test.installed
 install-dev: venv install-test ${VENV_NAME}/req-dev.installed
+install-typecheck: venv install-test ${VENV_NAME}/req-typecheck.installed
 
 ${VENV_NAME}/made:
 	test -d ${VENV_NAME} || ${PYTHON} -m venv ${VENV_NAME}
@@ -51,6 +52,10 @@ ${VENV_NAME}/req-test.installed: setup.py setup.cfg
 
 ${VENV_NAME}/req-dev.installed: setup.py setup.cfg
 	${INVENV} pip install -e .[dev]
+	@touch $@
+
+${VENV_NAME}/req-typecheck.installed:
+	${INVENV} pip install pytype
 	@touch $@
 
 run: install
@@ -77,8 +82,7 @@ lint: install
 lint-no-fail: install
 	${INVENV} pylint --rcfile .pylintrc --exit-zero karp5 setup.py cli.py run.py
 
-type-check: install-test
-	${INVENV} pip install pytype
+type-check: install-test install-typecheck
 	${INVENV} pytype karp5
 
 clean: clean-pyc

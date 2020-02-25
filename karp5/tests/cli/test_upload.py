@@ -2,15 +2,8 @@ import json
 import time
 import os
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib import urlopen
-try:
-    from itertools import zip_longest
-except ImportError:
-    from itertools import izip_longest as zip_longest
+from urllib.request import urlopen
+from itertools import zip_longest
 
 # import elasticsearch_dsl as es_dsl
 import pytest

@@ -34,10 +34,12 @@ def init(auth_name: str):
     global check_user
     if auth_name == "dummy":
         _logger.warning("Using dummy auth module.")
-        from karp5.context.auth import dummy_auth
+        from . import dummy_auth  # pytype: disable=import-error
 
         check_user = dummy_auth.check_user
     else:
-        from karp5.context.auth import std_auth
+        from . import (  # pylint: disable=import-outside-toplevel
+            std_auth,
+        )  # pytype: disable=import-error
 
         check_user = std_auth.check_user

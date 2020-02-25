@@ -1,4 +1,3 @@
-from builtins import str
 from elasticsearch import exceptions as esExceptions
 from karp5 import errors
 from karp5.dbhandler.dbhandler import dbselect

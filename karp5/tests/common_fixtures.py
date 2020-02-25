@@ -10,8 +10,8 @@ import elasticsearch_test
 from karp5.config import conf_mgr
 from karp5.cli import cli as karp5_cli
 from karp5.cli import setup_cli
-from karp5.tests import auth_server
-from karp5.tests._test_config import TestConfig
+from karp5.tests import auth_server  # pytype: disable=import-error
+from karp5.tests._test_config import TestConfig  # pytype: disable=import-error
 
 
 @pytest.fixture(scope="session")

@@ -1,7 +1,6 @@
 """[summary]
 """
 
-from builtins import object
 
 from distutils.util import strtobool
 

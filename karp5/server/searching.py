@@ -583,7 +583,7 @@ def testquery():
         else:
             sort = settings["sort"]
         start = settings["start"] if "start" in settings else settings["page"] * settings["size"]
-        elasticq = parser.parse()
+        elasticq = parser.parse(settings)
         return json.dumps(elasticq) + json.dumps(
             {"sort": sort, "_from": start, "size": settings["size"], "version": "true"}
         )

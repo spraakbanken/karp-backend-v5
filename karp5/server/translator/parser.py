@@ -27,7 +27,7 @@ def make_settings(permitted, in_settings, *, user_is_authorized: bool):
     settings = {
         "allowed": permitted,
         "mode": conf_mgr.app_config.STANDARDMODE,
-        "user_is_authorized": user_is_authorized
+        "user_is_authorized": user_is_authorized,
     }
     settings.update(in_settings)
     return settings
@@ -63,7 +63,9 @@ def parse(settings: Dict, isfilter=False):
 
     if command == "simple":
         settings["search_type"] = "dfs_query_then_fetch"
-        return freetext(query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight, filters=filters)
+        return freetext(
+            query, mode, isfilter=isfilter, extra=p_extra, highlight=highlight, filters=filters
+        )
     elif command == "extended":
         fields = []
         p_ex = [p_extra]
@@ -89,10 +91,10 @@ def parse(settings: Dict, isfilter=False):
         )
 
 
-def get_command():
-    query = request.args.get("q", [""]) or request.args.get("query")
-    command, query = query.split("||", 1)
-    return command
+# def get_command():
+#     query = request.args.get("q", [""]) or request.args.get("query")
+#     command, query = query.split("||", 1)
+#     return command
 
 
 def parse_extra(settings):

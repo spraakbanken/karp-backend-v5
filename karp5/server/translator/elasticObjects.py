@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from builtins import object
 import json
 import logging
 from . import errors
@@ -10,7 +9,7 @@ from . import errors
 _logger = logging.getLogger("karp5")
 
 
-class Operator(object):
+class Operator:
     """ A class for representing complete and incomplet elasticsearch objects
         Construct an object by giving te expressiontype and the operator.
         Complete it by giving it field name(s) and operand(s) using (one or
@@ -37,8 +36,8 @@ class Operator(object):
     def __repr__(self):
         return "Operator(operator={0},query={1})".format(self.operator, self.query)
 
-    def make_object(self):
-        return json.loads(self)
+    # def make_object(self):
+    #     return json.loads(self)
 
     def make_string(self, field=None, q_obj=None, query=None):
         """ Similar to the string method, but does not update the self.query
@@ -94,20 +93,16 @@ class Operator(object):
             combinator = "must"
 
         fieldquery = (
-            '"bool" : {"%s" : [' % (combinator)
-            + ",".join("{" + q + "}" for q in queries)
-            + "]}"
+            '"bool" : {"%s" : [' % (combinator) + ",".join("{" + q + "}" for q in queries) + "]}"
         )
         _logger.debug("made fieldquery %s", fieldquery)
 
         if constraints:
-            nestedquery = '"match_phrase": {"%s": "%s"}' % (
-                constraints[1],
-                constraints[2],
-            )
-            self.query = (
-                '"nested": {"path": "%s", "query": {"bool": {"must":[{%s},{%s}]}}}'
-                % (constraints[0], fieldquery, nestedquery)
+            nestedquery = '"match_phrase": {"%s": "%s"}' % (constraints[1], constraints[2],)
+            self.query = '"nested": {"path": "%s", "query": {"bool": {"must":[{%s},{%s}]}}}' % (
+                constraints[0],
+                fieldquery,
+                nestedquery,
             )
         else:
             self.query = fieldquery
@@ -144,9 +139,7 @@ class Operator(object):
             # If the operand is within the range of what the operator needs,
             # fill up its slots (eg. range)
             if index > 0 and index < self.min_operands:
-                ops[-1] = "{%s}" % self.set_field(
-                    ops[-1], other_op=("OP%d" % index, operand)
-                )
+                ops[-1] = "{%s}" % self.set_field(ops[-1], other_op=("OP%d" % index, operand))
             # If there are more than the minimum number of operands we prepare
             # them one by one here, and save the list to be coordinated by 'or'
             # och 'and not'
@@ -175,9 +168,7 @@ class Operator(object):
                 # don't use ops, they contain to many curly brackets
                 obj = self.make_string(self.query, query=operands[0])
                 _logger.debug("made %s", obj)
-                return json.loads(
-                    "{%s}" % self.make_string(self.query, query=operands[0])
-                )
+                return json.loads("{%s}" % self.make_string(self.query, query=operands[0]))
                 # return self.string(query=operands[0])
 
             # Several operands here means disjunction, the 'and' tells us that
@@ -236,9 +227,7 @@ class Operator(object):
         elif op == "contains":
             self.operator = "match"
             # self.query = lambda x,y,z: {self.operator: {x: {"query": y, "operator": "and"}}}
-            self.query = (
-                '"%s": {"FIELD": {"query": "QUERY", "operator": "and"}}' % self.operator
-            )
+            self.query = '"%s": {"FIELD": {"query": "QUERY", "operator": "and"}}' % self.operator
             # Set to false to make sure this query is never put
             # directly inside a filter (might be possible, not tested)
             self.ok_in_filter = False

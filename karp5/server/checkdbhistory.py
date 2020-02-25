@@ -7,7 +7,7 @@ from sb_json_tools import jsondiff
 
 from karp5 import errors
 from karp5.config import mgr as conf_mgr
-import karp5.server.helper.helpers as helpers
+from karp5.server.helper import helpers
 from karp5.context import auth
 
 from karp5.dbhandler.dbhandler import dbselect

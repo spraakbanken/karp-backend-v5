@@ -1,4 +1,3 @@
-from builtins import str
 from datetime import timedelta
 import logging
 import six
@@ -134,13 +133,7 @@ def init_errorhandler(app):
             # s = '%s: %s  User: %s\n\t%s: %s\n\t%s\n' \
             #     % (datetime.datetime.now(), request.path, user, e_type,
             #        str(error), data)
-            s = "%s  User: %s\n%s: %s\n%s\n" % (
-                request.full_path,
-                user,
-                e_type,
-                str(error),
-                data,
-            )
+            s = "%s  User: %s\n%s: %s\n%s\n" % (request.full_path, user, e_type, str(error), data,)
             _logger.exception(s)
 
             if isinstance(error, ConnectionError):
@@ -175,6 +168,6 @@ def init_errorhandler(app):
             if conf_mgr.app_config.ADMIN_EMAILS:
 
                 email.send_notification(conf_mgr.app_config.ADMIN_EMAILS, title, msg)
-            #open(logdir + "KARPERR" + time.strftime("%Y%m%d"), "a").write(msg)
+            # open(logdir + "KARPERR" + time.strftime("%Y%m%d"), "a").write(msg)
             _logger.error(msg)
             return "Oops, something went wrong\n", 500

@@ -1,5 +1,3 @@
-
-from builtins import str
 from flask import request
 from json import loads
 import logging
@@ -33,12 +31,7 @@ def get_querysettings(settings):
 def check_lexiconName(lexicon, entry_lexicon, _id, action):
     if entry_lexicon != lexicon:
         msg = "The entry does not belong in lexicon %s" % lexicon
-        debug = "Attemped to %s %s from %s, instead of %s" % (
-            action,
-            _id,
-            lexicon,
-            entry_lexicon,
-        )
+        debug = "Attemped to %s %s from %s, instead of %s" % (action, _id, lexicon, entry_lexicon,)
         raise errors.KarpElasticSearchError(msg, debug_msg=debug)
 
 

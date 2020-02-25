@@ -1,15 +1,13 @@
-from base64 import b64encode
-
 import pytest
 
-from karp5.context.auth.dummy_auth import check_user
+from karp5.context.auth import dummy_auth  # pytype: disable=import-error
 
 from karp5.tests.util import mk_headers
 
 
 def test_check_user_w_no_user(app):
     with app.test_request_context("/"):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["authenticated"]
     assert result["username"] == "TestUser"
@@ -24,7 +22,7 @@ def test_check_user_w_user(app):
     username = "valid_user"
     headers = mk_headers(username)
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["username"] == username
     assert result["authenticated"]
@@ -39,7 +37,7 @@ def test_check_user_w_invalid_user(app):
     username = "invalid"
     headers = mk_headers(username)
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["username"] == username
     assert not result["authenticated"]
@@ -54,7 +52,7 @@ def test_check_user_w_read_rights(app):
     username = "read"
     headers = mk_headers(username)
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["username"] == username
     assert result["authenticated"]
@@ -72,7 +70,7 @@ def test_check_user_w_write_rights(app):
     username = "write"
     headers = mk_headers(username)
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["username"] == username
     assert result["authenticated"]
@@ -91,7 +89,7 @@ def test_check_user_w_invalid_user_w_lex(app, lexicon):
     username = "invalid"
     headers = mk_headers(f"{username}__{lexicon}")
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     assert result["username"] == username
     assert not result["authenticated"]
@@ -112,7 +110,7 @@ def test_check_user_w_invalid_user_w_lex(app, lexicon):
 def test_check_user_w_user_w_lex(app, lexicon, username):
     headers = mk_headers(f"{username}__{lexicon}")
     with app.test_request_context("/", headers=headers):
-        result = check_user()
+        result = dummy_auth.check_user()
 
     ok_keys = ["read"]
     if username == "write":

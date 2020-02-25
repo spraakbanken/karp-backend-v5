@@ -78,15 +78,16 @@ def check_user(force_lookup=False):
         "username": user,
         "authenticated": user != "invalid",
     }
+    authenticated = user != "invalid"
 
     lexitems = auth_response.get("permitted_resources", {})
-    session["lexicon_list"] = lexitems.get("lexica", {})
+    session["lexicon_list"] = lexlist
     session["username"] = user
-    session["authenticated"] = auth_response["authenticated"]
+    session["authenticated"] = authenticated
     return {
         "auth_response": auth_response,
         "username": user,
-        "lexicon_list": lexitems.get("lexica", {}),
-        "authenticated": auth_response["authenticated"],
+        "lexicon_list": lexlist,
+        "authenticated": authenticated,
     }
 

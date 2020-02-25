@@ -2,7 +2,7 @@
     including deletion and creation of indices
 """
 
-from builtins import str
+
 import datetime
 import logging
 from elasticsearch import helpers as eshelpers

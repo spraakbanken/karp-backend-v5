@@ -2,7 +2,7 @@ import base64
 import hashlib
 from unittest.mock import patch, Mock
 
-from karp5.context.auth.std_auth import check_user
+from karp5.context.auth import std_auth
 from karp5.config import conf_mgr
 
 
@@ -22,7 +22,7 @@ def test_check_user_no_user(app):
             mk_auth_req_mock.return_value = {
                 "authenticated": False,
             }
-            result = check_user()
+            result = std_auth.check_user()
             mk_auth_req_mock.assert_called_with(
                 conf_mgr.app_config.AUTH_RESOURCES, {"include_open_resources": "true"}
             )
@@ -44,7 +44,7 @@ def test_check_user_valid_user(app):
                     "lexica": {"a": {"read": True, "write": True, "admin": True}}
                 },
             }
-            result = check_user()
+            result = std_auth.check_user()
             mk_auth_req_mock.assert_called_with(
                 conf_mgr.app_config.AUTH_SERVER,
                 {
@@ -77,7 +77,7 @@ def test_check_user_invalid_user(app):
                     "lexica": {"open": {"read": True, "write": False, "admin": False}}
                 },
             }
-            result = check_user()
+            result = std_auth.check_user()
             mk_auth_req_mock.assert_called_with(
                 conf_mgr.app_config.AUTH_SERVER,
                 {
