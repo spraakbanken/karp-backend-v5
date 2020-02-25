@@ -56,6 +56,10 @@ jobs:
         run: |
           make lint-no-fail
           # pylint --rcfile=.pylintrc --exit-zero karp5 setup.py run.py cli.py
+      - name: Typecheck with pytype
+        run: |
+            pip install pytype
+            pytype karp5
       - name: Test with pytest
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
