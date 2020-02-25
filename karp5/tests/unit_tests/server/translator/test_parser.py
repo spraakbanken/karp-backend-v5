@@ -3,7 +3,7 @@ import pytest
 from karp5.server.translator import parser
 from karp5.config import conf_mgr
 
-from karp5.tests.util import assert_es_search
+from karp5.tests.util import assert_es_search  # pytype: disable=import-error
 
 
 def test_make_settings_empty_call(app):
@@ -134,11 +134,7 @@ def test_parse_q_simple_mode_foo(app, user_is_authorized):
     text = "hej"
     lexicon = "foo"
     with app.test_request_context(f"/query?q=simple||{text}"):
-        settings = {
-            "mode": lexicon,
-            "allowed": [lexicon],
-            "user_is_authorized": user_is_authorized
-        }
+        settings = {"mode": lexicon, "allowed": [lexicon], "user_is_authorized": user_is_authorized}
         result = parser.parse(settings)
         expected = {
             "query": {
@@ -168,11 +164,7 @@ def test_parse_q_extended_mode_foo(app, user_is_authorized):
     """Used in karp5.server.searching.requestquery when User is not authorized"""
     text = "hej"
     lexicon = "foo"
-    settings = {
-        "mode": lexicon,
-        "allowed": [lexicon],
-        "user_is_authorized": user_is_authorized
-    }
+    settings = {"mode": lexicon, "allowed": [lexicon], "user_is_authorized": user_is_authorized}
     with app.test_request_context(f"/query?q=extended||and|foo|equals|{text}"):
         result = parser.parse(settings)
 
@@ -182,17 +174,7 @@ def test_parse_q_extended_mode_foo(app, user_is_authorized):
     ]
     if not user_is_authorized:
         expected_filter_must.append({"term": {"status": "ok"}})
-    expected = {
-        "query": {
-            "constant_score": {
-                "filter": {
-                    "bool": {
-                        "must": expected_filter_must
-                    }
-                }
-            }
-        }
-    }
+    expected = {"query": {"constant_score": {"filter": {"bool": {"must": expected_filter_must}}}}}
     assert_es_search(result, expected)
     assert result == expected
 
@@ -214,11 +196,9 @@ def test_search_autocomplete():
     pass
 
 
-@pytest.mark.parametrize("exps,filters", [
-    (
-        [{"match": {"field": "value"}}],
-        [{"term": {"status": "ok"}}]),
-])
+@pytest.mark.parametrize(
+    "exps,filters", [([{"match": {"field": "value"}}], [{"term": {"status": "ok"}}]),]
+)
 @pytest.mark.parametrize("constant_score", (True, False))
 def test_search_case1(exps, filters, constant_score):
     fields = None
