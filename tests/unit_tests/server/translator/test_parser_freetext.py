@@ -1,6 +1,6 @@
 from karp5.server.translator.parser import freetext
 
-from karp5.tests.util import assert_es_search
+from tests.util import assert_es_search
 
 
 def test_freetext_minimum():
@@ -27,7 +27,7 @@ def test_freetext_minimum():
 def test_freetext_with_extra():
     text = None
     mode = "karp"
-    extra = {"term":{"extra": "extra"}}
+    extra = {"term": {"extra": "extra"}}
     result = freetext(text, mode, extra=extra)
 
     expected = {

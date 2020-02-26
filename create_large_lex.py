@@ -7,8 +7,7 @@ def create_entry(value: int):
 
 def main():
     json_iter.dump_to_file(
-        (create_entry(value) for value in range(20000)),
-        "karp5/tests/data/data/large_lex/large_lex.json",
+        (create_entry(value) for value in range(20000)), "tests/data/data/large_lex/large_lex.json",
     )
 
 

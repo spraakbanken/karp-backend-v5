@@ -1,6 +1,6 @@
 from hypothesis import assume, given, settings, strategies as st
 
-from karp5.tests.util import get_json
+from tests.util import get_json
 
 
 @settings(deadline=None)

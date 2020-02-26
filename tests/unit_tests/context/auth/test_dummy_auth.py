@@ -2,7 +2,7 @@ import pytest
 
 from karp5.context.auth import dummy_auth  # pytype: disable=import-error
 
-from karp5.tests.util import mk_headers
+from tests.util import mk_headers
 
 
 def test_check_user_w_no_user(app):

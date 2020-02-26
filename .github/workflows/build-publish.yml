@@ -72,7 +72,6 @@ jobs:
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
           make test-cov
-          # pytest -vv --cov=karp5 --cov-report=term karp5/tests
           docker logs "${{ job.services.mysql.id }}"
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}

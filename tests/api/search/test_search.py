@@ -1,7 +1,7 @@
 import pytest
 
 
-from karp5.tests.util import get_json
+from tests.util import get_json
 
 
 @pytest.mark.parametrize("command", ["query", "querycount", "minientry",])
