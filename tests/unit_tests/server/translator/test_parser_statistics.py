@@ -4,7 +4,7 @@ import elasticsearch_dsl as es_dsl
 
 from karp5.server.translator import parser
 
-from karp5.tests.util import assert_es_search
+from tests.util import assert_es_search
 
 
 def test_statistics_empty_call():
