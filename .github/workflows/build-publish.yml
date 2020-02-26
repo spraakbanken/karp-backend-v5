@@ -65,9 +65,9 @@ jobs:
           cat .env
       - name: Lint with flake8 for syntax errors
         run: make lint-syntax-errors
-      - name: Typecheck with pytype
-        if: matrix.python-version != '3.8' && matrix.es-version == '6.8.6'
-        run: make type-check
+      # - name: Typecheck with pytype
+      #   if: matrix.python-version != '3.8' && matrix.es-version == '6.8.6'
+      #   run: make type-check
       - name: Test with pytest
         run: |
           echo "KARP5_DBPASS=${KARP5_DBPASS}"
