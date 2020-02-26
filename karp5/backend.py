@@ -141,9 +141,7 @@ def init(route):
     @route("<lexicon>/<_id>/latest/<fromdate>")
     @route("<lexicon>/<_id>/<fromdate>/<todate>")
     def checkdifference(_id, lexicon, todate="", fromdate=""):
-        return checkdbhistory.comparejson(
-            lexicon, _id, todate=todate, fromdate=fromdate
-        )
+        return checkdbhistory.comparejson(lexicon, _id, todate=todate, fromdate=fromdate)
 
     # For submitting a suggestion
     @route(name="/suggestnew/<lexicon>", methods=["POST"])
@@ -223,7 +221,7 @@ def init(route):
     @route()
     def order():
         orderlist = []
-        for name, val in conf_mgr.lexicons.conf.items():
+        for name, val in conf_mgr.lexicons.items():
             orderlist.append((val["order"], "%s (%s)" % (name, val[0])))
         olist = "\n".join("<li>%d: %s</li>" % on for on in sorted(orderlist))
         return "<ul> %s </ul>" % olist

@@ -14,8 +14,8 @@ from karp5.tests import auth_server  # pytype: disable=import-error
 from karp5.tests._test_config import TestConfig  # pytype: disable=import-error
 
 
-@pytest.fixture(scope="session")
-def client(app):
+@pytest.fixture(name="client", scope="session")
+def fixture_client(app):
     return app.test_client()
 
 

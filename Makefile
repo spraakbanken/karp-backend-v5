@@ -85,9 +85,29 @@ lint-no-fail: install
 type-check: install-test install-typecheck
 	${INVENV} pytype karp5
 
-clean: clean-pyc
+clean: clean-build clean-pyc clean-test clean-venv
+
+clean-build:
+	rm -fr build/
+	rm -fr dist/
+	rm -fr .eggs/
+	find . -name '*.egg-info' -exec rm -fr {} +
+	find . -name '*.egg' -exec rm -f {} +
+
 clean-pyc:
-	find . -name '*.pyc' -exec rm --force {} \;
+	find . -name '*.pyc' -exec rm -f {} +
+	find . -name '*.pyo' -exec rm -f {} +
+	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -fr {} +
+
+clean-test:
+	#rm -fr .tox/
+	#rm -f .coverage
+	#rm -fr htmlcov/
+	rm -fr .pytest_cache
+
+clean-venv:
+	rm -rf ./{VENV_NAME}
 
 bump-version-patch:
 	${INVENV} bumpversion patch

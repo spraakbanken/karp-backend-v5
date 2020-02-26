@@ -6,4 +6,3 @@ def test_logout(client):
 
     assert result["logged_out"]
 
-

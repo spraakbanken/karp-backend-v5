@@ -27,7 +27,7 @@ def test_freetext_minimum():
 def test_freetext_with_extra():
     text = None
     mode = "karp"
-    extra = {"term":{"extra": "extra"}}
+    extra = {"term": {"extra": "extra"}}
     result = freetext(text, mode, extra=extra)
 
     expected = {

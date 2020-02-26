@@ -2,29 +2,22 @@
 """ Methods for querying the data base """
 import copy
 import itertools
-import elasticsearch
-import logging
-import re
-from flask import request, jsonify, Response, stream_with_context
 from itertools import chain
 import json
+import logging
+import re
 
-import karp5.dbhandler.dbhandler as db
+import elasticsearch
+from flask import Response, jsonify, request, stream_with_context
+
 from karp5 import errors
-from karp5.context import auth
+from karp5 import util
 from karp5.config import mgr as conf_mgr
+from karp5.context import auth
+import karp5.dbhandler.dbhandler as db
 import karp5.server.helper.helpers as helpers
-
 from karp5.server.translator import parser
 from karp5.server.translator.errors import AuthenticationError, QueryError
-
-# from gevent.threadpool import ThreadPool
-# from gevent.queue import Queue, Empty
-# import functools
-# import sys
-# import time
-
-from karp5 import util
 
 _logger = logging.getLogger("karp5")
 

@@ -17,7 +17,7 @@ with open(os.path.join(instance_info.get_instance_path(), "config/config.json"))
 KARP5_DBPASS = os.environ.get("KARP5_DBPASS")
 
 
-class Config(object):
+class Config:
     """[summary]"""
 
     DEBUG = False

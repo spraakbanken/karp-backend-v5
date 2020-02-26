@@ -30,7 +30,7 @@ venv3
 /config/modes.json
 !config/mappings/fieldmappings_panacea.json
 !config/mappings/mappingconf_panacea.json
-!/karp5/tests/data
+!/tests/data
 **/*.sw[abcdefghijklmnop]
 
 # Mappings #
