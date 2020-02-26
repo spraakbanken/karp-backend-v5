@@ -40,7 +40,7 @@ def fixture_app():
 
 
 from karp5.tests.common_fixtures import (  # pytype: disable=import-error
-    client,
+    fixture_client,
     fixture_cli,
     fixture_cli_w_es,
     fixture_es,
