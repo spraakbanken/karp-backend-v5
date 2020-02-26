@@ -87,7 +87,7 @@ def test_lexicon_init(cli_w_es):
     time.sleep(5)
     _test_index_exists(mode, suffix, 3)
 
-    filename = os.path.join("tests", "data", "data", "custom_path_bar.json")
+    filename = os.path.join("karp5", "tests", "data", "data", "custom_path_bar.json")
     result = cli_w_es.lexicon_init(lexicon, suffix, data=filename)
 
     assert result.exit_code == 0

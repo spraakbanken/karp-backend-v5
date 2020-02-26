@@ -5,7 +5,7 @@ from collections import defaultdict
 import itertools
 import logging
 import re
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from elasticsearch import helpers as EShelpers
 from flask import request
@@ -33,7 +33,7 @@ def make_settings(permitted, in_settings, *, user_is_authorized: bool):
     return settings
 
 
-def parse(settings: Dict, isfilter=False):
+def parse(settings: Dict, isfilter=False) -> Dict[str, Any]:
     """ Parses a query on the form simple||..., extended||...
         returns the corresponding elasticsearch query object
         settings is a dictionary where the 'size' (the number of wanted hits)
@@ -41,8 +41,6 @@ def parse(settings: Dict, isfilter=False):
         isfilter is set to True when a elastic Filter, rather than a query,
                  should be returned
     """
-    if settings is None:
-        settings = {}
     # isfilter is used for minientries and some queries to statistics
     # only one query is allowed
     query = request.args.get("q") or request.args.get("query")
@@ -264,19 +262,21 @@ def parse_nested(exp, exps, filters, mode, isfilter=False):
     qs = exp.split("|||")
     allpaths = []  # will contain all search all queried paths
     todo = {}  # will contain all expressions to construct for every path
+    info = {}
     for n, q in enumerate(qs):
         newexps, newfilters = [], []
         # hax, construct complete expression for parsing.
         if n:
             q = "and|" + q
         info = parse_ext(q, newexps, newfilters, mode, isfilter)
-        allpaths.extend(info.get("fields"))
-        if len(info.get("fields")) > 1:
+        fields = info.get("fields", [])
+        allpaths.extend(fields)
+        if len(fields) > 1:
             # a field may correspond to several paths, not ok for nested queries
             raise errors.QueryError(
                 "Cannot construct nested query from multiple fields.\
                                    You attempt to search all of %s."
-                % (",".join(info.get("fields")))
+                % (",".join(fields))
             )
         todo[info.get("fields")[0]] = newexps
 
@@ -377,7 +377,9 @@ def parse_operation(etype, op, isfilter=False):
     return elasticObjects.Operator(etype, op, isfilter=isfilter)
 
 
-def freetext(text, mode, extra=None, isfilter=False, highlight=False, filters: List = None):
+def freetext(
+    text, mode, extra=None, isfilter=False, highlight=False, filters: List = None
+) -> Dict[str, Any]:
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
         text is the text to search for
@@ -422,7 +424,7 @@ def freetext(text, mode, extra=None, isfilter=False, highlight=False, filters: L
 
 def search(
     exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True,
-):
+) -> Dict[str, Any]:
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
         filters is a list of filters (unfinished elasticsearch objects)

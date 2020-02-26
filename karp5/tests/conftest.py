@@ -21,7 +21,7 @@ from karp5 import create_app  # noqa: E402
 from karp5.cli import cli as karp5_cli, setup_cli  # noqa: E402
 from karp5.config import conf_mgr  # noqa: E402
 
-from tests._test_config import TestConfig  # pytype: disable=import-error
+from karp5.tests._test_config import TestConfig  # pytype: disable=import-error
 
 
 @pytest.fixture(name="app", scope="session")
@@ -39,7 +39,7 @@ def fixture_app():
 #     return app
 
 
-from tests.common_fixtures import (  # pytype: disable=import-error
+from karp5.tests.common_fixtures import (  # pytype: disable=import-error
     client,
     fixture_cli,
     fixture_cli_w_es,

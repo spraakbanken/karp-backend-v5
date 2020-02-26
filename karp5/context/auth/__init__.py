@@ -1,11 +1,14 @@
 import logging
+from typing import List, Tuple
+
+from karp5.context.auth import std_auth
 
 _logger = logging.getLogger("karp5")
 
-check_user = None
+check_user = std_auth.check_user
 
 
-def validate_user(mode="write"):
+def validate_user(mode: str = "write") -> Tuple[bool, List]:
     """Authenticates a user against an authentication server.
        Returns a dictionary with permitted resources for the user
     """
@@ -17,7 +20,7 @@ def validate_user(mode="write"):
 
     if mode == "verbose":
         auth = check_user(force_lookup=True)
-        return auth.get("authenticated"), auth.get("auth_response")
+        return auth.get("authenticated", False), auth.get("auth_response", [])
 
     user_auth = check_user()
     auth_response = user_auth["authenticated"]
@@ -38,8 +41,5 @@ def init(auth_name: str):
 
         check_user = dummy_auth.check_user
     else:
-        from . import (  # pylint: disable=import-outside-toplevel # pytype: disable=import-error
-            std_auth,
-        )  # pytype: disable=import-error
 
         check_user = std_auth.check_user

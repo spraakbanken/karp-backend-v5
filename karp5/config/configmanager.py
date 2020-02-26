@@ -13,16 +13,15 @@ from elasticsearch import Elasticsearch
 from karp5 import errors
 
 # from karp5.server.translator
-from karp5 import instance_info
 from karp5.util.debug import print_err
-
+from karp5.config import config
 from .errors import KarpConfigException
 
 
 _logger = logging.getLogger("karp5")
 
 
-def set_defaults(data: Dict):
+def set_defaults(data: Dict) -> None:
     """[summary]
 
     Arguments:
@@ -103,7 +102,7 @@ class ConfigManager(object):
         self.lexicons = {}
         self.field = {}
         self.defaultfields = {}
-        self.app_config = None
+        self.app_config: config.Config = config.Config()
         self.configdir = os.path.join(instance_path, "config")
         self._extra_src = {}
         self.load_config()

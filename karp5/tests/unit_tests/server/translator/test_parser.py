@@ -3,7 +3,7 @@ import pytest
 from karp5.server.translator import parser
 from karp5.config import conf_mgr
 
-from tests.util import assert_es_search  # pytype: disable=import-error
+from karp5.tests.util import assert_es_search  # pytype: disable=import-error
 
 
 def test_make_settings_empty_call(app):

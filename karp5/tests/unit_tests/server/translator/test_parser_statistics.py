@@ -4,7 +4,7 @@ import elasticsearch_dsl as es_dsl
 
 from karp5.server.translator import parser
 
-from tests.util import assert_es_search
+from karp5.tests.util import assert_es_search
 
 
 def test_statistics_empty_call():
@@ -134,7 +134,7 @@ def test_statistics_foo(app, user_is_authorized):
         "buckets": ["lexiconOrder", "lexiconName"],
         "size": stat_size,
         "allowed": ["bar", "foo", "large_lex", "panacea", "panacea_links"],
-        "user_is_authorized": user_is_authorized
+        "user_is_authorized": user_is_authorized,
     }
     path = f"/querycount?q=extended||and|{field}|exists&mode=foo"
     with app.test_request_context(path):
@@ -146,14 +146,7 @@ def test_statistics_foo(app, user_is_authorized):
         )
 
     expected_filter_must = [
-        {
-            "bool": {
-                "should": [
-                    {"term": {"lexiconName": lex}}
-                    for lex in settings["allowed"]
-                ]
-            }
-        }
+        {"bool": {"should": [{"term": {"lexiconName": lex}} for lex in settings["allowed"]]}}
     ]
     if not user_is_authorized:
         expected_filter_must.append({"term": {"status": "ok"}})
@@ -167,16 +160,16 @@ def test_statistics_foo(app, user_is_authorized):
                         "terms": {"field": "lexiconOrder", "size": stat_size, "shard_size": 27000},
                         "aggs": {
                             "lexiconName": {
-                                "terms": {"field": "lexiconName", "size": stat_size, "shard_size": 27000}
+                                "terms": {
+                                    "field": "lexiconName",
+                                    "size": stat_size,
+                                    "shard_size": 27000,
+                                }
                             }
                         },
                     }
                 },
-                "filter": {
-                    "bool": {
-                        "must": expected_filter_must
-                    }
-                },
+                "filter": {"bool": {"must": expected_filter_must}},
             }
         }
     }

@@ -68,19 +68,19 @@ lint-syntax-errors: install-test
 	${INVENV} flake8 karp5 setup.py run.py cli.py --count --select=E9,F63,F7,F82 --show-source --statistics ${FLAKE8_FLAGS}
 
 test: install-test clean-pyc
-	${INVENV} pytest -vv tests/unit_tests
+	${INVENV} pytest -vv karp5/tests/unit_tests
 
 test-cov: install-test clean-pyc
-	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing tests
+	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing karp5/tests
 
 test-log: install-test clean-pyc
-	${INVENV} pytest --cov=karp5 --cov-report=term-missing tests > pytest.log
+	${INVENV} pytest --cov=karp5 --cov-report=term-missing karp5/tests > pytest.log
 
 lint: install
-	${INVENV} pylint --rcfile .pylintrc karp5 setup.py cli.py run.py tests
+	${INVENV} pylint --rcfile .pylintrc karp5 setup.py cli.py run.py
 
 lint-no-fail: install
-	${INVENV} pylint --rcfile .pylintrc --exit-zero karp5 setup.py cli.py run.py tests
+	${INVENV} pylint --rcfile .pylintrc --exit-zero karp5 setup.py cli.py run.py
 
 type-check: install-test install-typecheck
 	${INVENV} pytype karp5

@@ -1,6 +1,6 @@
 from karp5.server.translator.parser import freetext
 
-from tests.util import assert_es_search
+from karp5.tests.util import assert_es_search
 
 
 def test_freetext_minimum():

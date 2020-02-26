@@ -1,6 +1,6 @@
 from karp5.server import searching
 
-from tests.util import get_json
+from karp5.tests.util import get_json
 
 
 def test_autocomplete_with_q(client_w_panacea):

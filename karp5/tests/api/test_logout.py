@@ -1,4 +1,4 @@
-from tests.util import get_json
+from karp5.tests.util import get_json
 
 
 def test_logout(client):
