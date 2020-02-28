@@ -265,7 +265,7 @@ def recover(alias, suffix, lexicon, create_new=True) -> bool:
 #     print("recovery done")
 
 
-def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO] = None):
+def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO[str]] = None):
     """Dump the latest entries for a lexicon (or mode?).
 
        If with_id=True, then the results can be imported from cli.
@@ -443,6 +443,7 @@ def internalize_lexicon(mode, to_add):
     """
     ok = 0
     es = conf_mgr.elastic(mode)
+    sql_bulk = None
     for lex in to_add:
         print("Internalize", lex)
         # Go through each lexicon separately
@@ -480,7 +481,8 @@ def internalize_lexicon(mode, to_add):
             raise Exception(db_error)
         ok += db_loaded
 
-    print("will load %s entries, starting with %s" % (len(sql_bulk), sql_bulk[0]))
+    if sql_bulk:
+        print("will load %s entries, starting with %s" % (len(sql_bulk), sql_bulk[0]))
     if not ok:
         _logger.warning("No data. 0 documents uploaded.")
         raise Exception("No data")
