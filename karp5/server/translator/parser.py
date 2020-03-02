@@ -51,7 +51,7 @@ def parse(settings: Dict, isfilter=False) -> Dict[str, Any]:
     command, query = query.split("||", 1)
     settings["query_command"] = command
     highlight = settings.get("highlight", False)
-    mode = settings.get("mode")
+    mode = settings["mode"]
 
     filters = []  # filters will be put here
     if not settings.get("user_is_authorized", False):
@@ -76,10 +76,17 @@ def parse(settings: Dict, isfilter=False) -> Dict[str, Any]:
             _logger.debug("fields %s, p_ex %s", fields, p_ex)
         # unless the user wants to sort by _score, use a filter rather
         # than a query. will improve ES speed, since no scoring is done.
-        usefilter = "_score" not in settings.get("sort", "")
+        usefilter: bool = "_score" not in settings.get("sort", [])
+        # constant_score: bool = usefilter
 
         return search(
-            p_ex, filters, fields, isfilter=isfilter, highlight=highlight, usefilter=usefilter,
+            p_ex,
+            filters,
+            fields,
+            isfilter=isfilter,
+            highlight=highlight,
+            usefilter=usefilter,
+            # constant_score=constant_score,
         )
     else:
         raise errors.QueryError(
@@ -378,7 +385,12 @@ def parse_operation(etype, op, isfilter=False):
 
 
 def freetext(
-    text, mode, extra=None, isfilter=False, highlight=False, filters: List = None
+    text: str,
+    mode: str,
+    extra: Dict = None,
+    isfilter: bool = False,
+    highlight: bool = False,
+    filters: List = None,
 ) -> Dict[str, Any]:
     """ Constructs a free text query, searching all fields but boostig the
         form and writtenForm fields
@@ -423,7 +435,13 @@ def freetext(
 
 
 def search(
-    exps, filters, fields, isfilter=False, highlight=False, usefilter=False, constant_score=True,
+    exps: List,
+    filters: List,
+    fields,
+    isfilter: bool = False,
+    highlight: bool = False,
+    usefilter: bool = False,
+    constant_score: bool = True,
 ) -> Dict[str, Any]:
     """ Combines a list of expressions into one elasticsearch query object
         exps    is a list of strings (unfinished elasticsearch objects)
@@ -484,7 +502,7 @@ def search(
     return res
 
 
-def construct_exp(exps, querytype="filter", constant_score=True):
+def construct_exp(exps: List, querytype: str = "filter", constant_score: bool = True) -> Dict:
     """ Creates the final search object
         Returns a string representing the query object
         exps is a list of strings (unfinished elasticsearch objects)

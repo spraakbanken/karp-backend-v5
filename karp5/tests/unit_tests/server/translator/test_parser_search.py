@@ -139,3 +139,4 @@ def test_search_autocomplete_q(app):
     }
     assert_es_search(result, expected)
     assert result == expected
+

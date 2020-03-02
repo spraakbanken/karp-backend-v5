@@ -130,7 +130,7 @@ class ConfigManager(object):
         """[summary]
         """
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
-        print(f"self.modes = {self.modes}", file=sys.stderr)
+        # print(f"self.modes = {self.modes}", file=sys.stderr)
         set_defaults(self.modes)
 
         self.lexicons = load_from_file(os.path.join(self.configdir, "lexiconconf.json"))

@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from karp5.server.translator import parser
@@ -177,6 +179,29 @@ def test_parse_q_extended_mode_foo(app, user_is_authorized):
     expected = {"query": {"constant_score": {"filter": {"bool": {"must": expected_filter_must}}}}}
     assert_es_search(result, expected)
     assert result == expected
+
+
+def test_search_query_with_score(app):
+    lexicon = "panacea"
+    text = "test"
+    settings = {"mode": lexicon, "allowed": [lexicon], "sort": ["_score"]}
+    with app.test_request_context(
+        f"/query?q=extended||and|anything|contains|{text}&mode={lexicon}"
+    ), mock.patch("karp5.context.auth.validate_user", return_value=(True, ["panacea"])):
+        result = parser.parse(settings)
+
+    expected = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"lexiconName": lexicon}},
+                    {"match": {"_all": {"query": text, "operator": "and"}}},
+                ]
+            }
+        }
+    }
+
+    assert_es_search(result, expected)
 
 
 def test_search_empty_input():

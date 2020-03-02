@@ -68,9 +68,16 @@ def test_update(client_w_foo):
     assert "field" in result["diff"][0]
 
     to_keep = dbhandler.get_entries_to_keep("foo")
-    for i, v in enumerate(to_keep, 1):
-        assert v is not None
-    assert i == 5
+    num_to_keep = 0
+    for num_to_keep, obj in enumerate(to_keep, 1):
+        assert obj is not None
+    assert num_to_keep == 5
+
+    to_keep = dbhandler.get_entries_to_keep_gen("foo")
+    num_to_keep = 0
+    for num_to_keep, obj in enumerate(to_keep, 1):
+        assert obj is not None
+    assert num_to_keep == 5
 
 
 def test_delete_and_sql_to_keep(client_w_foo):

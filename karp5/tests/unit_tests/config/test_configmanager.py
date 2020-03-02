@@ -1,7 +1,6 @@
 import os
 
 import pytest
-import six
 
 from karp5 import conf_mgr, config
 from karp5.instance_info import get_instance_path
@@ -12,13 +11,13 @@ def test_override_elastic_url():
     mgr = config.ConfigManager("path")
     elastic_url = "test.elastic.url"
 
-    for mode, mode_settings in six.viewitems(mgr.modes):
+    for mode, mode_settings in mgr.modes.items():
         assert "elastic_url" in mode_settings
         assert mode_settings["elastic_url"] != elastic_url
 
     mgr.override_elastic_url(elastic_url)
 
-    for mode, mode_settings in six.viewitems(mgr.modes):
+    for mode, mode_settings in mgr.modes.items():
         assert "elastic_url" in mode_settings
         assert mode_settings["elastic_url"] == elastic_url
 
@@ -64,9 +63,14 @@ def test_get_modes_that_include_mode(app, mode, facit):
         assert f in modes
 
 
-@pytest.mark.parametrize("mode,expected", [
-    ("karp", None),
-    ("foo", {"status": "ok"}),
-])
+@pytest.mark.parametrize("mode,expected", [("karp", None), ("foo", {"status": "ok"}),])
 def test_filter_for_unauth_user(app, mode, expected):
     assert conf_mgr.filter_for_unauth_user(mode) == expected
+
+
+def test_lookup_multiple_score(app):
+    mode = "panacea"
+    result = conf_mgr.lookup_multiple("_score", mode)
+    expected = ["_score"]
+
+    assert result == expected
