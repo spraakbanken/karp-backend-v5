@@ -1,13 +1,20 @@
 from unittest import mock
 import typing
 
-from karp5.dbhandler.dbhandler import SQLNull, get_entries_to_keep_gen
+from karp5.dbhandler.dbhandler import DBUsageError, SQLNull, get_entries_to_keep_gen
 
 
 def test_sql_null_w_lexicon():
     sql_null = SQLNull("LEXICON")
-    assert str(sql_null) == "SQLNull: No SQL db available for LEXICON"
-    assert sql_null.message == "No SQL db available for LEXICON"
+    assert str(sql_null) == "Error: No SQL db available for LEXICON"
+    assert sql_null.message == "Error: No SQL db available for LEXICON"
+
+
+def test_db_usage_error():
+    msg = "TEST"
+    db_usage_error = DBUsageError(msg)
+
+    assert db_usage_error.message == f"Error: {msg}"
 
 
 def generate_from_list(

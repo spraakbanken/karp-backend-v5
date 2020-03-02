@@ -7,12 +7,13 @@ Emails the admins (config/config.json) if an error occurs.
 import datetime
 import json
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
 
 from karp5.config import mgr as conf_mgr
+from karp5.errors import KarpGeneralError
 
 
 _logger = logging.getLogger("karp5")
@@ -167,8 +168,8 @@ def update(
         conn.execute(ins)
         conn.close()
         return 1, ""
-    except SQLNull(lexicon):
-        return 0, ("Lexicon %s has no SQL instance" % lexicon)
+    except SQLNull as e:
+        return 0, e.message
     except Exception as e:
         return 0, handle_error(e, user, msg, doc)
 
@@ -202,8 +203,8 @@ def update_bulk(lexicon, bulk):
         engine.execute(db_entry.insert(), gen_bulk)
         return len(bulk), ""
 
-    except SQLNull(lexicon):
-        return 0, ("Lexicon %s has no SQL instance" % lexicon)
+    except SQLNull as e:
+        return 0, e.message
     except Exception as e:
         return 0, handle_error(e, user, "bulk update: %s" % e, "")
 
@@ -364,10 +365,10 @@ def get_entries_to_keep_gen(lexicon, *, to_date=None):
     old_id = None
     for entry in dbselect_gen(lexicon, **dbselect_kwargs):
         if entry["id"] == old_id:
-            print(f"skipping entry = {entry}")
+            # print(f"skipping entry = {entry}")
             continue
         elif entry["status"] == "removed":
-            print(f"skipping entry = {entry}")
+            # print(f"skipping entry = {entry}")
             old_id = entry["id"]
             continue
         else:
@@ -423,7 +424,7 @@ def delete(lexicon, _id):
     return []
 
 
-def deletebulk(lexicon="", user=""):
+def deletebulk(lexicon: Optional[str] = None, user: Optional[str] = None):
     engine, dbtable = get_engine(lexicon)
     conn = engine.connect()
     operands = []
@@ -436,6 +437,8 @@ def deletebulk(lexicon="", user=""):
         choice = dbtable.c.user == user
     elif lexicon:
         choice = dbtable.c.lexicon == lexicon
+    else:
+        raise DBUsageError("Must give either 'lexicon' or 'user', or both.")
 
     conn.execute(dbtable.delete().where(choice))
     conn.close()
@@ -485,12 +488,21 @@ def get_entries_to_keep(lexicons: Union[str, List[str]], *, to_date=None, exclud
     return gen_out
 
 
-class SQLNull(Exception):
+class SQLNull(KarpGeneralError):
     """ Tells that there is no SQL instance """
 
     def __init__(self, lex):
-        self.message = "No SQL db available for %s" % lex
-        super().__init__(self.message)
+        super().__init__(f"No SQL db available for {lex}")
 
     def __str__(self):
-        return f"SQLNull: {self.message}"
+        return f"{self.message}"
+
+
+class DBUsageError(KarpGeneralError):
+    """ Error in usage of the dbhandler module. """
+
+    def __init__(self, msg):
+        super().__init__(msg)
+
+    def __str__(self):
+        return f"{self.message}"
