@@ -5,7 +5,7 @@ import os
 import re
 import copy
 import sys
-from typing import Dict
+from typing import Dict, List, Optional, Union, Callable
 
 from elasticsearch import Elasticsearch
 
@@ -233,7 +233,7 @@ class ConfigManager(object):
         fformat = conf.get("format", self.lexicons.get("format", "json"))
         return os.path.join(self.instance_path, path, f"{lexicon}.{fformat}")
 
-    def searchconf(self, mode, field, failonerror=True):
+    def searchconf(self, mode, field, failonerror=True) -> Optional[List[str]]:
         """[summary]
 
         Arguments:
@@ -366,7 +366,12 @@ class ConfigManager(object):
         return self.modes.get(mode, {})
 
     def formatquery(self, mode, field, op):
-        return self.searchconf(mode, "format_query")(field, op)
+        format_query = self.extra_src(mode, "format_query", None)
+        if format_query:
+            return format_query(field, op)
+        else:
+            return op
+        # return self.searchconf(mode, "format_query")(field, op)
 
     def elasticnodes(self, mode="", lexicon=""):
         if not mode:
