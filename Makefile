@@ -109,11 +109,11 @@ clean-test:
 clean-venv:
 	rm -rf ./{VENV_NAME}
 
-bump-version-patch:
-	${INVENV} bumpversion patch
+bump-version-patch: install-dev
+	${INVENV} bump2version patch
 
-bump-version-minor:
-	${INVENV} bumpversion minor
+bump-version-minor: install-dev
+	${INVENV} bump2version minor
 
-bump-version-major:
-	${INVENV} bumpversion major
+bump-version-major: install-dev
+	${INVENV} bump2version major
