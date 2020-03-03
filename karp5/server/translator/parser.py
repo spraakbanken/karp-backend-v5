@@ -20,6 +20,15 @@ from karp5.config import mgr as conf_mgr
 _logger = logging.getLogger("karp5")
 
 
+def make_response(ans):
+    response = {"hits": {"hits": [], "total": ans.hits.total if ans else 0}}
+    if ans:
+        for hit in ans:
+            response["hits"]["hits"].append(hit.to_dict())
+
+    return response
+
+
 def get_mode():
     return request.args.get("mode", conf_mgr.app_config.STANDARDMODE)
 
@@ -696,7 +705,7 @@ def adapt_query(size, _from, es, query, kwargs):
             s = s.params(search_type=search_type)
         # s = s.using(es)
         _logger.debug("|adapt_query| es_dsl.s = %s", s.to_dict())
-        return s.execute()
+        return make_response(s.execute())
         # return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search

@@ -22,19 +22,10 @@ from karp5.server.translator.errors import AuthenticationError, QueryError
 _logger = logging.getLogger("karp5")
 
 
-def make_response(ans):
-    response = {"hits": {"hits": [], "total": ans.hits.total if ans else 0}}
-    if ans:
-        for hit in ans:
-            response["hits"]["hits"].append(hit.to_dict())
-
-    return response
-
-
 def query(page=0):
     try:
         ans = requestquery(page=page)
-        return jsonify(make_response(ans))
+        return jsonify(ans)
 
     except errors.KarpException as e:  # pass on karp exceptions
         _logger.exception(e)
@@ -171,7 +162,7 @@ def querycount(page=0):
         # Remember that 'buckets' is not allowed here! %s"
         _logger.exception(e)
         raise errors.KarpQueryError("Could not parse data", debug_msg=e, query=request.query_string)
-    return jsonify({"query": make_response(q_ans), "distribution": distribution})
+    return jsonify({"query": q_ans, "distribution": distribution})
 
 
 def test():
@@ -240,7 +231,7 @@ def minientry():
         if settings.get("highlight", False):
             clean_highlight(ans)
 
-        return jsonify(make_response(ans))
+        return jsonify(ans)
     except AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
@@ -494,7 +485,7 @@ def autocomplete():
             _logger.debug("_source: %s", autocomplete_field)
             _logger.debug(elasticq)
             index, typ = conf_mgr.get_mode_index(mode)
-            ans = parser.adapt_query(
+            single_response = parser.adapt_query(
                 settings["size"],
                 0,
                 es,
@@ -502,7 +493,6 @@ def autocomplete():
                 {"size": settings["size"], "index": index, "_source": autocomplete_fields,},
             )
             # save the results for multi
-            single_response = make_response(ans)
             res[q] = single_response
         if multi:
             return jsonify(res)
@@ -777,7 +767,6 @@ def get_pre_post(
             "_source": show,
         },
     )
-    ans = make_response(ans)
     hits = ans.get("hits", {}).get("hits", [])
     return go_to_sortkey(hits, center_id)
 
