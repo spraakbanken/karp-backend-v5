@@ -1,3 +1,5 @@
+from unittest import mock
+
 from hypothesis import assume, given, settings, strategies as st
 
 from karp5.tests.util import get_json
@@ -10,9 +12,12 @@ def test_pagination_panacea(client_w_panacea, start, size):
     command = "query"
     q = "extended||and|baseform|regexp|.*"
     mode = "panacea"
+    user_is_authenticated = True
     query = f"/{command}?q={q}&mode={mode}&start={start}&size={size}"
-
-    result = get_json(client_w_panacea, query)
+    with mock.patch(
+        "karp5.context.auth.validate_user", return_value=(user_is_authenticated, [mode])
+    ):
+        result = get_json(client_w_panacea, query)
 
     assert result is not None
     assert "hits" in result

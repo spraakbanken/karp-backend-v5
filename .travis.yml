@@ -17,7 +17,7 @@ python:
 install:
   - make install-test
 script:
-  - make test-cov
+  - make test-w-coverage
 after_success:
   - codecov
   - coveralls

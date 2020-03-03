@@ -7,6 +7,7 @@ import logging
 import re
 from typing import Dict, List, Any
 
+import elasticsearch_dsl as es_dsl
 from elasticsearch import helpers as EShelpers
 from flask import request
 
@@ -667,9 +668,36 @@ def adapt_query(size, _from, es, query, kwargs):
 
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= min(conf_mgr.app_config.SCAN_LIMIT, 10000):
-        kwargs["body"] = query
+        if "query" in query:
+            kwargs["query"] = query["query"]
+        else:
+            kwargs["query"] = query
         _logger.debug("|adapt_query| Will ask for %s", kwargs)
-        return es.search(**kwargs)
+        if "from_" in kwargs:
+            kwargs["from"] = kwargs["from_"]
+            del kwargs["from_"]
+        index = kwargs["index"]
+        del kwargs["index"]
+        if "_source_exclude" in kwargs:
+            source_exclude = kwargs["_source_exclude"]
+            del kwargs["_source_exclude"]
+        else:
+            source_exclude = None
+
+        search_type = kwargs["search_type"] if "search_type" in kwargs else None
+        if "search_type" in kwargs:
+            del kwargs["search_type"]
+
+        s = es_dsl.Search(using=es, index=index)
+        s = s.update_from_dict(kwargs)
+        if source_exclude:
+            s = s.source(excludes=source_exclude)
+        if search_type:
+            s = s.params(search_type=search_type)
+        # s = s.using(es)
+        _logger.debug("|adapt_query| es_dsl.s = %s", s.to_dict())
+        return s.execute()
+        # return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search
     else:
