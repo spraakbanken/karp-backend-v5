@@ -705,7 +705,7 @@ def adapt_query(size, _from, es, query, kwargs):
             s = s.params(search_type=search_type)
         # s = s.using(es)
         _logger.debug("|adapt_query| es_dsl.s = %s", s.to_dict())
-        return make_response(s.execute())
+        return s.execute().to_dict()
         # return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search
