@@ -703,7 +703,7 @@ def adapt_query(size, _from, es, query, kwargs):
             for s in sort:
                 if s.endswith(":asc"):
                     sort_tmp.append(s.split(":")[0])
-                elif s.endswith(":dsc"):
+                elif s.endswith(":desc"):
                     sort_tmp.append("-" + s.split(":")[0])
                 else:
                     sort_tmp.append(s)
