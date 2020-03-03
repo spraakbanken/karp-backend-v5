@@ -687,15 +687,27 @@ def adapt_query(size, _from, es, query, kwargs):
             del kwargs["from_"]
         index = kwargs["index"]
         del kwargs["index"]
+        source_exclude = kwargs.get("_source_exclude")
         if "_source_exclude" in kwargs:
-            source_exclude = kwargs["_source_exclude"]
             del kwargs["_source_exclude"]
         else:
             source_exclude = None
 
-        search_type = kwargs["search_type"] if "search_type" in kwargs else None
+        search_type = kwargs.get("search_type")
         if "search_type" in kwargs:
             del kwargs["search_type"]
+        sort = kwargs.get("sort")
+        if sort:
+            del kwargs["sort"]
+            sort_tmp = []
+            for s in sort:
+                if s.endswith(":asc"):
+                    sort_tmp.append(s.split(":")[0])
+                elif s.endswith(":dsc"):
+                    sort_tmp.append("-" + s.split(":")[0])
+                else:
+                    sort_tmp.append(s)
+            sort = sort_tmp
 
         s = es_dsl.Search(using=es, index=index)
         s = s.update_from_dict(kwargs)
@@ -703,6 +715,8 @@ def adapt_query(size, _from, es, query, kwargs):
             s = s.source(excludes=source_exclude)
         if search_type:
             s = s.params(search_type=search_type)
+        if sort:
+            s = s.sort(*sort)
         # s = s.using(es)
         _logger.debug("|adapt_query| es_dsl.s = %s", s.to_dict())
         return s.execute().to_dict()
