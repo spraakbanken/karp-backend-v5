@@ -2,6 +2,7 @@ import itertools
 from typing import Dict, Optional
 
 import attr
+from elasticsearch import helpers as es_helpers
 import elasticsearch_dsl as es_dsl
 
 from karp5.config import conf_mgr
@@ -42,8 +43,18 @@ def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[in
         return es_search.execute().to_dict()
     else:
         es_search = es_search.params(preserve_order=True, scroll="5m")
-        for hit in itertools.islice(es_search.scan(), from_, from_ + size):
-            response["hits"]["hits"].append(hit.to_dict())
+        # Workaround
+        scan_iter = es_helpers.scan(
+            es_search._client,
+            query=es_search.to_dict(),
+            index=es_search._index,
+            doc_type=es_search._get_doc_type(),
+            **es_search._params
+        )
+        # scan_iter = es_search.scan()
+        for hit in itertools.islice(scan_iter, from_, from_ + size):
+            response["hits"]["hits"].append(hit)
+            # response["hits"]["hits"].append(hit.to_dict())
 
         return response
 
