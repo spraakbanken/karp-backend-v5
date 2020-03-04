@@ -1,3 +1,5 @@
+import itertools
+
 import elasticsearch_dsl as es_dsl
 
 from typing import Dict, Optional
@@ -31,7 +33,7 @@ def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[in
         return es_search.execute().to_dict()
     else:
         es_search = es_search.params(preserve_order=True, scroll="5m")
-        for hit in es_search.scan():
+        for hit in itertools.islice(es_search.scan(), from_, from_ + size):
             response["hits"]["hits"].append(hit.to_dict())
 
         return response
