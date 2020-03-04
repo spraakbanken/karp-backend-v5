@@ -1,11 +1,12 @@
 import attr
-import typing
+from typing import Dict
+
 
 @attr.s(auto_attribs=True)
 class User:
     name: str = ""
     is_authenticated: bool = False
-    allowed_lexicons: typing.List[str] = attr.Factory(list)
+    lexicon_permissions: Dict[str, Dict[str, bool]] = attr.Factory(dict)
 
     def is_not_authenticated(self) -> bool:
         return not self.is_authenticated

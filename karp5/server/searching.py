@@ -467,7 +467,7 @@ def autocomplete():
 
         headboost = conf_mgr.searchfield(mode, "boosts")[0]
         res = {}
-        ans = {}
+        single_response = {}
         # if multi is not true, only one iteration of this loop will be done
         for q in qs:
             boost = {"term": {headboost: {"boost": "500", "value": q}}}
@@ -485,7 +485,7 @@ def autocomplete():
             _logger.debug("_source: %s", autocomplete_field)
             _logger.debug(elasticq)
             index, typ = conf_mgr.get_mode_index(mode)
-            ans = parser.adapt_query(
+            single_response = parser.adapt_query(
                 settings["size"],
                 0,
                 es,
@@ -493,12 +493,12 @@ def autocomplete():
                 {"size": settings["size"], "index": index, "_source": autocomplete_fields,},
             )
             # save the results for multi
-            res[q] = ans
+            res[q] = single_response
         if multi:
             return jsonify(res)
         else:
             # single querys: only return the latest answer
-            return jsonify(ans)
+            return jsonify(single_response)
     except AuthenticationError as e:
         _logger.exception(e)
         msg = e.message
@@ -767,7 +767,6 @@ def get_pre_post(
             "_source": show,
         },
     )
-
     hits = ans.get("hits", {}).get("hits", [])
     return go_to_sortkey(hits, center_id)
 

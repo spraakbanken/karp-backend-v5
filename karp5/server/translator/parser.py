@@ -7,6 +7,7 @@ import logging
 import re
 from typing import Dict, List, Any
 
+import elasticsearch_dsl as es_dsl
 from elasticsearch import helpers as EShelpers
 from flask import request
 
@@ -17,6 +18,15 @@ from karp5.config import mgr as conf_mgr
 
 
 _logger = logging.getLogger("karp5")
+
+
+def make_response(ans):
+    response = {"hits": {"hits": [], "total": ans.hits.total if ans else 0}}
+    if ans:
+        for hit in ans:
+            response["hits"]["hits"].append(hit.to_dict())
+
+    return response
 
 
 def get_mode():
@@ -667,9 +677,50 @@ def adapt_query(size, _from, es, query, kwargs):
 
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= min(conf_mgr.app_config.SCAN_LIMIT, 10000):
-        kwargs["body"] = query
+        if "query" in query:
+            kwargs["query"] = query["query"]
+        else:
+            kwargs["query"] = query
         _logger.debug("|adapt_query| Will ask for %s", kwargs)
-        return es.search(**kwargs)
+        if "from_" in kwargs:
+            kwargs["from"] = kwargs["from_"]
+            del kwargs["from_"]
+        index = kwargs["index"]
+        del kwargs["index"]
+        source_exclude = kwargs.get("_source_exclude")
+        if "_source_exclude" in kwargs:
+            del kwargs["_source_exclude"]
+        else:
+            source_exclude = None
+
+        search_type = kwargs.get("search_type")
+        if "search_type" in kwargs:
+            del kwargs["search_type"]
+        sort = kwargs.get("sort")
+        if sort:
+            del kwargs["sort"]
+            sort_tmp = []
+            for s in sort:
+                if s.endswith(":asc"):
+                    sort_tmp.append(s.split(":")[0])
+                elif s.endswith(":desc"):
+                    sort_tmp.append("-" + s.split(":")[0])
+                else:
+                    sort_tmp.append(s)
+            sort = sort_tmp
+
+        s = es_dsl.Search(using=es, index=index)
+        s = s.update_from_dict(kwargs)
+        if source_exclude:
+            s = s.source(excludes=source_exclude)
+        if search_type:
+            s = s.params(search_type=search_type)
+        if sort:
+            s = s.sort(*sort)
+        # s = s.using(es)
+        _logger.debug("|adapt_query| es_dsl.s = %s", s.to_dict())
+        return s.execute().to_dict()
+        # return es.search(**kwargs)
 
     # Else the number of hits is too large, do a scan search
     else:
