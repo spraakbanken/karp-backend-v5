@@ -615,6 +615,7 @@ def get_context(lexicon):
         for field in conf_mgr.searchconf(mode, "sort_by")
         if field not in ["_score", "lexiconOrder"]
     ]
+    _logger.debug("|get_context| sortfieldnames = %s", sortfieldnames)
     # get the sort field paths (eg. ['FormRep.baseform.raw', 'lemmaid.raw'])
     # Used for sorting.
     sortfield = sum([conf_mgr.lookup_multiple(f, mode) for f in sortfieldnames], [])
@@ -675,6 +676,8 @@ def get_context(lexicon):
     # TODO what to do if the sort key is not in the lexicon? as below?
     # origentry_sort = centerentry['sort'][0]
     # TODO test this!
+    if not isinstance(origentry_sort, str):
+        origentry_sort = str(origentry_sort)
     sortvalue = util.escape_control(origentry_sort)
     _logger.debug("Orig entry escaped key %s", sortvalue)
 
