@@ -1,10 +1,18 @@
 import itertools
-
-import elasticsearch_dsl as es_dsl
-
 from typing import Dict, Optional
 
+import attr
+import elasticsearch_dsl as es_dsl
+
 from karp5.config import conf_mgr
+
+
+@attr.s(auto_attribs=True)
+class SearchSettings:
+    scan_limit: int = 10000
+
+
+search_settings = SearchSettings()
 
 
 def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[int] = None) -> Dict:
@@ -22,7 +30,7 @@ def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[in
         if tot_hits < from_:
             return response
 
-    if size + from_ <= conf_mgr.app_config.SCAN_LIMIT:
+    if size + from_ <= search_settings.scan_limit:
         extra_kwargs = {}
         if from_ is not None:
             extra_kwargs["from_"] = from_
