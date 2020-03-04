@@ -21,12 +21,13 @@ def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[in
 
     response = {"hits": {"hits": [], "total": 0}}
 
-    if size is None:
+    if size is None or (from_ + size > search_settings.scan_limit):
         tmp_search = es_search.extra(from_=0, size=0)
         tmp_response = tmp_search.execute()
         tot_hits = tmp_response.hits.total
         response["hits"]["total"] = tot_hits
-        size = tot_hits - from_
+        if size is None:
+            size = tot_hits - from_
         if tot_hits < from_:
             return response
 

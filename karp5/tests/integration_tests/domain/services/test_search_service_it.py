@@ -25,3 +25,5 @@ def test_large_lex(app_w_large_lex, from_, size):
 
     assert len(result["hits"]["hits"]) == expected_len_hits
     assert result["hits"]["total"] == total_num_entries
+    for hit in result["hits"]["hits"]:
+        assert "_source" in hit
