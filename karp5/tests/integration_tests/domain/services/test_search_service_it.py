@@ -18,7 +18,10 @@ def test_large_lex(app_w_large_lex, from_, size):
     total_num_entries = 20000
     es_search = es_dsl.Search(using=conf_mgr.elastic(mode), index=mode)
     result = search_service.execute_query(es_search, from_=from_, size=size)
-    expected_len_hits = size if from_ + size < total_num_entries else total_num_entries - from_
+    if size is None:
+        expected_len_hits = total_num_entries - from_
+    else:
+        expected_len_hits = size if (from_ + size < total_num_entries) else total_num_entries - from_
 
     assert len(result["hits"]["hits"]) == expected_len_hits
     assert result["hits"]["total"] == total_num_entries
