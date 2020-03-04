@@ -12,7 +12,7 @@ from elasticsearch import helpers as EShelpers
 from flask import request
 
 import karp5.server.translator.elasticObjects as elasticObjects
-
+from karp5.domain.services import search_service
 from . import errors
 from karp5.config import mgr as conf_mgr
 
@@ -672,9 +672,56 @@ def adapt_query(size, _from, es, query, kwargs):
     # If _from is a float ignore it. Typically this happens because size is
     # inf and neither _from nor page were not set, which will set _from to
     # page*size = 0*inf = nan
+    if "from_" in kwargs:
+        del kwargs["from_"]
     if isinstance(_from, float):
         del kwargs["from_"]
+        _from = 0
 
+    if "size" in kwargs:
+        del kwargs["size"]
+    if isinstance(size, float):
+        size = None
+
+    if "query" in query:
+        kwargs["query"] = query["query"]
+    else:
+        kwargs["query"] = query
+    _logger.debug("|adapt_query| Will ask for %s", kwargs)
+    index = kwargs["index"]
+    del kwargs["index"]
+    source_exclude = kwargs.get("_source_exclude")
+    if "_source_exclude" in kwargs:
+        del kwargs["_source_exclude"]
+    else:
+        source_exclude = None
+
+    search_type = kwargs.get("search_type")
+    if "search_type" in kwargs:
+        del kwargs["search_type"]
+    sort = kwargs.get("sort")
+    if sort:
+        del kwargs["sort"]
+        sort_tmp = []
+        for s in sort:
+            if s.endswith(":asc"):
+                sort_tmp.append(s.split(":")[0])
+            elif s.endswith(":desc"):
+                sort_tmp.append("-" + s.split(":")[0])
+            else:
+                sort_tmp.append(s)
+        sort = sort_tmp
+
+    es_search = es_dsl.Search(using=es, index=index)
+    es_search = es_search.update_from_dict(kwargs)
+    if source_exclude:
+        es_search = es_search.source(excludes=source_exclude)
+    if search_type:
+        es_search = es_search.params(search_type=search_type)
+    if sort:
+        es_search = es_search.sort(*sort)
+
+    return search_service.execute_query(es_search, from_=_from, size=size)
     # If the wanted number of hits is below the scan limit, do a normal search
     if stop_num <= min(conf_mgr.app_config.SCAN_LIMIT, 10000):
         if "query" in query:
