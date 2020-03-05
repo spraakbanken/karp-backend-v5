@@ -1,4 +1,4 @@
-__version__ = "5.24.7"
+__version__ = "5.24.8"
 
 import pkg_resources
 import logging
