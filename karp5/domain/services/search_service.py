@@ -45,7 +45,7 @@ def execute_query(es_search: es_dsl.Search, *, from_: int = 0, size: Optional[in
         es_search = es_search.params(preserve_order=True, scroll="5m")
         # Workaround
         scan_iter = es_helpers.scan(
-            es_search._client,
+            es_search._using,
             query=es_search.to_dict(),
             index=es_search._index,
             doc_type=es_search._get_doc_type(),
