@@ -7,6 +7,7 @@ import copy
 import sys
 from typing import Dict, List, Optional, Union, Callable
 
+import attr
 from elasticsearch import Elasticsearch
 
 # import karp5.server.helper.configpaths as C
@@ -14,7 +15,7 @@ from karp5 import errors
 
 # from karp5.server.translator
 from karp5.util.debug import print_err
-from karp5.config import config
+from karp5.config.config import Config
 from .errors import KarpConfigException
 
 
@@ -81,6 +82,7 @@ def load_from_file(path, default=None):
     return default
 
 
+# @attr.s(auto_attribs=True)
 class ConfigManager(object):
     """[summary]
 
@@ -95,17 +97,40 @@ class ConfigManager(object):
         [type] -- [description]
     """
 
+    # instance_path: str = os.path.abspath(__file__)
+    # version: str = ""
+    # modes: Dict[str, Dict] = attr.Factory(dict)
+    # config: Dict[str, Dict] = attr.Factory(dict)
+    # lexicons: Dict[str, Dict] = attr.Factory(dict)
+    # fields: Dict[str, Dict] = attr.Factory(dict)
+    # defaultfields: Dict[str, Dict] = attr.Factory(dict)
+    # _extra_src: Dict = attr.Factory(dict)
+    # app_config: Config = attr.Factory(Config)
+    # configdir: str = attr.ib(init=False)
+
     def __init__(self, instance_path):
         self.instance_path = instance_path
-        self.modes = {}
+        self.version: str = ""
         self.config = {}
         self.lexicons = {}
         self.field = {}
         self.defaultfields = {}
-        self.app_config: config.Config = config.Config()
+        self.app_config: Config = Config()
         self.configdir = os.path.join(instance_path, "config")
         self._extra_src = {}
         self.load_config()
+
+    # def __attrs_post_init__(self):
+    #     self.configdir = os.path.join(self.instance_path, "config")
+    #     self.load_config()
+
+    def update_version(self, new_version: str):
+        """Update the version string.
+
+        Arguments:
+            new_version {str} -- the new version to use
+        """
+        self.version = new_version
 
     def add_extra_src(self, mode, func):
         """[summary]
@@ -145,6 +170,8 @@ class ConfigManager(object):
         # with open(os.path.join(self.configdir, 'fieldmappings.json')) as fp:
         #     self.fields = json.load(fp)
         self.fields = self.read_fieldmappings()
+
+        # self.version = load_from_file(os.path.join(self.configdir, "karp5-version"))
 
     def read_fieldmappings(self):
         """[summary]
