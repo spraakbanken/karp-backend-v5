@@ -1,3 +1,4 @@
+from karp5.config.configmanager import ConfigManager
 import os
 
 import pytest
@@ -11,13 +12,13 @@ def test_override_elastic_url():
     mgr = config.ConfigManager("path")
     elastic_url = "test.elastic.url"
 
-    for mode, mode_settings in mgr.modes.items():
+    for _, mode_settings in mgr.modes.items():
         assert "elastic_url" in mode_settings
         assert mode_settings["elastic_url"] != elastic_url
 
     mgr.override_elastic_url(elastic_url)
 
-    for mode, mode_settings in mgr.modes.items():
+    for _, mode_settings in mgr.modes.items():
         assert "elastic_url" in mode_settings
         assert mode_settings["elastic_url"] == elastic_url
 
@@ -74,3 +75,19 @@ def test_lookup_multiple_score(app):
     expected = ["_score"]
 
     assert result == expected
+
+
+def test_version_default():
+    mgr = config.ConfigManager("path")
+
+    assert mgr.version == ""
+
+
+def test_update_version():
+    mgr = config.ConfigManager("path")
+
+    version = "x.y.z"
+    mgr.update_version(version)
+
+    assert mgr.version == version
+

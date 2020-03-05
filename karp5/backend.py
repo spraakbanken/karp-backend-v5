@@ -253,7 +253,7 @@ def init(route):
         _logger.debug("md_text: %s", type(md_text))
         # Replace placeholders
         md_text = md_text.replace("[SBURL]", KARP_API_URL)
-        md_text = md_text.replace("[SBVERSION]", karp5.get_version())
+        md_text = md_text.replace("[SBVERSION]", conf_mgr.version
         # md_text = md_text.replace("[URL]", request.base_url)
         # md_text = md_text.replace("[VERSION]", KARP_VERSION)
 

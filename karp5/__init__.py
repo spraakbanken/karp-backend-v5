@@ -34,6 +34,7 @@ def create_app(config_class=Config):
 
     conf_mgr.app_config = config_class
 
+    conf_mgr.update_version(__version__)
     print("app.config = {}".format(app.config))
 
     # if app.config['ELASTICSEARCH_URL']:
