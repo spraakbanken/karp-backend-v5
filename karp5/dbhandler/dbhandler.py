@@ -366,17 +366,17 @@ def get_entries_to_keep_gen(lexicon, *, to_date=None):
     if to_date is not None:
         dbselect_kwargs["to_date"] = to_date
 
-    old_id = None
+    processed_ids = set()
     for entry in dbselect_gen(lexicon, **dbselect_kwargs):
-        if entry["id"] == old_id:
+        if entry["id"] in processed_ids:
             # print(f"skipping entry = {entry}")
             continue
         elif entry["status"] == "removed":
             # print(f"skipping entry = {entry}")
-            old_id = entry["id"]
+            processed_ids.add(entry["id"])
             continue
         else:
-            old_id = entry["id"]
+            processed_ids.add(entry["id"])
             yield entry
 
 
