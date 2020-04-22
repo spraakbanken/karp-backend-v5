@@ -7,11 +7,13 @@ Emails the admins (config/config.json) if an error occurs.
 import datetime
 import json
 import logging
+import traceback
 from typing import List, Union, Optional
 
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
 
+import karp5
 from karp5.config import mgr as conf_mgr
 from karp5.errors import KarpGeneralError
 
@@ -206,7 +208,7 @@ def update_bulk(lexicon, bulk):
     except SQLNull as e:
         return 0, e.message
     except Exception as e:
-        return 0, handle_error(e, user, "bulk update: %s" % e, "")
+        return 0, handle_error(e, user, "bulk update: %s" % e, None)
 
 
 def dbselect(
@@ -404,13 +406,21 @@ def modifysuggestion(_id, lexicon, msg="", status="", origid="", engine=None, db
 
 
 def handle_error(e, user, msg, doc):
+    _logger.exception(e)
     mail_sent = "No warnings sent by email"
     if conf_mgr.app_config.ADMIN_EMAILS:
         import karp5.dbhandler.emailsender as sender
 
-        report = "User: %s, msg: %s. \nDoc:\n%s" % (user, msg, doc)
-        msg = "Karp-b failure, %s.\n%s\n%s" % (datetime.datetime.now(), e, report)
-        sender.send_notification(conf_mgr.app_config.ADMIN_EMAILS, "Karp failure", msg)
+        # report = "User: %s, msg: %s. \nDoc:\n%s" % (user, msg, doc)
+        msg = f"""Karp5-backend failure
+        Time: {datetime.datetime.now()}
+        Version: {karp5.get_version()}
+        Error: {e}
+        User: {user}
+        Message: {msg}
+        Document: {doc}
+        Traceback: {traceback.format_exc()}"""
+        sender.send_notification(conf_mgr.app_config.ADMIN_EMAILS, "Karp5-backend failure", msg)
         mail_sent = "Warning sent to %s" % ", ".join(conf_mgr.app_config.ADMIN_EMAILS)
     return "%s. %s" % (str(e), mail_sent)
 
