@@ -8,7 +8,7 @@ import datetime
 import json
 import logging
 import traceback
-from typing import List, Union, Optional
+from typing import Iterable, List, Tuple, Union, Optional
 
 import sqlalchemy as sql
 from sqlalchemy.ext.compiler import compiles
@@ -176,7 +176,9 @@ def update(
         return 0, handle_error(e, user, msg, doc)
 
 
-def update_bulk(lexicon, bulk):
+def update_bulk(
+    lexicon: str, bulk: Iterable[Tuple[str, str, str, str, str, str]]
+) -> Tuple[int, str]:
     user = "admin"
     try:
         engine, db_entry = get_engine(lexicon, echo=False)
@@ -203,7 +205,7 @@ def update_bulk(lexicon, bulk):
         #            f.write(str(s))
         # else:
         engine.execute(db_entry.insert(), gen_bulk)
-        return len(bulk), ""
+        return len(gen_bulk), ""
 
     except SQLNull as e:
         return 0, e.message
