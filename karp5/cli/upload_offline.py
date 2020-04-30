@@ -296,12 +296,13 @@ def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO[str]
 
 def publish_mode(mode, suffix):
     index = make_indexname(mode, suffix)
+    _logger.info("Publishing mode '%s' to index '%s'", mode, index)
     add_actions = []
     rem_actions = []
     for alias in conf_mgr.get_modes_that_include_mode(mode):
         add_actions.append('{"add" : {"index": "%s", "alias": "%s"}}' % (index, alias))
         rem_actions.append('{"remove": {"index":"%s_*", "alias":"%s"}}' % (mode, alias))
-    print("remove {}".format(rem_actions))
+    _logger.debug("remove %s", rem_actions)
     print("add {}".format(add_actions))
 
     es = conf_mgr.elastic(mode)
@@ -312,7 +313,7 @@ def publish_mode(mode, suffix):
             '{"actions" : [%s]}' % ",".join(rem_actions), request_timeout=30
         )  # pylint: disable=unexpected-keyword-arg
     except esExceptions.ElasticsearchException:
-        print("No previous aliased indices, could not do remove any")
+        _logger.info("No previous aliased indices, could not do remove any")
         print(rem_actions)
 
     return es.indices.update_aliases(  # pylint: disable=unexpected-keyword-arg

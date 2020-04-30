@@ -6,6 +6,7 @@ import os
 import click
 
 import karp5
+from karp5.application.actions import mode_actions
 from karp5.cli import create_metadata as metadata
 from karp5.cli import upload_offline as upload
 from karp5.cli import getmapping as gm
@@ -95,6 +96,33 @@ def mode_init(mode, suffix, data_dir):
     """
     upload.create_mode(mode, suffix, data_dir=data_dir)
     print("Upload successful")
+
+
+@group_mode.command("recover")
+@click.argument("mode", type=str)
+@click.argument("suffix", default=None, type=str, required=False)
+@click.option(
+    "--lexicons",
+    default=None,
+    type=str,
+    help="lexicons to recover",
+    metavar="<lexicon1>[,<lexicon2>,...]",
+)
+def mode_recover(mode, suffix, lexicons):
+    """Recover MODE from sql.
+
+    Copies all entries in sql to the index MODE_SUFFIX.
+
+    If --lexicons is given, only those lexicons are recovered.
+    """
+    _logger.info("mode_recover called with mode=%s", mode)
+    try:
+        result = mode_actions.recover(
+            mode, suffix=suffix, lexicons=None if not lexicons else lexicons.split(",")
+        )
+        print(result)
+    except Exception as e:
+        _logger.exception(str(e))
 
 
 @group_lexicon.command("init")

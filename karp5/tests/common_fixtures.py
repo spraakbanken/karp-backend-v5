@@ -1,5 +1,6 @@
 from distutils.util import strtobool
 import os
+from typing import List, Optional
 
 import pytest
 
@@ -45,6 +46,18 @@ class CliTestRunner(object):
 
     def publish_mode(self, mode, suffix):
         return self.runner.invoke(self.cli, ["publish_mode", mode, suffix])
+
+    def recover_mode(
+        self, mode: str, *, suffix: Optional[str] = None, lexicons: Optional[List[str]] = None
+    ):
+        print(f"recover_mode(mode={mode}, suffix={suffix}, lexicons={lexicons})")
+        args = ["mode", "recover"]
+        if lexicons:
+            args.append(f"--lexicons {','.join(lexicons)}")
+        args.append(mode)
+        if suffix:
+            args.append(suffix)
+        return self.runner.invoke(self.cli, args)
 
     def reindex_alias(self, mode, suffix):
         return self.runner.invoke(self.cli, ["reindex_alias", mode, suffix])

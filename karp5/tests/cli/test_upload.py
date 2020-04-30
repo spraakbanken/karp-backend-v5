@@ -100,6 +100,7 @@ def test_create_reindex_alias(cli_w_panacea):
     mode = "panacea"
     suffix = "test_upload_02"
     n_hits = 6609
+    time.sleep(5)
     _test_n_hits_equals(mode, n_hits)
     r = cli_w_panacea.reindex_alias(mode, suffix)
 
