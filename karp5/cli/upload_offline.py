@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import sys
-from typing import IO, Optional, List, Union
+from typing import IO, Optional, List, Union, Tuple
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
@@ -213,7 +213,7 @@ def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
 #     return to_keep
 
 
-def recover(alias, suffix, lexicon, create_new=True) -> bool:
+def recover(alias, suffix, lexicon, create_new=True) -> Tuple[bool, str]:
     """ Recovers the data to ES, uses SQL as the trusted base version.
         Find the last version of every SQL entry and send this to ES.
     """
@@ -240,7 +240,7 @@ def recover(alias, suffix, lexicon, create_new=True) -> bool:
                Message: %s.\n"
         raise Exception(msg % (ok, "\n".join(err)))
     print("recovery done")
-    return True
+    return True, index
 
 
 # def recover_add(index, suffix, lexicon):

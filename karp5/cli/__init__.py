@@ -10,6 +10,7 @@ from karp5.application.actions import mode_actions
 from karp5.cli import create_metadata as metadata
 from karp5.cli import upload_offline as upload
 from karp5.cli import getmapping as gm
+from karp5.config import conf_mgr
 
 
 _logger = logging.getLogger("karp5")
@@ -98,31 +99,31 @@ def mode_init(mode, suffix, data_dir):
     print("Upload successful")
 
 
-@group_mode.command("recover")
-@click.argument("mode", type=str)
-@click.argument("suffix", default=None, type=str, required=False)
-@click.option(
-    "--lexicons",
-    default=None,
-    type=str,
-    help="lexicons to recover",
-    metavar="<lexicon1>[,<lexicon2>,...]",
-)
-def mode_recover(mode, suffix, lexicons):
-    """Recover MODE from sql.
+# @group_mode.command("recover")
+# @click.argument("mode", type=str)
+# @click.argument("suffix", default=None, type=str, required=False)
+# @click.option(
+#     "--lexicons",
+#     default=None,
+#     type=str,
+#     help="lexicons to recover",
+#     metavar="<lexicon1>[,<lexicon2>,...]",
+# )
+# def mode_recover(mode, suffix, lexicons):
+#     """Recover MODE from sql.
 
-    Copies all entries in sql to the index MODE_SUFFIX.
+#     Copies all entries in sql to the index MODE_SUFFIX.
 
-    If --lexicons is given, only those lexicons are recovered.
-    """
-    _logger.info("mode_recover called with mode=%s", mode)
-    try:
-        result = mode_actions.recover(
-            mode, suffix=suffix, lexicons=None if not lexicons else lexicons.split(",")
-        )
-        print(result)
-    except Exception as e:
-        _logger.exception(str(e))
+#     If --lexicons is given, only those lexicons are recovered.
+#     """
+#     _logger.info("mode_recover called with mode=%s", mode)
+#     try:
+#         result = mode_actions.recover(
+#             mode, suffix=suffix, lexicons=None if not lexicons else lexicons.split(",")
+#         )
+#         print(result)
+#     except Exception as e:
+#         _logger.exception(str(e))
 
 
 @group_lexicon.command("init")
@@ -145,6 +146,25 @@ def lexicon_init(lexicon, suffix, data):
     )
     index = upload.add_lexicon(lexicon, suffix, filename=data)
     print(f"'{lexicon}' was successfully loaded to the index '{index}'")
+
+
+@group_lexicon.command("recover")
+@click.argument("lexicon", type=str)
+@click.argument("suffix", default=None, type=str, required=False)
+def lexicon_recover(lexicon, suffix):
+    """Recovers the LEXICON from sql.
+
+    Loads the lexicon to the index <mode of LEXICON>_SUFFIX.
+    """
+    _logger.debug(
+        "lexicon_recover(lexicon='%s', suffix='%s')", lexicon, suffix,
+    )
+    mode = conf_mgr.get_lexicon_mode(lexicon)
+    result, index = upload.recover(mode, suffix, lexicon)
+    if result:
+        print(f"'{lexicon}' was successfully loaded to the index '{index}'")
+    else:
+        print("Something went wrong.")
 
 
 @cli.command("create_empty_index")
