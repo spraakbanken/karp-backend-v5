@@ -22,7 +22,7 @@ def test_mode_create_empty():
     assert mode.id == "id"
     assert mode.elastic_url == []
     assert mode.sql is None
-    assert mode.type is "type"
+    assert mode.type == "type"
     assert mode.secret_fields == []
     assert mode.src is None
     assert mode.suggestionalias == "suggestionalias"
