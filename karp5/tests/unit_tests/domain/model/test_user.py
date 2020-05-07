@@ -1,4 +1,4 @@
-from karp5.domain.models.user import User
+from karp5.domain.model.user import User
 
 
 def test_empty_user():
