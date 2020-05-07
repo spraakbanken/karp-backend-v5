@@ -31,7 +31,6 @@ def set_defaults(data: Dict) -> None:
     defaults = data.get("default", None)
     if not defaults:
         return
-    print(f"data = {data}")
     for data_key, data_val in data.items():
         if data_key != "default":
             for def_key, def_val in defaults.items():
