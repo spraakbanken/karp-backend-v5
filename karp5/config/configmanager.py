@@ -11,6 +11,7 @@ import attr
 from elasticsearch import Elasticsearch
 
 # import karp5.server.helper.configpaths as C
+from karp5.utility.container import merge_dict
 from karp5 import errors
 
 # from karp5.server.translator
@@ -45,15 +46,6 @@ def complement_dict(adict, bdict):
     " Adds values from bdict into adict unless the key is already there "
     for key, val in bdict.items():
         if key not in adict:
-            adict[key] = val
-
-
-def merge_dict(adict, bdict):
-    " Merges bdict into adict by taking the union of the vaule lists "
-    for key, val in bdict.items():
-        if key in adict:
-            adict[key] = list(set(adict[key]) | set(val))
-        else:
             adict[key] = val
 
 
