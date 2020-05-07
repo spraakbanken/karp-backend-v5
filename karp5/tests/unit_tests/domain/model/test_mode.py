@@ -36,6 +36,7 @@ def test_mode_create_empty():
     assert mode.indexalias == "indexalias"
     assert mode.groups == []
     assert mode.filter_for_unauth_user is None
+    assert isinstance(mode.field_mappings, dict)
 
 
 def test_mode_create_from_dict_with_defaults():

@@ -31,6 +31,7 @@ class Mode:
     groups: List[str] = attr.Factory(list)
     is_index: bool = False
     filter_for_unauth_user: Optional[Dict] = None
+    field_mappings: Dict = attr.Factory(dict)
 
     @classmethod
     def from_mapping(cls, id: str, mapping: Dict, defaults: Optional[Dict] = None):
