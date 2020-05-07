@@ -5,7 +5,7 @@ import os
 import re
 import copy
 import sys
-from typing import Dict, List, Optional, Union, Callable
+from typing import Any, Dict, List, Optional, Union, Callable
 
 import attr
 from elasticsearch import Elasticsearch
@@ -260,7 +260,7 @@ class ConfigManager(object):
         fformat = conf.get("format", self.lexicons.get("format", "json"))
         return os.path.join(self.instance_path, path, f"{lexicon}.{fformat}")
 
-    def searchconf(self, mode, field, failonerror=True) -> Optional[List[str]]:
+    def searchconf(self, mode, field, failonerror=True) -> Any:
         """[summary]
 
         Arguments:
@@ -426,7 +426,7 @@ class ConfigManager(object):
         typ = self.searchconf(mode, "type")
         return index, typ
 
-    def get_mode_type(self, mode):
+    def get_mode_type(self, mode) -> str:
         return self.searchconf(mode, "type")
 
     def get_mode_index(self, mode):

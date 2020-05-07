@@ -259,10 +259,11 @@ def test_recover(cli_w_panacea):
     alias_hits = get_es_search(alias)
 
     suffix = "test_recover"
-    assert upload.recover(alias, suffix, alias)
+    status_is_ok, indexname = upload.recover(alias, suffix, alias)
 
+    assert status_is_ok
     time.sleep(3)
-    recover_hits = get_es_search(mk_indexname(alias, suffix))
+    recover_hits = get_es_search(indexname)
 
     assert "hits" in alias_hits
     assert "hits" in alias_hits["hits"]
