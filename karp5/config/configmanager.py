@@ -102,6 +102,7 @@ class ConfigManager(object):
     def __init__(self, instance_path):
         self.instance_path = instance_path
         self.version: str = ""
+        self.modes = {}
         self.config = {}
         self.lexicons = {}
         self.field = {}
@@ -148,7 +149,6 @@ class ConfigManager(object):
         self.modes = load_from_file(os.path.join(self.configdir, "modes.json"))
         # print(f"self.modes = {self.modes}", file=sys.stderr)
         set_defaults(self.modes)
-
         self.lexicons = load_from_file(os.path.join(self.configdir, "lexiconconf.json"))
         set_defaults(self.lexicons)
 

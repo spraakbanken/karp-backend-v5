@@ -12,5 +12,5 @@ def get_instance_path():
     return instance_path
 
 
-# def get_instance_path():
-#     return instance_path
+def get_instance_path():
+    return instance_path
