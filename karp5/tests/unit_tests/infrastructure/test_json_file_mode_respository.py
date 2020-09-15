@@ -5,11 +5,9 @@ import pytest
 from karp5.infrastructure.json_file_mode_repository import JsonFileModeRepository
 
 
-@pytest.fixture(scope="session")
-def mode_repo():
-    return JsonFileModeRepository(
-        config_dir=Path("karp5/tests/data/config")
-    )
+@pytest.fixture(name="mode_repo", scope="session")
+def fixture_mode_repo():
+    return JsonFileModeRepository(config_dir=Path("karp5/tests/data/config"))
 
 
 def test_json_file_mode_repository(mode_repo):
