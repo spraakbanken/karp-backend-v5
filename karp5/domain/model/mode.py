@@ -54,8 +54,7 @@ class ModeRepository(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def modes_that_include_mode(self, mode_id: str) -> List[Mode]:
-        modes = dict()
-        modes[mode_id] = self.mode_by_id(mode_id)
+        modes = {mode_id: self.mode_by_id(mode_id)}
         for m_id in self.mode_ids():
             if m_id == mode_id:
                 continue
