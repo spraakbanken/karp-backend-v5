@@ -1,13 +1,26 @@
 from pathlib import Path
+
+import pytest
+
 from karp5.infrastructure.json_file_mode_repository import JsonFileModeRepository
 
 
-def test_json_file_mode_repository():
-    repo = JsonFileModeRepository(config_dir=Path("karp5/tests/data/config"))
+@pytest.fixture(scope="session")
+def mode_repo():
+    return JsonFileModeRepository(
+        config_dir=Path("karp5/tests/data/config")
+    )
 
-    assert repo.mode_ids() == ["panacea", "panacea_links", "karp", "foo", "large_lex"]
 
-    for mode_id in repo.mode_ids():
-        mode = repo.mode_by_id(mode_id)
+def test_json_file_mode_repository(mode_repo):
+
+    assert mode_repo.mode_ids() == ["panacea", "panacea_links", "karp", "foo", "large_lex"]
+
+    for mode_id in mode_repo.mode_ids():
+        mode = mode_repo.mode_by_id(mode_id)
 
         assert mode.id == mode_id
+
+
+def test_mode_that_include_mode(mode_repo):
+    assert mode_repo.modes_that_include_mode("panacea") == ["panacea"]
