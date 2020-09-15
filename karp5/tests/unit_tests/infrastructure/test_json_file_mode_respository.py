@@ -21,4 +21,6 @@ def test_json_file_mode_repository(mode_repo):
 
 
 def test_mode_that_include_mode(mode_repo):
-    assert mode_repo.modes_that_include_mode("panacea") == ["panacea"]
+    modes = mode_repo.modes_that_include_mode("panacea")
+    modes = [m.id for m in modes]
+    assert modes == ["panacea", "panacea_links", "karp"]
