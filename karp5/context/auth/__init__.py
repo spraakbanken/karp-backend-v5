@@ -25,11 +25,7 @@ def validate_user(mode: str = "write") -> Tuple[bool, List]:
     user_auth = check_user()
     auth_response = user_auth["authenticated"]
 
-    allowed = []
-    for lex, val in user_auth["lexicon_list"].items():
-        if val[mode]:
-            allowed.append(lex)
-
+    allowed = [lex for lex, val in user_auth["lexicon_list"].items() if val[mode]]
     return auth_response, allowed
 
 
