@@ -1,4 +1,4 @@
-import collections
+import collections.abc
 import copy
 import json
 
@@ -25,7 +25,7 @@ def compare(orig, obj):
         assert escape(orig) == obj
         return
 
-    if isinstance(orig, collections.Sized):
+    if isinstance(orig, collections.abc.Sized):
         # all other types of objects should have unchanged length
         assert len(orig) == len(obj)
 

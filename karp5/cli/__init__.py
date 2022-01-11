@@ -34,7 +34,10 @@ def setup_cli(config=karp5.Config):
             os.mkdir(log_dir)
 
         file_handler = logging.handlers.TimedRotatingFileHandler(
-            os.path.join(log_dir, "karp5-admin.log"), when="d", interval=1, backupCount=0,
+            os.path.join(log_dir, "karp5-admin.log"),
+            when="d",
+            interval=1,
+            backupCount=0,
         )
         file_handler.setLevel(config.LOG_LEVEL)
         file_handler.setFormatter(formatter)
@@ -86,7 +89,14 @@ def create_mode(mode, suffix):
 @group_mode.command("init")
 @click.argument("mode", type=str)
 @click.argument("suffix", default=None, type=str)
-@click.option("--data-dir", "-d", default=None, type=str, help="file to load", metavar="<filename>")
+@click.option(
+    "--data-dir",
+    "-d",
+    default=None,
+    type=str,
+    help="file to load",
+    metavar="<filename>",
+)
 def mode_init(mode, suffix, data_dir):
     """Init MODE.
 
@@ -129,7 +139,9 @@ def mode_init(mode, suffix, data_dir):
 @group_lexicon.command("init")
 @click.argument("lexicon", type=str)
 @click.argument("suffix", default=None, type=str)
-@click.option("--data", "-d", default=None, type=str, help="file to load", metavar="<filename>")
+@click.option(
+    "--data", "-d", default=None, type=str, help="file to load", metavar="<filename>"
+)
 def lexicon_init(lexicon, suffix, data):
     """Init the LEXICON.
 
@@ -157,7 +169,9 @@ def lexicon_recover(lexicon, suffix):
     Loads the lexicon to the index <mode of LEXICON>_SUFFIX.
     """
     _logger.debug(
-        "lexicon_recover(lexicon='%s', suffix='%s')", lexicon, suffix,
+        "lexicon_recover(lexicon='%s', suffix='%s')",
+        lexicon,
+        suffix,
     )
     mode = conf_mgr.get_lexicon_mode(lexicon)
     result, index = upload.recover(mode, suffix, lexicon)
@@ -189,7 +203,11 @@ def import_mode(mode, suffix):
 def publish_mode(mode, suffix):
     """Publish MODE to all modes that contain MODE."""
     upload.publish_mode(mode, suffix)
-    print("Published '{mode}_{suffix}' successfully to '{mode}'".format(mode=mode, suffix=suffix))
+    print(
+        "Published '{mode}_{suffix}' successfully to '{mode}'".format(
+            mode=mode, suffix=suffix
+        )
+    )
 
 
 @cli.command("reindex_alias")
@@ -212,7 +230,7 @@ def getmapping(alias, outfile):
 @click.argument("mode", nargs=1)
 @click.argument("to_upload", nargs=-1)
 def internalize_lexicon(mode, to_upload):
-    """ Add a lexicon to sql from es.
+    """Add a lexicon to sql from es.
     Can be done at any time, not noticable to the end user.
     """
 
@@ -222,10 +240,12 @@ def internalize_lexicon(mode, to_upload):
 
 @cli.command("printlatestversion")
 @click.argument("lexicon", metavar="<lexicon>")
-@click.option("--output", "-o", default=None, metavar="<path>", help="File to write to.")
+@click.option(
+    "--output", "-o", default=None, metavar="<path>", help="File to write to."
+)
 def printlatestversion(lexicon, output):
     if output:
-        with open(output, "w") as fp:
+        with open(output, "bw") as fp:
             upload.printlatestversion(lexicon, fp=fp)
     else:
         upload.printlatestversion(lexicon)
@@ -233,10 +253,12 @@ def printlatestversion(lexicon, output):
 
 @cli.command("exportlatestversion")
 @click.argument("lexicon", metavar="<lexicon>")
-@click.option("--output", "-o", default=None, metavar="<path>", help="File to write to.")
+@click.option(
+    "--output", "-o", default=None, metavar="<path>", help="File to write to."
+)
 def exportlatestversion(lexicon, output):
     if output:
-        with open(output, "w") as fp:
+        with open(output, "bw") as fp:
             upload.printlatestversion(lexicon, with_id=True, fp=fp)
     else:
         upload.printlatestversion(lexicon, with_id=True)

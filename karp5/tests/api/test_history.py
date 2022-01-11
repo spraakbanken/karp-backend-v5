@@ -35,7 +35,9 @@ def test_update(client_w_foo):
 
     entry = {"lexiconName": "foo", "lexiconOrder": 2, "foo": "five"}
 
-    new_data = post_json(client_w_foo, "/add/foo", {"doc": entry, "message": "adding entry"})
+    new_data = post_json(
+        client_w_foo, "/add/foo", {"doc": entry, "message": "adding entry"}
+    )
     assert "sql_loaded" in new_data
     assert new_data["sql_loaded"] == 1
     assert "es_loaded" in new_data
@@ -83,7 +85,9 @@ def test_update(client_w_foo):
 def test_delete_and_sql_to_keep(client_w_foo):
     entry = {"lexiconName": "foo", "lexiconOrder": 2, "foo": "six"}
 
-    new_data = post_json(client_w_foo, "/add/foo", {"doc": entry, "message": "adding entry"})
+    new_data = post_json(
+        client_w_foo, "/add/foo", {"doc": entry, "message": "adding entry"}
+    )
 
     assert "sql_loaded" in new_data
     assert new_data["sql_loaded"] == 1
@@ -122,7 +126,7 @@ def test_print_latestversion_foo(cli_w_foo):
     for entry in dbhandler.get_entries_to_keep_gen("foo"):
         print(f"entry = {entry}")
         assert entry["status"] != "removed"
-    fp = io.StringIO()
+    fp = io.BytesIO()
     upload_offline.printlatestversion("foo", fp=fp, with_id=True)
 
     data = json.loads(fp.getvalue())
@@ -132,7 +136,7 @@ def test_print_latestversion_foo(cli_w_foo):
 
 
 def test_print_latestversion_panacea(cli_w_panacea):
-    fp = io.StringIO()
+    fp = io.BytesIO()
     upload_offline.printlatestversion("panacea", fp=fp)
 
     data = json.loads(fp.getvalue())
@@ -142,7 +146,7 @@ def test_print_latestversion_panacea(cli_w_panacea):
 
 
 def test_export_latestversion_foo(cli_w_foo):
-    fp = io.StringIO()
+    fp = io.BytesIO()
     upload_offline.printlatestversion("foo", fp=fp, with_id=True)
 
     data = json.loads(fp.getvalue())
@@ -154,7 +158,7 @@ def test_export_latestversion_foo(cli_w_foo):
 
 
 def test_export_latestversion_panacea(cli_w_panacea):
-    fp = io.StringIO()
+    fp = io.BytesIO()
     upload_offline.printlatestversion("panacea", fp=fp, with_id=True)
 
     data = json.loads(fp.getvalue())

@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import sys
-from typing import IO, Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, BinaryIO
 
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
@@ -275,7 +275,7 @@ def recover(alias, suffix, lexicon, create_new=True) -> Tuple[bool, str]:
 
 
 def printlatestversion(
-    lexicon: str, with_id: bool = False, fp: Optional[IO[str]] = None
+    lexicon: str, with_id: bool = False, fp: Optional[BinaryIO] = None
 ):
     """Dump the latest entries for a lexicon (or mode?).
 
@@ -289,7 +289,7 @@ def printlatestversion(
         fp -- file handle to write to, if None write to stdout (default: {None})
     """
     if fp is None:
-        fp = sys.stdout
+        fp = sys.stdout.buffer
 
     # to_keep = get_entries_to_keep_from_sql(lexicon)
     entries = db.get_entries_to_keep_gen(lexicon)
@@ -389,7 +389,7 @@ def create_mode(alias, suffix, with_id=False, data_dir=None):
     if conf_mgr.modes[alias]["is_index"]:
         to_create = [alias]
     else:
-        to_create = conf_mgr.modes.get(alias)["groups"]
+        to_create = conf_mgr.modes.get(alias, {"groups": [alias]})["groups"]
 
     typ = conf_mgr.modes[alias]["type"]
     for index in to_create:
