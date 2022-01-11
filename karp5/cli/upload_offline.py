@@ -10,7 +10,7 @@ from typing import IO, Optional, List, Union, Tuple
 from elasticsearch import helpers as es_helpers
 from elasticsearch import exceptions as esExceptions
 
-from sb_json_tools import json_iter
+from json_streams import json_iter
 
 # import elasticsearch_dsl as es_dsl
 
@@ -34,13 +34,13 @@ def make_indexname(index, suffix=None):
 
 
 def update_source_field(mode, doc):
-    """ Apply doc_to_es to doc. """
+    """Apply doc_to_es to doc."""
     doc["_source"] = document.doc_to_es(doc["_source"], mode, "update")
     return doc
 
 
 def index_create(mode, index):
-    """ Create a new Elasticsearch index. """
+    """Create a new Elasticsearch index."""
 
     es = conf_mgr.elastic(mode)
     data = conf_mgr.get_mapping(mode)
@@ -72,7 +72,16 @@ def index_exists(mode: str, index: Union[str, List[str]]) -> bool:
 
 
 def upload(
-    informat, name, order, data, elastic, index, typ, sql=False, verbose=True, with_id=False,
+    informat,
+    name,
+    order,
+    data,
+    elastic,
+    index,
+    typ,
+    sql=False,
+    verbose=True,
+    with_id=False,
 ):
     """Uploads the data to elastic and the database
         sql      if True,  the data will be stored in the SQL database as well
@@ -214,8 +223,8 @@ def parse_upload(informat, lexname, lexOrder, data, index, typ, with_id=False):
 
 
 def recover(alias, suffix, lexicon, create_new=True) -> Tuple[bool, str]:
-    """ Recovers the data to ES, uses SQL as the trusted base version.
-        Find the last version of every SQL entry and send this to ES.
+    """Recovers the data to ES, uses SQL as the trusted base version.
+    Find the last version of every SQL entry and send this to ES.
     """
 
     # if not lexicon:
@@ -265,7 +274,9 @@ def recover(alias, suffix, lexicon, create_new=True) -> Tuple[bool, str]:
 #     print("recovery done")
 
 
-def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO[str]] = None):
+def printlatestversion(
+    lexicon: str, with_id: bool = False, fp: Optional[IO[str]] = None
+):
     """Dump the latest entries for a lexicon (or mode?).
 
        If with_id=True, then the results can be imported from cli.
@@ -285,7 +296,10 @@ def printlatestversion(lexicon: str, with_id: bool = False, fp: Optional[IO[str]
 
     if with_id:
         entries = (
-            {"_id": entry["id"], "_source": document.doc_to_es(entry["doc"], lexicon, "bulk")}
+            {
+                "_id": entry["id"],
+                "_source": document.doc_to_es(entry["doc"], lexicon, "bulk"),
+            }
             for entry in entries
         )
     else:
@@ -388,9 +402,13 @@ def create_mode(alias, suffix, with_id=False, data_dir=None):
             # delete the index if things did not go well
             ans = es.indices.delete(newname)
             _logger.error(
-                "Any documentes uploaded to ES index %s are removed. ans = '%s'", newname, ans,
+                "Any documentes uploaded to ES index %s are removed. ans = '%s'",
+                newname,
+                ans,
             )
-            _logger.error("If data was uploaded to SQL you will have to remove it manually.")
+            _logger.error(
+                "If data was uploaded to SQL you will have to remove it manually."
+            )
             _logger.exception(e)
             raise
 
@@ -420,7 +438,9 @@ def add_lexicon(lexicon, suffix, filename=None, with_id=False):
         with open(filename, "r") as fp:
             data = fp.read()
         sql = conf_mgr.get_mode_sql(mode)
-        upload("json", lexicon, "", data, es, indexname, _type, sql=sql, with_id=with_id)
+        upload(
+            "json", lexicon, "", data, es, indexname, _type, sql=sql, with_id=with_id
+        )
         # do this last to get the avoid version conflicts (in case some user is
         # updating the index during this process)
         # reindex_alias(mode, suffix, create_index=False)
@@ -429,18 +449,22 @@ def add_lexicon(lexicon, suffix, filename=None, with_id=False):
         # delete the index if things did not go well
         ans = es.indices.delete(indexname)
         # print(ans)
-        _logger.error("Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans)
-        _logger.error("If data was uploaded to SQL you will have to remove it manually.")
+        _logger.error(
+            "Any documentes uploaded to ES index %s are removed. ans=%s", indexname, ans
+        )
+        _logger.error(
+            "If data was uploaded to SQL you will have to remove it manually."
+        )
         _logger.exception(e)
         raise
     return indexname
 
 
 def internalize_lexicon(mode, to_add):
-    """ Reads all entries from the lexicons specified in to_add
-        and puts them in sql. They may then be edited.
-        The ES index is not effected and this operation may hence
-        be run at any time
+    """Reads all entries from the lexicons specified in to_add
+    and puts them in sql. They may then be edited.
+    The ES index is not effected and this operation may hence
+    be run at any time
     """
     ok = 0
     es = conf_mgr.elastic(mode)
@@ -555,7 +579,12 @@ def apply_filter(it, filter_func, field=None):
 
 
 def copy_alias_to_new_index(
-    source_mode, target_mode, target_suffix, filter_func=None, create_index=True, query=None,
+    source_mode,
+    target_mode,
+    target_suffix,
+    filter_func=None,
+    create_index=True,
+    query=None,
 ):
     es_source = conf_mgr.elastic(source_mode)
     es_target = conf_mgr.elastic(target_mode)
@@ -572,7 +601,7 @@ def copy_alias_to_new_index(
     target_type = conf_mgr.get_mode_type(target_mode)
 
     def update_doc(doc):
-        """ Apply doc_to_es to doc. """
+        """Apply doc_to_es to doc."""
         doc["_source"] = document.doc_to_es(doc["_source"], target_mode, "update")
         doc["_index"] = target_index
         doc["_type"] = target_type
@@ -581,7 +610,9 @@ def copy_alias_to_new_index(
     update_docs = (update_doc(doc) for doc in source_docs)
     success = 0
     errors = []
-    for ok, item in es_helpers.streaming_bulk(es_target, update_docs, index=target_index):
+    for ok, item in es_helpers.streaming_bulk(
+        es_target, update_docs, index=target_index
+    ):
         if not ok:
             errors.append(item)
         else:
@@ -615,10 +646,12 @@ def reindex_help(alias, source_index, target_index, create_index=True):
     if create_index:
         index_create(alias, target_index)
 
-    source_docs = es_helpers.scan(es, size=10000, index=source_index, raise_on_error=True)
+    source_docs = es_helpers.scan(
+        es, size=10000, index=source_index, raise_on_error=True
+    )
 
     def update_doc(doc):
-        """ Apply doc_to_es to doc. """
+        """Apply doc_to_es to doc."""
         doc["_source"] = document.doc_to_es(doc["_source"], alias, "update")
         doc["_index"] = target_index
         return doc
