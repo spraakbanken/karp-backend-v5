@@ -76,7 +76,17 @@ jobs:
           docker logs "${{ job.services.mysql.id }}"
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}
-      - uses: codecov/codecov-action@v2
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./coverage/reports/
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          files: ./coverage1.xml,./coverage2.xml
+          flags: unittests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report.txt
+          verbose: true
       # - name: Coveralls
       #   uses: coverallsapp/github-action@master
       #   with:
