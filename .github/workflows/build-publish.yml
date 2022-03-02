@@ -76,6 +76,7 @@ jobs:
           docker logs "${{ job.services.mysql.id }}"
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}
+      - uses: codecov/codecov-action@v2
       # - name: Coveralls
       #   uses: coverallsapp/github-action@master
       #   with:
