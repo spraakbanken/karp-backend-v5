@@ -71,7 +71,7 @@ test: install-test clean-pyc
 	${INVENV} pytest -vv karp5/tests/unit_tests
 
 test-w-coverage: install-test clean-pyc
-	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing karp5/tests
+	${INVENV} pytest -vv --cov-config=setup.cfg --cov=karp5 --cov-report=xml karp5/tests
 
 test-log: install-test clean-pyc
 	${INVENV} pytest --cov=karp5 --cov-report=term-missing karp5/tests > pytest.log
