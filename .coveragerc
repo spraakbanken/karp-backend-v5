@@ -1,0 +1,3 @@
+[run]
+source = karp5
+omit = karp5/tests
