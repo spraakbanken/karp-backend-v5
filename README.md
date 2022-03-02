@@ -7,8 +7,6 @@
 [![codecov](https://codecov.io/gh/spraakbanken/karp-backend-v5/branch/master/graph/badge.svg)](https://codecov.io/gh/spraakbanken/karp-backend-v5)
 [![](https://github.com/spraakbanken/karp-backend-v5/workflows/Build/badge.svg)](https://github.com/spraakbanken/karp-backend-v5/actions)
 
-**This package - code and documentation - is still under construction.**
-
 Karp is the lexical platform of Språkbanken.
 Now migrated to Python 3.6+.
 
