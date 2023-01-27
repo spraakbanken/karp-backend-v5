@@ -1,71 +1,47 @@
-[metadata]
-name = karp-backend-5
-summary = Backend for Karp
-author = Språkbanken at the University of Gothenburg
-author_email = sb-info@svenska.gu.se
-maintainer = Språkbanken
-maintainer_email = sb-info@svenska.gu.se
-description-file = README.md
-description-content-type = text/markdown
-home-page = https://github.com/spraakbanken/karp-backend-v5
-project_urls =
-    Bug Tracker = https://github.com/spraakbanken/karp-backend-v5/issues
-    # Documentation = https://github.
-    Source Code = https://github.com/spraakbanken/karp-backend-v5
-license = MIT
-classifier =
+[tool.poetry]
+name = "karp-backend-v5"
+version = "5.26.4"
+description = "Backend for Karp v5"
+authors = [
+    "Språkbanken at the University of Gothenburg <sb-info@svenska.gu.se>",
+    'Kristoffer Andersson <kod.kristoff@gmail.com>',
+]
+license = "MIT"
+readme = "README.md"
+homepage = "https://spraakbanken.gu.se"
+repository = https://github.com/spraakbanken/karp-backend-v5
+classifiers = [
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        Development Status :: 5 - Production/Stable
-        Intended Audience :: Developers
-        License :: OSI Approved :: MIT License
-        Operating System :: Unix
-        Operating System :: POSIX
-        # Operating System :: Microsoft :: Windows
-        Programming Language :: Python
-        Programming Language :: Python :: 3
-        Programming Language :: Python :: 3.6
-        Programming Language :: Python :: 3.7
-        Programming Language :: Python :: 3.8
-        Programming Language :: Python :: Implementation :: CPython
-        # uncomment if you test on these interpreters:
-        # 'Programming Language :: Python :: Implementation :: IronPython',
-        # 'Programming Language :: Python :: Implementation :: Jython',
-        # 'Programming Language :: Python :: Implementation :: Stackless',
-        Topic :: Utilities
+        "Development Status :: 5 - Production/Stable"
+        "Intended Audience :: Developers"
+        "License :: OSI Approved :: MIT License"
+        "Operating System :: Unix"
+        "Operating System :: POSIX"
+        "Topic :: Utilities"
+]
+packages = [
+    {include="karp5", from="../.."},
+]
 
-[files]
-packages =
-    karp5
-data_files =
-    karp5/html = karp5/html/*
+[tool.poetry.dependencies]
+python = "^3.10"
+elasticsearch>=6.1.0,<7.0.0
+elasticsearch-dsl>=6.0.0,<7.0.0
+Flask
+SQLAlchemy
+urllib3
+six
+pymysql
+markdown
+python-dotenv
+sb-json-tools>=0.4.3
+json_streams
 
-[extras]
-dev =
-    black
-    bump2version
-test =
-    pytest
-    pytest-cov
-    codecov
-    elasticsearch_test-py
-    pylint
-    hypothesis
-    attrs>=19.2
-    flake8
+[tool.poetry.group.dev.dependencies]
 
-[tool:pytest]
-testpaths = karp5/tests
-junit_family = legacy
-# addopts = --cov-config=setup.cfg --cov=karp5 --cov-report=term-missing
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/spraakbanken/karp-backend-v5/issues"
 
-[coverage:run]
-branch = true
-source =
-    karp5
-omit = karp5/tests/*
-
-[pycodestyle]
-max-line-length=120
-
-[flake8]
-max-line-length=120
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
