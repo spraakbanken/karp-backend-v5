@@ -1,0 +1,638 @@
+%\documentclass[10pt]{article}
+%\usepackage{fullpage, graphicx, url}
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0ex}
+\section*{Query API}
+For a more complete documentation, see 
+\url{https://ws.spraakbanken.gu.se/ws/karp}
+\subsection*{Query language}
+ The query language is very simple.
+ \begin{itemize}
+\item \textbf{simple:}
+ free text search. Searches all fields. 
+
+ q=simple||satt och
+
+\item \textbf{extended:}
+ search a specific field 
+
+ 
+
+\begin{tabular}{cc}
+q=extended||and|field|operator|value &(positive) \\
+q=extended||not|field|operator|value &(negative)
+
+\end{tabular}
+
+
+
+
+Example:
+ search all entries with a word form that is ``blomma'' or ``banan'' and that has no part of speech tag:\\ 
+ q=extended||and|pos|missing||and||wf|equals|blomma|banan 
+
+\end{itemize}
+
+\textbf{Operators}\\
+%\begin{itemize}
+equals,
+missing,
+exists,
+regexp,
+startswith,
+endswith,
+lte,
+gte
+
+%\end{itemize}
+%\subsection*{Fields}
+%\begin{itemize}
+%\item wf
+%\item pos
+%\item sense
+%\item rawFreq
+%\item lemgram
+%\item LU
+%\item baseform
+%\item ... (See more fields)
+%
+%\end{itemize}
+%
+%
+% 
+%\subsection*{Available calls to the backend}
+%
+%
+%\begin{tabular}{cc}
+%\textbf{Public calls:}
+% & \\
+%query & for normal querying  \\
+%querycount & for querying with some statistics \\
+%minientry & for getting minientries \\
+%statistics & for getting statistics, aggregation  \\
+%autocomplete & for autocompletion of lemgrams  \\
+%saldopath & for showing the path from a saldo sense to PRIM \\
+%explain & for normal querying  \\
+%lexiconorder & for retrieving the lexicon order  \\
+%random & for retrieving a random lexical entry  \\
+%suggest & make an update suggestion  \\
+%suggestnew & suggest a new entry \\
+%checksuggestion  & see the status of a suggestion  \\
+%\\ 
+% & \\
+%\textbf{Password protected calls:}
+% & \\
+%delete & delete an entry by \#ID \\
+%delete\_light & delete an entry from ElasticSearch but not from SQL \\
+%mkupdate & update a lexicalentry \\
+%add & add a lexicalentry \\
+%readd & add a document which already has an id (one that has been deleted)  \\
+%checksuggestions  & view suggestions  \\
+%acceptsuggestion & accept a suggestion \\
+%rejectsuggestion & reject a suggestion \\
+%checkuser & for checking whether the user is ok \\
+%checkuserhistory & for retrieving the edit history of a user  \\
+%checkhistory & for retrieving the edit history of an entry  \\
+%checklexiconhistory & for retrieving the edit history of one or more lexicon \\
+%checkdifference &see the difference between two versions \\
+%\\ 
+% & \\
+%\textbf{Calls available for offline use}
+% & \\
+%publish & Set this index to have the alias karp  \\
+%publishexternal & Set this index to have the alias karp, and removes other externals from the alias  \\
+%createindexd & create an index \\
+%createwithmapping &create an index with a specific mapping \\
+%getmapping &get the current mapping \\
+%upload & upload a new resource to ElasticSearch and the SQL database \\
+%upload\_light & upload a new resource to ElasticSearch. Used for lexica that should not be updated through the karp interface.  \\
+%deleteindex & delete an entire index \\
+%deletelexicon & delete one lexicon from the index
+%
+%\end{tabular}
+
+\subsection*{Types of queries}
+The backend accepts a number of commands, listed below.\\
+
+\textbf{query}
+\begin{verbatim}
+URL/query?q=simple||stort hus\\
+URL/query?q=extended||and|sitta||not|wf|equals|satt
+\end{verbatim}
+%
+% Available query parameters: \\
+%\begin{tabular}{ll}
+%'q':  & the query \\
+%'resource': & one or more comma separated lexica to search. default: all \\
+%'size': & number of hits to show on each page. default: 25 \\
+%'start': & the index of the first hit to show. default: 0 \\
+%'sort': & one or more comma separated fields to sort on. default: lexiconOrder, score, baseform, lemgram
+%
+%\end{tabular}
+
+%\item URL/query?q=simple||flicka
+%\item URL/query?q=extended||and|lemgram|startswith|dalinm--
+%\item URL/query?q=extended||and|wf|equals|\~A¤ta||and|pos|missing\&resource=kelly,lwt
+%\item URL/query?q=extended||and|wf|regexp|.*o.*a
+%\item URL/query?q=extended||and|wf|regexp|.*o.*a\&start=25
+%\item URL/query?q=extended||and|sense|exists
+
+%
+%  Result: 
+%hits\{
+%  total : number of hits
+%  hits:   a list with information about the hits
+%     hits[n].\_source:      all information in hit n
+%     hits[n].\_source.\_id   elasticsearch's identifier for the entry
+%     hits[n].\_version:     the current version of this entry
+%     hits[n].\_source.lexiconName
+%     hits[n].\_source.lexiconOrder
+%     hits[n].\_source.FormRepresentations
+%     hits[n].\_source.Sense
+%     hits[n].\_source.WordForms
+%
+%     hits[n].\_source.ListOfComponents
+%     hits[n].\_source.RelatedForm
+%     hits[n].\_source.compareWith
+%     hits[n].\_source.entryType
+%     hits[n].\_source.saldoLinks
+%     hits[n].\_source.see
+%     hits[n].\_source.symbolCenter
+%     hits[n].\_source.symbolHeight
+%     hits[n].\_source.symbolPath
+%     hits[n].\_source.symbolWidth
+%
+%     For freetext search (simple||...) only:
+%     hits[n].highlight       information and paths about the matching part of the entry
+%\}
+%  
+
+\textbf{querycount}
+ Basically the same as a normal query, but also shows the distribution over lexicons. Is a mix of query and statistics. The distribution results are sorted in lexicon order. 
+  Example: \begin{verbatim}
+URL/querycount?q=simple||stort hus
+
+\end{verbatim}
+%
+%
+%
+%  Result: 
+%  hits\{...\}                                          as above
+%  distribution                                       a list of counts for each lexicon that contains at least one match
+%  distribution[n].key                                the order for the n:th lexicon
+%  distribution[n].doc\_count                          the count for the n:th lexicon
+%  distribution[n].lexiconName.buckets.[0].doc\_count  the count for the n:th lexicon (again)
+%  distribution[n].lexiconName.buckets.[0].key        the name of the n:th lexicon
+%  
+\textbf{minientry}
+ Returns a mini variant of the normal query result. Only shows the fields specified in ``show'', but otherwise works the same way as \emph{query}. 
+% Available query parameters: 
+%\begin{tabular}{ll}
+%'q':  & the query \\
+%'resource': & one or more comma separated lexica to search. default: all \\
+%'show': & one or more comma separated fields to show. default: lexiconName, lemgram, baseform \\
+%'size': & number of hits to show on each page. default: 25
+%\end{tabular}
+\begin{verbatim}
+URL/minientry?q=extended||and|wf|equals|sitta|ligga
+\end{verbatim}
+%\item URL/minientry?q=extended||and|writtenForm|equals|f\~A{Y\hspace*{-1.4ex}--}r||and|writtenForm|equals|fick\&show=pos
+%  Result: See query.  
+
+\textbf{statistics}
+ Aggregation, as provided by ElasticSearch. Shows the number of hits,
+ group by the requested fields. Defaults to show the distribution grouped
+ by lexicon and pos tags. 
+
+%  Available query parameters: 
+%
+%\begin{tabular}{ll}
+%'q':  & the query \\
+%'resource': & one or more comma separated lexica to search. default: all \\
+%'size': & number of hits to show in each bucket. default: 100 \\
+%'buckets': & one or more comma separated fields to group the results by. default: lexiconName, pos
+%
+%\end{tabular}
+
+\begin{verbatim}
+URL/statistics
+\end{verbatim}
+%The result is not sorted. 
+%\item URL/statistics?q=simple||kasusformer
+%\item  URL/statistics?resource=hellqvist
+%\item  URL/statistics?buckets=pos,sense\&size=200
+%
+
+
+%  Result: X is the name of the first bucket (default: lexiconName), Y (defaults to pos) the second and so on. For a search where a query or a resource is specified: 
+%aggregations \{
+%    q\_statistics.doc\_count : total number of hits
+%    q\_satistics.X.buckets : information grouped by X
+%
+%      q\_satistics.X.buckets[n].key: X value
+%      q\_satistics.X.buckets[n].doc\_count: number of hits within the X value
+%
+%      q\_satistics.X.buckets[n].Y: information group by X and then Y
+%      q\_satistics.X.buckets[n].Y.doc\_count: number of hits within the Y value in X
+%      ....
+%\}
+% If a statistics of all lexical entries is done, that is, no resource or query is specified, then the q\_satistics level will be left out: 
+%aggregations \{
+%      X.buckets[n].key: X name
+%      X.buckets[n].doc\_count: number of hits within X
+%
+%      X.buckets[n].Y: information grouped by Y
+%      ...
+%\}
+  
+\textbf{autocomplete}
+ Gives suggestions for lemgrams which have a (whole) word form matching
+ the given one. Should work the same way as the autocompletion in Korp,
+ ie. it does not match prefixes of words. Searching for ``sig'' does hence
+ not give suggestions like ``sigill'' or ``signatur''. Examples:
+\begin{verbatim}
+URL/autocomplete?q=kasus\&resource=saldom,dalin,hellqvist
+\end{verbatim}
+%\item URL/autocomplete?q=sig\&resource=saldom
+
+%Available query parameters: 
+%
+%\begin{tabular}{ll}
+%'q':  & the query, a word form \\
+%'resource': & one or more comma separated lexica to search. default: all
+%\end{tabular}
+%
+
+%
+%
+%  The result is not sorted and one lemgram may occur multiple times 
+%
+%
+%  Result: 
+%hits\{
+%  total : number of hits
+%  hits  : information abouth the hits
+%  hits[n].\_source : information about hit n
+%  hits[n].\_source.FormRepresentations.lemgram  : lemgram
+%\}
+  
+\textbf{saldopath}
+Shows the path from a saldo sense to PRIM. Only works for saldo senses. 
+ Example: \begin{verbatim}
+URL/autocomplete?q=bandy..1
+\end{verbatim}
+%  Result: 
+%\{ path: [input\_sense..1, ... , PRIM..1] \}
+  
+\textbf{explain}
+ A tool for debugging. Shows the result of the given query, the json formatted query as sent to ElasticSearch and the information given by a \_validate/query?explain call to ElasticSearch 
+  Example: \begin{verbatim}
+URL/explain?q=simple||mastodont
+\end{verbatim}
+%
+%
+%
+%  Result: 
+%ans                  the normal query result
+%elastic\_json\_query   the query translated to Elastic's api
+%explain              Elastic's result to a \_validate/query?explain query.
+  
+\textbf{lexiconorder}
+ Shows the order in which the lexicons are. The query results are also ordered in this way. 
+ \begin{verbatim}
+URL/lexiconorder
+\end{verbatim}
+
+%
+%  Result: 
+%\{
+%  ``lexiconA'': 1,
+%  ``lexiconB'': 3,
+%  ``lexiconC'': 8,
+%  ...
+%\}
+%
+
+\textbf{random}
+ Shows a randomly selected lexical entry. 
+%
+%Available query parameters: 
+%
+%\begin{tabular}{ll}
+%'resource': & one or more comma separated lexica to search. default: all \\
+%'show': & one or more comma separated fields to show. default: lexiconName, lemgram, baseform \\
+%'size': & number of hits to show on each page. default: 1
+%\end{tabular}
+%
+%\item URL/random
+ Example: \begin{verbatim}
+URL/random?resource=saldo
+\end{verbatim}
+  
+\textbf{suggest, suggestnew}
+ Works like update, but requires no log in. The suggestion is stored in a separate system until it has been accepted by a logged in user. No \#ID is given to suggestnew calls. 
+%
+%The field 'version' is optional, but will prevent an old version to later override a newer one. 
+ \begin{verbatim}
+URL/suggest/\#ID -d \{``message'' : ..., ``user'': ..., ``version'': ... \}
+URL/suggestnew -d \{``message'' : ..., ``user'': ..., ``version'': ... \}
+\end{verbatim}
+
+%
+%  Result: 
+%\{
+%  ``es\_ans'': \{...\}  // output from ES
+%  ``es\_loaded'': 1,  // 1 if the suggestion is stored in ES
+%  ``id'':           // the \#ID of the suggestion. Can be used to see the current status, accept or reject the suggestion
+%  ``sql\_loaded'': 1,  // 1 if the suggestion is stored in SQL
+%  ``suggestion'': true,
+%  sql\_error // present if there were errors storing the suggestion
+%\}
+
+\textbf{delete}
+ Deletes one entry, identified by its \#ID. Requires a valid username and password. 
+  Examples: \begin{verbatim}
+ URL/delete/\#ID
+\end{verbatim}
+
+%
+%
+%  Result: \{
+%'sql\_loaded' : 1 if successfully marked as deleted in the SQL database,
+%'es\_loaded' : 1 if successfully deleted from ElasticSearch (is no longer searchable),
+%'es\_ans'    : the answer from ES.
+%\}  
+%\subsubsection*{delete\_light}
+% Deletes one entry from ElasticSearch (but not from the SQL database), identified by its \#ID. This should be used for lexica which are not updated through the karp interface. Requires a valid username and password. 
+%
+%  Example: \begin{itemize}
+%\item URL/delete\_light/\#ID
+%
+%\end{itemize}
+%
+%
+%
+%  Result: \{
+%'es\_loaded' : 1 if successfully deleted from ElasticSearch (is no longer searchable),
+%'es\_ans'    : the answer from ES.
+%\}  
+\textbf{mkupdate}
+ Updates a lexicalentry identified by Elasticsearch's id (\#ID). Requires a valid username and password. The IDs are found in any query results.  To avoid conflicts, the last known version number of the entry can be provided as a query string. If a version number is provided and the database entry has been updated since the our last read, ElasticSearch will refuse to update it. Example: 
+ \begin{verbatim}
+XPOST URL/mkupdate/\#ID -d '\{'doc' : updated entry, 'version' : (last) version, 'message' : update message\}'
+\end{verbatim}
+%XPOST URL/mkupdate/\#ID -d '\{'doc' : updated entry, 'version' : (last) version, 'message' : update message\}'
+% Result: \{
+%'sql\_loaded' : 1 if successfully saved in the SQL database,
+%'es\_loaded' : 1 if successfully stored in ElasticSearch (is searchable),
+%'es\_ans'    : \{'\_id':..., '\_index':..., '\_type':..., '\_version': ...\} //the answer from ES.
+%\}
+%
+
+%  Error messages: 
+%
+%
+%  Version conflict: \{``message'': ``Database exception: Error during update. Message: TransportError(409, u'RemoteTransportException[...]; nested: VersionConflictEngineException[...]: version conflict, current [3], provided [1]]; ').''\} ID could not be found: \{``message'': ``Database exception: Error during update. Message: TransportError(404, u'RemoteTransportException[...]; nested: DocumentMissingException[...]: document missing]; ')''\}   
+%\subsubsection*{add, readd}
+% Adds a lexicalentry. Requires a valid username and password. The given ID is found in the returned object and is associated with the entry in ElasticSearch and in the SQL database. The new entry must contain the lexicon name and the order of the lexicon. Example: \begin{itemize}
+%\item XPOST URL/add -d '\{'doc' : \{...,'lexiconName': 'saldo',lexiconOrder' : 0,...\} 'version' : (last) version, 'message' : update message\}'
+%
+%\end{itemize}
+% If an entry has existed in the data base before and has got an ID, it can be readded to get the same ID: \begin{itemize}
+%\item XPOST URL/readd/\#ID -d '\{'doc' : \{...,'lexiconName': 'saldo',lexiconOrder' : 0,...\} 'version' : (last) version, 'message' : update message\}'
+%
+%\end{itemize}
+%
+%
+%  Result: 
+%\{
+%'sql\_loaded' : 1 if successfully saved in the SQL database,
+%'es\_loaded' : 1 if successfully stored in ElasticSearch (is searchable),
+%'es\_ans'    : \{'\_id':..., '\_index':..., '\_type':..., '\_version': ..., 'created' : True\} //the answer from ES. ,
+%'suggestion': False. True if the update has been treated as $<$a href=''suggestion''$>$suggestion$<$/a$>$.
+%\}
+%
+%
+
+  
+\textbf{checksuggestions}
+ Requires log in. Show the suggestions for the chosen lexica that the user has access to. 
+%
+%  Available query parameters: 
+%
+%\begin{tabular}{ll}
+%'resource': & one or more comma separated lexica to search. default: all \\
+%'size':  & the number of suggestions to view (order by decreasing date). default: 50 \\
+%'status':  & waiting, rejected, accepted. default: all
+%
+%\end{tabular}
+%
+  Example: \begin{verbatim}
+URL/checksuggestions?resource=konstruktikon\&size=2\&status=waiting
+\end{verbatim}
+
+%
+%
+%  Result: 
+%\{
+%  ``updates'': [
+%    \{
+%      ``acceptmessage''  // is set when the suggestion is accepted or rejected
+%      ``date'':          // the date of suggestion
+%      ``doc'':           // the suggested lexical entry
+%      ``id'':            // the \#ID of the suggestion
+%      ``lexicon'':       // the lexicon it belongs to
+%      ``message'':       // message from the suggester
+%      ``origid'':        // the \#ID of the entry the suggestion concerns
+%      ``status'':        // the status of the suggestion (waiting, accepted or rejected)
+%      ``user'':          // the name or email adress of the suggester
+%      ``version'':       // the version of the entry that the suggestion concerns
+%    \}
+%  ]
+
+
+
+
+  
+\textbf{checksuggestion}
+ Checks the status of a given suggestion. Does not require log in. 
+  Example:
+  \begin{verbatim}
+ URL/checksuggestion/\#ID  The \#ID refers to the suggestion, not the original entry. 
+\end{verbatim}
+
+
+%
+%  Result: 
+%\{
+%  ``updates'': [
+%    \{
+%      ``acceptmessage''  // is set when the suggestion is accepted or rejected
+%      ``date'':          // the date of suggestion
+%      ``doc'':           // the suggested lexical entry
+%      ``id'':            // the \#ID of the suggestion
+%      ``lexicon'':       // the lexicon it belongs to
+%      ``message'':       // message from the suggester
+%      ``origid'':        // the \#ID of the entry the suggestion concerns
+%      ``status'':        // the status of the suggestion (waiting, accepted or rejected)
+%      ``user'':          // the name or email adress of the suggester
+%      ``version'':       // the version of the entry that the suggestion concerns
+%    \}
+%  ]
+%
+
+\textbf{acceptsuggestion}
+ Requires log in. Changes the status of a suggestion to ``accepted'' and moves it to the live data base. Accepted suggestions are still present in the sql data base, but not searchable through ES. 
+  Example: \begin{verbatim}
+ URL/accetpsuggestion/\#ID -d \{``message'' : ...\} The \#ID refers to the suggestion, not the original entry. The message will be stored in the suggestion data base and in the live data base. 
+\end{verbatim}
+
+%  Result: 
+%\{
+%  ``es\_ans'': \{
+%    ``\_id'':  // \#ID of the updated entry
+%    ``\_index'':
+%    ``\_type'':
+%    ``\_version'':
+%  \},
+%  ``es\_loaded'':  // 1 if successfully loaded to ES
+%  ``sql\_loaded'': // 1 if successfully loaded to the live SQL
+%  ``sugg\_db\_error'': // present if there were errors storing the suggestion
+%  ``sugg\_db\_loaded'':  // 1 if successfully loaded to suggestion SQL
+%  ``sugg\_es\_ans'': \{``es\_ans'' : \{...\} // ans from ES
+%                 ,''es\_loaded'':  // 1 if removed from the suggestion ES
+%                 ,''sql\_loaded'': // 1 if the suggestion was marked as accepted
+%                 \}
+%\}
+
+  
+\textbf{rejectsuggestion}
+ Requires log in. Changes the status of a suggestion to ``rejected''. Rejected suggestions are still present in the sql data base, but not searchable through ES. 
+  Example: \begin{verbatim}
+URL/rejectpsuggestion/\#ID -d \{``message'' : ...\} 
+\end{verbatim}
+The \#ID refers to the suggestion, not the original entry. The message will be stored in the suggestion data base. 
+
+%
+%
+%  Result: 
+%\{
+%``es\_ans'': \{...\} // output from the deletion from the suggestion ES
+%  ``es\_loaded'':  // 1 if successfully removed to the suggestion ES
+%  ``sugg\_db\_error'': // present if there were errors storing the suggestion
+%  ``sugg\_db\_loaded'':  // 1 if successfully loaded to suggestion SQL
+%\}
+%
+
+\textbf{checkuser}
+ Checks whether the provided user log-in details are ok. 
+%  Result: \\
+%\{
+%  ``authenticated'':   is the user name and password ok,
+%  ``permitted\_resources.lexica'': lexicons that the user may edit
+%\}
+
+
+
+  
+\textbf{checkuserhistory}
+ Shows the edit history of the user, ordered from newest to oldest. 
+% Available query parameters: 
+%
+%\begin{tabular}{cc}
+%'size': & number of hits to show on each page. default: 10
+%
+%\end{tabular}
+
+%
+%  Result: 
+%\{
+%  ``updates'': [
+%    \{``date''
+%    ,''doc''        //the entry that has been edited
+%    ,''id''
+%    ,''message''
+%    ,''user''
+%    \},
+%    ...
+%  ]
+%\}
+%
+
+\textbf{checkhistory}
+ Shows the edit history of an entry, selected by its identifier and ordered from newest to oldest. Available query parameters: 
+%
+%\begin{tabular}{cc}
+%'size': & number of hits to show on each page. default: 10
+%
+%\end{tabular}
+%
+ Example: \begin{verbatim}
+\item URL/checkhistory/XXX
+\end{verbatim}
+
+
+%  Result: 
+%\{
+%  ``updates'': [
+%    \{``date''
+%    ,''doc''        //the entry that has been edited
+%    ,''id''
+%    ,''message''
+%    ,''user''
+%    \},
+%    ...
+%  ]
+%\}
+
+
+\textbf{checklexiconhistory}
+ Shows the edit history of one or more lexicons, ordered from newest to oldest. If no lexicon is specified, all is picked. Available query parameters: 
+%
+%\begin{tabular}{cc}
+%'size': & number of hits to show on each page. default: 10
+%
+%\end{tabular}
+%
+  Example: %If a date is provided (in the correct format) only updates done later than this is shown.
+  \begin{verbatim}
+URL/checklexiconhistory
+\end{verbatim}
+%\item URL/checklexiconhistory/20150922
+
+
+%
+%  Result: 
+%\{
+%  ``updates'': [
+%    \{``date''
+%    ,''doc''        //the entry that has been edited
+%    ,''id''
+%    ,''message''
+%    ,''user''
+%    ,''type''  // CHANGED, ADDED or REMOVED, only present if checklexiconhistory is called
+%    \},
+%    ...
+%  ]
+%\}
+
+\textbf{checkdifference}
+ Shows the diff of a chosen \#ID. 
+
+  Examples: \begin{verbatim}
+URL/checkdifference/\#ID/latest
+URL/checkdifference/\#ID/latest/\#fromdate'
+URL/checkdifference/\#ID/\#fromdate/\#todate'
+\end{verbatim}
+
+%
+%  Result: 
+%\{ ``diff'' : [
+%
+%   \{``field''  // a field that has been changed between the two versions
+%   ,''after''  // the content of the field in the later of the two versions
+%   ,''before'' // the content of the field in the older of the two versions (not present if the field is added)
+%   ``type''    // added, changed och removed
+%   \}
+%]\}
+

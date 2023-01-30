@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "karp-backend-v5"
+version = "0.1.0"
+description = ""
+authors = ["Kristoffer Andersson <kod.kristoff@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+  {include = "karp5"},
+  {include = "karp/server", from = "components"},
+  {include = "karp/config", from = "components"},
+  {include = "karp/autocomplete_query", from = "components"},
+  {include = "karp/user", from = "components"},
+  {include = "karp/karp_v4_flask_api", from = "bases"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+flask = "^2.2.2"
+elasticsearch = ">=6,<7"
+elasticsearch-dsl = ">=6,<7"
+pydantic = "^1.10.4"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
