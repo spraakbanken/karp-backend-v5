@@ -102,3 +102,4 @@ Thumbs.db
 ###################
 .vscode/
 tmp/
+poetry.lock

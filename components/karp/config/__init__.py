@@ -1,4 +1,4 @@
 from karp.config import core
-from karp5.config import ConfigManager
+from karp.config.configmanager import ConfigManager
 
 __all__ = ["core", "ConfigManager"]
