@@ -4,25 +4,19 @@
 
 PYTHON = python3
 PLATFORM := ${shell uname -o}
-INVENV_PATH = ${shell which invenv}
 
 ${info Platform: ${PLATFORM}}
-${info invenv: ${INVENV_PATH}}
 
 ifeq (${VIRTUAL_ENV},)
   VENV_NAME = .venv
+  INVENV = poetry run
 else
   VENV_NAME = ${VIRTUAL_ENV}
+  INVENV =
 endif
 ${info Using ${VENV_NAME}}
 
 VENV_BIN = ${VENV_NAME}/bin
-
-ifeq (${INVENV_PATH},)
-  INVENV = export VIRTUAL_ENV="${VENV_NAME}"; export PATH="${VENV_BIN}:${PATH}"; unset PYTHON_HOME;
-else
-  INVENV = invenv -C ${VENV_NAME}
-endif
 
 ifeq (${PLATFORM}, Android)
   FLAKE8_FLAGS = --jobs=1
@@ -34,7 +28,8 @@ venv: ${VENV_NAME}/made
 
 install: venv ${VENV_NAME}/req.installed
 install-test: venv install ${VENV_NAME}/req-test.installed
-install-dev: venv install-test ${VENV_NAME}/req-dev.installed
+install-dev:
+	poetry install --with dev
 install-typecheck: venv install-test ${VENV_NAME}/req-typecheck.installed
 
 ${VENV_NAME}/made:
