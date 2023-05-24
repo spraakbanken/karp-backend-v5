@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       max-parallel: 4
-      fail_fast: false
+      fail-fast: false
       matrix:
         python-version: [3.7, 3.8]
         es-version: ["6.8.6"]
