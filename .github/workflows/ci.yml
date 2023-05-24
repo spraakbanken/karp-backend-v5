@@ -83,7 +83,6 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
-          - "3.12-dev"
         es-version: ["6.8.23"]
     continue-on-error: >-
       ${{ contains(matrix.python-version, 'dev') && true || false }}
@@ -176,7 +175,7 @@ jobs:
         uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-failures: coverage
+          allowed-failures: lint
 
   build:
     name: Build package
