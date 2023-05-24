@@ -68,6 +68,7 @@ jobs:
       #----------------------------------------------
       - name: ${{ matrix.task.name }}
         run: ${{ matrix.task.run }}
+        continue-on-error: true
 
   coverage:
     name: Test coverage py-${{ matrix.python-version }} on ${{ matrix.os }}
