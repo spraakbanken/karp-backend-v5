@@ -24,7 +24,9 @@ class Config:
 
     DEBUG = False
     TESTING = False
-    LOG_LEVEL = getattr(logging, _CONFIG["DEBUG"]["DEBUGLEVEL"].upper(), logging.WARNING)
+    LOG_LEVEL = getattr(
+        logging, _CONFIG["DEBUG"]["DEBUGLEVEL"].upper(), logging.WARNING
+    )
     # LOG_LEVEL = debug_str_to_int(_CONFIG['DEBUG']['DEBUGLEVEL'])
     LOG_FMT = _CONFIG["DEBUG"].get("LOGFMT")
     LOG_DIR = _CONFIG["DEBUG"].get("LOGDIR")
@@ -32,7 +34,10 @@ class Config:
     LOG_TO_STDERR = _CONFIG["DEBUG"].get("DEBUG_TO_STDERR")
     SECRET_KEY = ENV_SETUP_SECRET_KEY or _CONFIG["SETUP"]["SECRET_KEY"]
     ABSOLUTE_PATH = _CONFIG["SETUP"]["ABSOLUTE_PATH"]
-    BACKEND_URL = _CONFIG["SETUP"].get("BACKEND_URL") or "https://ws.spraakbanken.gu.se/ws/karp/v5"
+    BACKEND_URL = (
+        _CONFIG["SETUP"].get("BACKEND_URL")
+        or "https://ws.spraakbanken.gu.se/ws/karp/v5"
+    )
     SCRIPT_PATH = _CONFIG["SETUP"]["SCRIPT_PATH"]
     SENDER_EMAIL = _CONFIG["DB"]["SENDER_EMAIL"]
     SMTP_SERVER = _CONFIG["DB"].get("SMTP_SERVER")
@@ -43,9 +48,9 @@ class Config:
     MAX_PAGE = _CONFIG["SETUP"]["MAX_PAGE"]
     MINIENTRY_PAGE = _CONFIG["SETUP"]["MINIENTRY_PAGE"]
     SCAN_LIMIT = _CONFIG["SETUP"]["SCAN_LIMIT"]
-    ELASTICSEARCH_URL = os.environ.get("KARP5_ELASTICSEARCH_URL", "http://localhost:9200").split(
-        ","
-    )
+    ELASTICSEARCH_URL = os.environ.get(
+        "KARP5_ELASTICSEARCH_URL", "http://localhost:9200"
+    ).split(",")
     OVERRIDE_ELASTICSEARCH_URL = strtobool(
         os.environ.get("KARP5_ELASTICSEARCH_URL_OVERRIDE", "false")
     )
@@ -57,3 +62,12 @@ class Config:
         else f"mysql+pymysql://{_CONFIG['DB']['DBPASS']}/" + "{}?charset=utf8"
     )
     STANDARDMODE = _CONFIG["SETUP"]["STANDARDMODE"]
+    TRACKING_MATOMO_URL = _CONFIG["SETUP"].get("MATOMO_URL") or os.environ.get(
+        "KARP5_TRACKING_URL"
+    )
+    TRACKING_SITE_ID = _CONFIG["SETUP"].get("SITE_ID") or os.environ.get(
+        "KARP5_TRACKING_SITE_ID"
+    )
+    TRACKING_AUTH_TOKEN = _CONFIG["SETUP"].get("AUTH_TOKEN") or os.environ.get(
+        "KARP5_TRACKING_AUTH_TOKEN"
+    )

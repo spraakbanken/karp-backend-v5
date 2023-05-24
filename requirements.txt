@@ -9,3 +9,4 @@ markdown
 python-dotenv
 sb-json-tools>=0.4.3
 json_streams
+flask-matomo2
