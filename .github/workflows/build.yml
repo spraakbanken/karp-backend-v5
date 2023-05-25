@@ -63,9 +63,9 @@ jobs:
         env:
           KARP5_DBPASS: karp:testing@127.0.0.1:${{ job.services.mysql.ports['3306'] }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true
       # - name: Coveralls
       #   uses: coverallsapp/github-action@master
