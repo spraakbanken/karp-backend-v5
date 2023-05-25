@@ -196,15 +196,20 @@ jobs:
       #----------------------------------------------
       #  -----  install & configure build  -----
       #----------------------------------------------
-      - name: Install pypa/build
-        run: python3 -m pip install build --user
+      # - name: Install pypa/build
+      #   run: python3 -m pip install build --user
 
       #----------------------------------------------
       #  -----  build distribution -----
       #----------------------------------------------
       - name: Build a binary wheel and a source tarball
-        run: python3 -m build --sdist --wheel --outdir dist/ .
-
+        # run: python3 -m build --sdist --wheel --outdir dist/ .
+        run: |
+          pip install --upgrade setuptools twine wheel pbr
+          python setup.py sdist bdist_wheel
+          echo "github.ref = ${{ github.ref }}"
+      - name: Check distributions
+        run: twine check dist/*
       #----------------------------------------------
       #  -----  upload artifacts  -----
       #----------------------------------------------
