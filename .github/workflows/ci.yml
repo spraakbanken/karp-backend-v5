@@ -245,7 +245,7 @@ jobs:
       - run: rm -r karp5
       # - run: pip install typing-extensions
       # - run: pip install -r tests/requirements.txt
-      - run: pip install karp5 --no-index --no-deps --find-links dist --force-reinstall
+      - run: pip install karp-backend-5 --no-index --no-deps --find-links dist --force-reinstall
       # - run: pytest
 
   publish:
