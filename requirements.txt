@@ -1,5 +1,5 @@
 elasticsearch>=6.1.0,<7.0.0
-elasticsearch-dsl>=6.0.0,<7.0.0
+elasticsearch-dsl>=6.0.0,<8.0.0
 Flask
 SQLAlchemy<2
 urllib3
