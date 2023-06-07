@@ -16,6 +16,7 @@ venv3
 .coverage
 .pytest_cache/
 .hypothesis/
+coverage.xml
 
 # environment #
 ###############
@@ -102,3 +103,7 @@ Thumbs.db
 ###################
 .vscode/
 tmp/
+
+# Type checking #
+#################
+.pytype/
