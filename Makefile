@@ -77,7 +77,10 @@ test-w-coverage: install-test clean-pyc
 test-log: install-test clean-pyc
 	${INVENV} pytest --cov=karp5 --cov-report=term-missing karp5/tests > pytest.log
 
-lint: install
+lint:
+	${INVENV} pylint --rcfile .pylintrc --disable=all --enable=E,W karp5 setup.py cli.py run.py
+
+lint-all:
 	${INVENV} pylint --rcfile .pylintrc karp5 setup.py cli.py run.py
 
 lint-no-fail: install

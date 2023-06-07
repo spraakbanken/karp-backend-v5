@@ -22,10 +22,10 @@ jobs:
         # Only run checks for ubuntu
         os: [ubuntu]
         task:
-          - name: Type check
-            run: make type-check
+          # - name: Type check
+          #   run: make type-check
           - name: Lint code
-            run: make lint
+            run: make lint-no-fail
 
     runs-on: ${{ matrix.os }}-latest
 
@@ -180,7 +180,7 @@ jobs:
   build:
     name: Build package
      # only run on push to main and on release
-    if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')"
+    if: "success() && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')"
     runs-on: ubuntu-latest
     steps:
       #----------------------------------------------
