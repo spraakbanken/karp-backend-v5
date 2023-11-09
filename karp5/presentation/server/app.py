@@ -9,6 +9,7 @@ from flask import Flask, request
 from karp5.config import Config, conf_mgr
 from karp5.server.extensions import matomo
 from karp5.instance_info import get_instance_path
+from karp5.presentation.server.blueprints.searching import searching_blueprint
 
 
 __name = "karp5"
@@ -52,6 +53,8 @@ def create_app(config_class=Config):
     from karp5 import backend
 
     flaskhelper.register(app, backend.init)
+
+    app.register_blueprint(searching_blueprint)
 
     print("app.debug = {}".format(app.debug))
     print("app.testing = {}".format(app.testing))
