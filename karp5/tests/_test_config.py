@@ -2,7 +2,7 @@ import logging
 import os
 import tempfile
 
-from karp5 import Config
+from karp5.infrastructure.kernel.config import Config
 
 
 KARP5_DBPASS = os.environ.get("KARP5_DBPASS")
@@ -17,5 +17,7 @@ class TestConfig(Config):
         # Use sqlite if KARP5_DBPASS is not set
         # DATABASE_BASEURL = "sqlite://"
         DATABASE_BASEURL = f"sqlite:///{_tempfile.name}"
-    ELASTICSEARCH_URL = os.environ.get("KARP5_ELASTICSEARCH_TEST_URL") or "localhost:9201"
+    ELASTICSEARCH_URL = (
+        os.environ.get("KARP5_ELASTICSEARCH_TEST_URL") or "localhost:9201"
+    )
     OVERRIDE_ELASTICSEARCH_URL = True

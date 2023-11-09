@@ -11,12 +11,13 @@ from karp5.cli import create_metadata as metadata
 from karp5.cli import upload_offline as upload
 from karp5.cli import getmapping as gm
 from karp5.config import conf_mgr
+from karp5.infrastructure.kernel.config import Config
 
 
 _logger = logging.getLogger("karp5")
 
 
-def setup_cli(config=karp5.Config):
+def setup_cli(config=Config):
     print("Setting up logging")
     karp5.conf_mgr.app_config = config
     logger = logging.getLogger("karp5")

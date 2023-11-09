@@ -14,7 +14,9 @@ import dotenv
 
 dotenv.load_dotenv(dotenv_path=".env", verbose=True)
 os.environ["KARP5_INSTANCE_PATH"] = os.path.join(os.path.dirname(__file__), "data/")
-assert os.environ["KARP5_INSTANCE_PATH"] == os.path.join(os.path.dirname(__file__), "data/")
+assert os.environ["KARP5_INSTANCE_PATH"] == os.path.join(
+    os.path.dirname(__file__), "data/"
+)
 print(os.environ["KARP5_INSTANCE_PATH"])
 
 from karp5 import create_app  # noqa: E402
@@ -39,12 +41,12 @@ def fixture_app():
 #     return app
 
 
-from karp5.tests.common_fixtures import (  # pytype: disable=import-error
-    fixture_client,
-    fixture_cli,
-    fixture_cli_w_es,
-    fixture_es,
-)  # pytype: disable=import-error
+from karp5.tests.common_fixtures import (  # noqa: E402
+    fixture_client,  # noqa: F401
+    fixture_cli,  # noqa: F401
+    fixture_cli_w_es,  # noqa: F401
+    fixture_es,  # noqa: F401
+)
 
 
 @pytest.fixture(name="cli_w_panacea", scope="session")
