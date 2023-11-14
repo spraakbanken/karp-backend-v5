@@ -1,7 +1,7 @@
 elasticsearch>=6.1.0,<7.0.0
 elasticsearch-dsl>=6.0.0,<7.0.0
 Flask
-SQLAlchemy<2
+SQLAlchemy<3
 urllib3
 six
 pymysql
